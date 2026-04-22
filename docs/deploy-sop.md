@@ -48,7 +48,7 @@ git pull
 在项目根目录创建 `.env`：
 
 ```bash
-cp .env.example .env 2>/dev/null || touch .env
+cp .env.example .env
 ```
 
 推荐填写：

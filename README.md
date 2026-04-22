@@ -108,6 +108,12 @@ npm run inventory:check
 
 项目默认读取根目录 `.env`。
 
+推荐直接复制模板：
+
+```bash
+cp .env.example .env
+```
+
 最小可运行示例：
 
 ```env
