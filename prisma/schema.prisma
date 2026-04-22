@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Reminder {
+  id                   String   @id @default(cuid())
+  title                String
+  description          String?
+  activationCode       String?
+  activationContact    String?
+  dueAt                DateTime
+  priority             String   @default("medium")
+  category             String?
+  remindBeforeDays     Int      @default(3)
+  remindBeforeHours    Int      @default(24)
+  overdueRemindEnabled Boolean  @default(true)
+  recurrenceType       String?
+  recurrenceInterval   Int?
+  upcomingNotifiedAt   DateTime?
+  overdueNotifiedAt    DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  deletedAt            DateTime?
+
+  @@index([dueAt])
+  @@index([completedAt])
+  @@index([deletedAt])
+}
+
+model AppSetting {
+  id                       Int      @id @default(1)
+  appName                  String   @default("到期提醒")
+  timezone                 String   @default("Asia/Shanghai")
+  defaultRemindBeforeDays  Int      @default(3)
+  defaultRemindBeforeHours Int      @default(24)
+  overdueRepeatEnabled     Boolean  @default(true)
+  dailyRemindTime          String   @default("09:00")
+  emailNotificationsEnabled Boolean @default(false)
+  notificationEmail        String?
+  smtpHost                 String?
+  smtpPort                 Int?
+  smtpUser                 String?
+  smtpPassEncrypted        String?
+  smtpFromEmail            String?
+  smtpFromName             String?
+  otpSecretEncrypted       String?
+  otpConfiguredAt          DateTime?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model AuthSession {
+  id               String   @id @default(cuid())
+  sessionTokenHash String
+  expiresAt        DateTime
+  ipAddress        String?
+  userAgent        String?
+  createdAt        DateTime @default(now())
+  lastSeenAt       DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model InventoryWatch {
+  id               String   @id @default(cuid())
+  source           String
+  sourceLabel      String
+  externalId       String
+  name             String
+  stock            Int      @default(0)
+  productUrl       String?
+  lastFetchedAt    DateTime?
+  notifyEnabled    Boolean  @default(false)
+  minNotifyStock   Int      @default(0)
+  maxNotifyStock   Int      @default(99999)
+  lastRangeMatched Boolean  @default(false)
+  lastNotifiedStock Int?
+  lastNotifiedAt   DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([source, externalId])
+  @@index([source])
+  @@index([notifyEnabled])
+}
