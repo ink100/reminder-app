@@ -1,9 +1,28 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type TaskLog = {
+  id: string;
+  task: string;
+  startedAt: string;
+  finishedAt: string | null;
+  success: boolean;
+  summary: string | null;
+};
+
+type SchedulerTask = {
+  name: string;
+  label: string;
+  running: boolean;
+};
+
+type SchedulerStatusResponse = {
+  tasks?: SchedulerTask[];
+  logs?: TaskLog[];
+};
 
 type SettingsFormProps = {
   initialValues: {
@@ -17,11 +36,24 @@ type SettingsFormProps = {
     smtpFromEmail: string;
     smtpFromName: string;
     smtpPasswordConfigured: boolean;
+    inventorySyncEnabled: boolean;
+    inventoryGeneralInterval: number;
+    inventoryCheckEnabled: boolean;
+    inventoryCheckInterval: number;
+    reminderEmailEnabled: boolean;
+    reminderEmailInterval: number;
+    notifyStartHour: number;
+    notifyEndHour: number;
   };
+  initialTaskLogs?: TaskLog[];
 };
 
-export function SettingsForm({ initialValues }: SettingsFormProps) {
-  const router = useRouter();
+const TASK_LABELS: Record<string, string> = {
+  "inventory-check": "库存通知检查",
+  "reminder-email": "到期提醒邮件",
+};
+
+export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFormProps) {
   const [appName, setAppName] = useState(initialValues.appName);
   const [timezone, setTimezone] = useState(initialValues.timezone);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(initialValues.emailNotificationsEnabled);
@@ -38,6 +70,34 @@ export function SettingsForm({ initialValues }: SettingsFormProps) {
   const [testingEmail, setTestingEmail] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  // 定时任务配置
+  const [inventoryCheckEnabled, setInventoryCheckEnabled] = useState(initialValues.inventoryCheckEnabled);
+  const [inventoryCheckInterval, setInventoryCheckInterval] = useState(String(initialValues.inventoryCheckInterval));
+  const [reminderEmailEnabled, setReminderEmailEnabled] = useState(initialValues.reminderEmailEnabled);
+  const [reminderEmailInterval, setReminderEmailInterval] = useState(String(initialValues.reminderEmailInterval));
+
+  // 通知时段
+  const [notifyStartHour, setNotifyStartHour] = useState(String(initialValues.notifyStartHour));
+  const [notifyEndHour, setNotifyEndHour] = useState(String(initialValues.notifyEndHour));
+
+  // 任务运行记录
+  const [taskLogs, setTaskLogs] = useState<TaskLog[]>(initialTaskLogs);
+  const [schedulerTasks, setSchedulerTasks] = useState<SchedulerTask[]>([]);
+
+  useEffect(() => {
+    fetch("/api/scheduler/status")
+      .then((res) => res.json())
+      .then((data: SchedulerStatusResponse) => {
+        if (data.tasks) {
+          setSchedulerTasks(data.tasks.map((task) => ({ ...task, label: TASK_LABELS[task.name] ?? task.name })));
+        }
+        if (data.logs) {
+          setTaskLogs(data.logs);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,12 +122,26 @@ export function SettingsForm({ initialValues }: SettingsFormProps) {
           smtpFromEmail,
           smtpFromName,
           clearSmtpPass,
+          inventoryCheckEnabled,
+          inventoryCheckInterval: Number(inventoryCheckInterval || 60),
+          reminderEmailEnabled,
+          reminderEmailInterval: Number(reminderEmailInterval || 1800),
+          notifyStartHour: Number(notifyStartHour || 9),
+          notifyEndHour: Number(notifyEndHour || 22),
         }),
       });
 
       const data = (await response.json()) as {
         error?: string;
-        item?: { smtpPasswordConfigured?: boolean };
+        item?: {
+          smtpPasswordConfigured?: boolean;
+          inventoryCheckEnabled?: boolean;
+          inventoryCheckInterval?: number;
+          reminderEmailEnabled?: boolean;
+          reminderEmailInterval?: number;
+          notifyStartHour?: number;
+          notifyEndHour?: number;
+        };
       };
       if (!response.ok) {
         throw new Error(data.error ?? "保存配置失败");
@@ -77,8 +151,16 @@ export function SettingsForm({ initialValues }: SettingsFormProps) {
       setClearSmtpPass(false);
       setSmtpPasswordConfigured(Boolean(data.item?.smtpPasswordConfigured));
       setTestEmail(notificationEmail.trim() ? notificationEmail.trim() : testEmail);
+      // 同步服务端返回的最新配置到本地 state
+      if (data.item) {
+        if (typeof data.item.inventoryCheckEnabled === "boolean") setInventoryCheckEnabled(data.item.inventoryCheckEnabled);
+        if (typeof data.item.inventoryCheckInterval === "number") setInventoryCheckInterval(String(data.item.inventoryCheckInterval));
+        if (typeof data.item.reminderEmailEnabled === "boolean") setReminderEmailEnabled(data.item.reminderEmailEnabled);
+        if (typeof data.item.reminderEmailInterval === "number") setReminderEmailInterval(String(data.item.reminderEmailInterval));
+        if (typeof data.item.notifyStartHour === "number") setNotifyStartHour(String(data.item.notifyStartHour));
+        if (typeof data.item.notifyEndHour === "number") setNotifyEndHour(String(data.item.notifyEndHour));
+      }
       setMessage("配置已保存");
-      router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "保存配置失败");
     } finally {
@@ -222,6 +304,108 @@ export function SettingsForm({ initialValues }: SettingsFormProps) {
             <Input value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="提醒助手" />
           </div>
         </div>
+      </div>
+
+      {/* 通知时段配置 */}
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div>
+          <p className="text-sm font-medium text-slate-700">库存通知时段</p>
+          <p className="text-xs text-slate-500">只有在这个时间段内才会发送邮件通知；冷却期和自适应波动幅度在库存页面配置。</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700">开始时间（时）</label>
+            <Input type="number" min={0} max={23} value={notifyStartHour} onChange={(e) => setNotifyStartHour(e.target.value)} className="w-24" />
+          </div>
+          <span className="pt-5 text-slate-400">~</span>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700">结束时间（时）</label>
+            <Input type="number" min={0} max={23} value={notifyEndHour} onChange={(e) => setNotifyEndHour(e.target.value)} className="w-24" />
+          </div>
+        </div>
+        <p className="text-xs text-slate-500">默认 9~22（早 9 点到晚 10 点）</p>
+      </div>
+
+      {/* 定时任务配置 */}
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div>
+          <p className="text-sm font-medium text-slate-700">定时任务配置</p>
+          <p className="text-xs text-slate-500">修改后保存即生效，无需重启服务。</p>
+        </div>
+
+        <p className="text-xs text-slate-500">已停用的库存源不会再自动同步。</p>
+
+        <div className="border-t border-slate-200 pt-3">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={inventoryCheckEnabled}
+              onChange={(e) => setInventoryCheckEnabled(e.target.checked)}
+            />
+            启用库存通知检查（命中阈值发邮件）
+          </label>
+          {inventoryCheckEnabled && (
+            <div className="ml-6 mt-2 max-w-xs space-y-2">
+              <label className="text-sm font-medium text-slate-700">检查间隔（秒）</label>
+              <Input type="number" min={10} max={3600} value={inventoryCheckInterval} onChange={(e) => setInventoryCheckInterval(e.target.value)} />
+              <p className="text-xs text-slate-500">推荐 60 秒</p>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-slate-200 pt-3">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={reminderEmailEnabled}
+              onChange={(e) => setReminderEmailEnabled(e.target.checked)}
+            />
+            启用到期提醒邮件发送
+          </label>
+          {reminderEmailEnabled && (
+            <div className="ml-6 mt-2 max-w-xs space-y-2">
+              <label className="text-sm font-medium text-slate-700">发送间隔（秒）</label>
+              <Input type="number" min={60} max={86400} value={reminderEmailInterval} onChange={(e) => setReminderEmailInterval(e.target.value)} />
+              <p className="text-xs text-slate-500">推荐 1800 秒（30 分钟）</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 运行状态 */}
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div>
+          <p className="text-sm font-medium text-slate-700">定时任务运行状态</p>
+        </div>
+        {schedulerTasks.length > 0 && (
+          <div className="grid gap-2 md:grid-cols-2">
+            {schedulerTasks.map((t) => (
+              <div key={t.name} className="flex items-center gap-2 text-sm">
+                <span className={`inline-block h-2 w-2 rounded-full ${t.running ? "bg-green-500" : "bg-rose-400"}`} />
+                <span className={t.running ? "text-slate-900" : "text-slate-500"}>{t.label}</span>
+                <span className="text-xs text-slate-400">{t.running ? "运行中" : "已停止"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <details>
+          <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-700">最近任务执行记录</summary>
+          {taskLogs.length === 0 ? (
+            <p className="mt-2 text-xs text-slate-500">暂无记录</p>
+          ) : (
+            <div className="mt-2 max-h-64 overflow-y-auto space-y-1">
+              {taskLogs.slice(0, 30).map((log) => (
+                <div key={log.id} className="flex items-start gap-2 rounded bg-white p-2 text-xs">
+                  <span className={`mt-0.5 inline-block h-2 w-2 shrink-0 rounded-full ${log.success ? "bg-green-500" : "bg-rose-500"}`} />
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-800">{TASK_LABELS[log.task] ?? log.task}</p>
+                    <p className="text-slate-500">{log.summary ?? ""} · {new Date(log.startedAt).toLocaleString("zh-CN")}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </details>
       </div>
 
       <div className="flex items-center justify-between gap-4">

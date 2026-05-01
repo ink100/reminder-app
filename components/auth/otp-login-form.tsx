@@ -1,17 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isOtpCodeComplete, normalizeOtpCode } from "@/lib/otp-input";
 
-export function OtpLoginForm() {
+type OtpLoginFormProps = {
+  redirectTo?: string;
+};
+
+export function OtpLoginForm({ redirectTo = "/inventory" }: OtpLoginFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const nextPath = searchParams.get("next") || redirectTo;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,7 +46,7 @@ export function OtpLoginForm() {
         throw new Error(data.error ?? "登录失败");
       }
 
-      router.push("/reminders");
+      router.push(nextPath);
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "登录失败");

@@ -14,12 +14,13 @@ ss -ltnp | grep 63456
 
 ### 1.2 页面连通性
 ```bash
-curl -I http://127.0.0.1:63456/auth
+curl -I http://127.0.0.1:63456/
 curl -I http://127.0.0.1:63456/inventory
 ```
 
 说明：
-- `/inventory` 未登录时跳 `/auth` 属于正常
+- `/` 会跳到 `/inventory`
+- `/inventory` 未登录时会直接显示 OTP 登录/绑定卡片
 
 ## 2. 代码与版本检查
 
@@ -52,7 +53,6 @@ npm run db:init
 
 ### 4.1 手工执行一次
 ```bash
-npm run inventory:sync:general
 npm run inventory:sync:owner
 npm run inventory:check
 ```
@@ -62,7 +62,6 @@ npm run inventory:check
 - `/inventory`
 
 确认：
-- 普货店同步状态
 - 群主店同步状态
 - 库存通知检查状态
 
@@ -95,7 +94,7 @@ npm run reminders:send
 
 ### 6.1 登录页
 访问：
-- `/auth`
+- `/inventory`
 
 ### 6.2 登录是否正常
 确认：
@@ -160,10 +159,10 @@ git status --ignored
 ## 11. 每次发布后验收
 
 发布后至少做一次：
-- [ ] `/auth` 可访问
+- [ ] `/inventory` 可访问
 - [ ] OTP 登录正常
 - [ ] `/inventory` 打开正常
-- [ ] 普货店库存正常显示
+- [ ] 库存通知配置正常显示
 - [ ] 群主店库存正常显示
 - [ ] 定时任务状态正常
 - [ ] 邮件通知流程可用（如果启用）

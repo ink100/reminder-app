@@ -1,0 +1,62 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { requireApiSession } from "@/lib/auth";
+import { normalizeClientKey } from "@/lib/license-key";
+
+const generateLicenseSchema = z.object({
+  clientKey: z.string().transform(normalizeClientKey).pipe(z.string().min(1, "激活码不能为空")),
+  validDays: z.coerce.number().int().positive("有效天数必须大于 0"),
+});
+
+function normalizeBaseUrl(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
+export async function POST(request: Request) {
+  const session = await requireApiSession();
+  if (!session) {
+    return NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
+
+  const parsed = generateLicenseSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "参数错误" }, { status: 400 });
+  }
+
+  const baseUrl = process.env.HRB_LICENSE_API_BASE_URL;
+  if (!baseUrl) {
+    return NextResponse.json(
+      { error: "授权生成服务未配置：请设置 HRB_LICENSE_API_BASE_URL，例如 http://127.0.0.1:63457" },
+      { status: 503 },
+    );
+  }
+
+  try {
+    const upstream = await fetch(`${normalizeBaseUrl(baseUrl)}/api/license/generate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(parsed.data),
+    });
+
+    if (!upstream.ok) {
+      const error = (await upstream.json().catch(() => null)) as { error?: string } | null;
+      return NextResponse.json({ error: error?.error ?? "授权生成服务返回错误" }, { status: upstream.status });
+    }
+
+    const bytes = await upstream.arrayBuffer();
+    const headers = new Headers();
+    headers.set("content-type", upstream.headers.get("content-type") ?? "application/octet-stream");
+    headers.set(
+      "content-disposition",
+      upstream.headers.get("content-disposition") ?? `attachment; filename="license_${Date.now()}.key"`,
+    );
+
+    return new Response(bytes, { status: 200, headers });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? `授权生成服务连接失败：${error.message}` : "授权生成服务连接失败" },
+      { status: 502 },
+    );
+  }
+}

@@ -1,13 +1,11 @@
-import { promises as fs } from "node:fs";
+import { buildTaskStatusFromScheduler, type InventoryTaskStatusItem } from "@/lib/inventory-task-status";
+import { getSchedulerStatus } from "@/lib/scheduler";
+import { getTaskRunLogs } from "@/lib/task-runner";
 
-import { buildInventoryTaskStatusView, inventoryCronJobsPath, type InventoryCronJobRecord } from "@/lib/inventory-task-status";
-
-export async function getInventoryTaskStatuses() {
+export async function getInventoryTaskStatuses(): Promise<InventoryTaskStatusItem[]> {
   try {
-    const raw = await fs.readFile(inventoryCronJobsPath, "utf8");
-    const parsed = JSON.parse(raw) as { jobs?: InventoryCronJobRecord[] } | InventoryCronJobRecord[];
-    const jobs = Array.isArray(parsed) ? parsed : (parsed.jobs ?? []);
-    return buildInventoryTaskStatusView(jobs);
+    const [tasks, logs] = await Promise.all([Promise.resolve(getSchedulerStatus()), getTaskRunLogs()]);
+    return buildTaskStatusFromScheduler(tasks, logs);
   } catch {
     return [];
   }

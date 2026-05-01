@@ -10,10 +10,13 @@ describe("inventoryWatchSettingsSchema", () => {
       maxNotifyStock: 99999,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       notifyEnabled: true,
       minNotifyStock: 0,
       maxNotifyStock: 99999,
+      notifyCooldownMin: 120,
+      changePercent: 5,
+      changePercentAuto: true,
     });
   });
 

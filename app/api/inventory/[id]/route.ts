@@ -21,6 +21,9 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/inve
         notifyEnabled: input.notifyEnabled,
         minNotifyStock: input.minNotifyStock,
         maxNotifyStock: input.maxNotifyStock,
+        notifyCooldownMin: input.notifyCooldownMin,
+        changePercent: input.changePercent,
+        changePercentAuto: input.changePercentAuto,
       },
     });
 

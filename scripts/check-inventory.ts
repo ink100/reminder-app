@@ -27,11 +27,11 @@ async function main() {
   await transport.sendMail({
     from: getMailFrom(settings),
     to: settings.notificationEmail,
-    subject: `库存通知｜${notifications.length} 个普货店商品命中阈值`,
+    subject: `库存通知｜${notifications.length} 个商品命中阈值`,
     text: [
       `${settings.appName} - 库存通知`,
       "",
-      "以下普货店主商品当前库存落在配置范围内：",
+      "以下商品当前库存落在配置范围内：",
       ...notifications.map(
         (item) =>
           `- [${item.sourceLabel}] ${item.name}｜库存 ${item.stock}｜通知区间 ${item.minNotifyStock}-${item.maxNotifyStock}${item.productUrl ? `｜${item.productUrl}` : ""}`,

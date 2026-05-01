@@ -96,7 +96,15 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
           {reminderRiskLabels[riskLevel]}
         </span>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
+        {activationCode ? (
+          <Link
+            className="rounded-md border border-sky-200 px-3 py-2 text-sm text-sky-700"
+            href={`/license-key?clientKey=${encodeURIComponent(activationCode)}`}
+          >
+            生成密匙
+          </Link>
+        ) : null}
         <Link className="rounded-md border border-slate-200 px-3 py-2 text-sm" href={`/reminders/${id}/edit`}>
           编辑
         </Link>

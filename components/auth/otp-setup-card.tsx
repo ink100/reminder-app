@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,13 +13,20 @@ type SetupPayload = {
   qrCodeDataUrl: string;
 };
 
-export function OtpSetupCard() {
+type OtpSetupCardProps = {
+  redirectTo?: string;
+};
+
+export function OtpSetupCard({ redirectTo = "/inventory" }: OtpSetupCardProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [payload, setPayload] = useState<SetupPayload | null>(null);
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const nextPath = searchParams.get("next") || redirectTo;
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +97,7 @@ export function OtpSetupCard() {
         throw new Error(data.error ?? "OTP 验证失败");
       }
 
-      router.push("/reminders");
+      router.push(nextPath);
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "OTP 验证失败");

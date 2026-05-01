@@ -2,46 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { buildCanonicalInventoryItems, type CanonicalInventoryItem } from "@/lib/inventory-catalog";
 import {
   collectInventoryNotifications,
+  adaptChangePercent,
   isInventoryInRange,
   type InventoryNotificationCandidate,
+  type InventoryNotificationContext,
 } from "@/lib/inventory-notifications";
-import { parseBmoplusInventory, parseMakerichInventoryPage, type ScrapedInventoryItem } from "@/lib/inventory-sources";
-
-const MAKERICH_URL = "https://stock.makerich.club/";
-const BMOPLUS_URL = "https://shop.bmoplus.com/user/api/index/commodity?categoryId=0";
+import type { ScrapedInventoryItem } from "@/lib/inventory-sources";
 
 export type InventoryWatchListItem = CanonicalInventoryItem;
-
-async function fetchWithCheck(url: string, errorPrefix: string) {
-  const response = await fetch(url, { cache: "no-store" });
-
-  if (!response.ok) {
-    throw new Error(`${errorPrefix}：${response.status}`);
-  }
-
-  return response;
-}
-
-export async function fetchMakerichInventorySource() {
-  const response = await fetchWithCheck(MAKERICH_URL, "普货店抓取失败");
-  const html = await response.text();
-  return parseMakerichInventoryPage(html);
-}
-
-export async function fetchBmoplusInventorySource() {
-  const response = await fetchWithCheck(BMOPLUS_URL, "群主店抓取失败");
-  const payload = await response.json();
-  return parseBmoplusInventory(payload);
-}
-
-export async function fetchInventorySources() {
-  const [makerichItems, bmoplusItems] = await Promise.all([
-    fetchMakerichInventorySource(),
-    fetchBmoplusInventorySource(),
-  ]);
-
-  return [...makerichItems, ...bmoplusItems];
-}
 
 export async function upsertInventoryWatches(items: ScrapedInventoryItem[]) {
   const now = new Date();
@@ -74,21 +42,10 @@ export async function upsertInventoryWatches(items: ScrapedInventoryItem[]) {
   }
 }
 
-export async function syncMakerichInventoryWatches() {
-  const items = await fetchMakerichInventorySource();
-  await upsertInventoryWatches(items);
-  return listInventoryWatches();
-}
-
-export async function syncBmoplusInventoryWatches() {
-  const items = await fetchBmoplusInventorySource();
-  await upsertInventoryWatches(items);
-  return listInventoryWatches();
-}
-
-export async function syncInventoryWatches(items?: ScrapedInventoryItem[]) {
-  const scrapedItems = items ?? (await fetchInventorySources());
-  await upsertInventoryWatches(scrapedItems);
+export async function syncInventoryWatches(items: ScrapedInventoryItem[] = []) {
+  if (items.length > 0) {
+    await upsertInventoryWatches(items);
+  }
   return listInventoryWatches();
 }
 
@@ -110,21 +67,25 @@ export async function listInventoryWatches() {
       notifyEnabled: item.notifyEnabled,
       minNotifyStock: item.minNotifyStock,
       maxNotifyStock: item.maxNotifyStock,
+      notifyCooldownMin: item.notifyCooldownMin,
+      changePercent: item.changePercent,
+      changePercentAuto: item.changePercentAuto,
     })),
   );
 }
 
 export async function ensureInventoryData() {
-  const primaryCount = await prisma.inventoryWatch.count({ where: { source: "makerich-general" } });
-
-  if (primaryCount === 0) {
-    return syncInventoryWatches();
-  }
-
   return listInventoryWatches();
 }
 
 export async function updateInventoryNotificationStates() {
+  const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+  const ctx: InventoryNotificationContext = {
+    now: new Date(),
+    notifyStartHour: settings?.notifyStartHour ?? 9,
+    notifyEndHour: settings?.notifyEndHour ?? 22,
+  };
+
   const items = await listInventoryWatches();
   const candidates: InventoryNotificationCandidate[] = items.map((item) => ({
     id: item.id,
@@ -136,15 +97,21 @@ export async function updateInventoryNotificationStates() {
     maxNotifyStock: item.maxNotifyStock,
     lastRangeMatched: false,
     lastNotifiedStock: null,
+    lastNotifiedAt: null,
+    notifyCooldownMin: item.notifyCooldownMin,
+    changePercent: item.changePercent,
+    changePercentAuto: item.changePercentAuto,
   }));
 
-  const primaryRows = await prisma.inventoryWatch.findMany({ where: { source: "makerich-general" } });
+  const currentRows = await prisma.inventoryWatch.findMany({ where: { id: { in: items.map((item) => item.id) } } });
   const previousStateMap = new Map(
-    primaryRows.map((item) => [
+    currentRows.map((item) => [
       item.id,
       {
         lastRangeMatched: item.lastRangeMatched,
         lastNotifiedStock: item.lastNotifiedStock,
+        lastNotifiedAt: item.lastNotifiedAt?.toISOString() ?? null,
+        changePercent: item.changePercent,
       },
     ]),
   );
@@ -154,29 +121,43 @@ export async function updateInventoryNotificationStates() {
     if (previousState) {
       candidate.lastRangeMatched = previousState.lastRangeMatched;
       candidate.lastNotifiedStock = previousState.lastNotifiedStock;
+      candidate.lastNotifiedAt = previousState.lastNotifiedAt;
+      candidate.changePercent = previousState.changePercent;
     }
   }
 
-  const notifications = collectInventoryNotifications(candidates);
+  const notifications = collectInventoryNotifications(candidates, ctx);
   const notifyMap = new Map(notifications.map((item) => [item.id, item.stock]));
   const now = new Date();
 
   await Promise.all(
     items.map((item) => {
       const inRange = item.notifyEnabled && isInventoryInRange(item);
-      const nextData = notifyMap.has(item.id)
-        ? {
-            lastRangeMatched: inRange,
-            lastNotifiedStock: notifyMap.get(item.id) ?? null,
-            lastNotifiedAt: now,
-          }
-        : {
-            lastRangeMatched: inRange,
-          };
+      const inNotifyList = notifyMap.has(item.id);
+      const prev = previousStateMap.get(item.id);
+
+      const updateData: Record<string, unknown> = {
+        lastRangeMatched: inRange,
+      };
+
+      if (inNotifyList) {
+        const newChangePercent = adaptChangePercent(
+          prev?.changePercent ?? item.changePercent,
+          item.changePercentAuto,
+          item.stock,
+          prev?.lastNotifiedStock ?? null,
+          5,
+        );
+
+        updateData.lastRangeMatched = inRange;
+        updateData.lastNotifiedStock = notifyMap.get(item.id);
+        updateData.lastNotifiedAt = now;
+        updateData.changePercent = newChangePercent;
+      }
 
       return prisma.inventoryWatch.update({
         where: { id: item.id },
-        data: nextData,
+        data: updateData,
       });
     }),
   );

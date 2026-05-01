@@ -31,7 +31,6 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
     return {
       total: items.length,
       enabled: items.filter((item) => item.notifyEnabled).length,
-      matched: items.filter((item) => item.matchedOwnerShopName).length,
     };
   }, [items]);
 
@@ -48,7 +47,7 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
       }
 
       setItems(data.items ?? []);
-      setMessage("库存已刷新");
+      setMessage("列表已刷新");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "刷新库存失败");
     } finally {
@@ -68,6 +67,9 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
           notifyEnabled: item.notifyEnabled,
           minNotifyStock: Number(item.minNotifyStock),
           maxNotifyStock: Number(item.maxNotifyStock),
+          notifyCooldownMin: Number(item.notifyCooldownMin),
+          changePercent: Number(item.changePercent),
+          changePercentAuto: item.changePercentAuto,
         }),
       });
 
@@ -84,29 +86,39 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
     }
   }
 
+  async function handleAutoChange(item: ItemState, auto: boolean) {
+    const updated = items.map((entry) =>
+      entry.id === item.id ? { ...entry, changePercentAuto: auto, changePercent: auto ? 5 : entry.changePercent } : entry,
+    );
+    setItems(updated);
+  }
+
   return (
     <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-500">现在只显示普货店主商品；群主店同款只做匹配参考，不单独占一行。</p>
-          <p className="text-sm text-slate-500">共 {summary.total} 个普货店商品，已开启通知 {summary.enabled} 个，匹配到群主店同款 {summary.matched} 个。</p>
+          <p className="text-sm text-slate-500">共 {summary.total} 个商品，已开启通知 {summary.enabled} 个。</p>
         </div>
         <Button type="button" disabled={refreshing} onClick={handleRefresh}>
-          {refreshing ? "刷新中..." : "立即抓取两家库存"}
+          {refreshing ? "刷新中..." : "刷新列表"}
         </Button>
       </div>
+
+      <p className="text-xs text-slate-400">
+        通知时段可在设置页修改｜冷却期内库存小波动不重复通知，大幅波动时忽略冷却期。
+      </p>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-slate-500">
-              <th className="px-3 py-3">主店铺</th>
               <th className="px-3 py-3">商品名称</th>
-              <th className="px-3 py-3">普货店库存</th>
-              <th className="px-3 py-3">群主店同款</th>
+              <th className="px-3 py-3">库存</th>
               <th className="px-3 py-3">最小通知</th>
               <th className="px-3 py-3">最大通知</th>
-              <th className="px-3 py-3">是否通知</th>
+              <th className="px-3 py-3">通知</th>
+              <th className="px-3 py-3">波动幅度</th>
+              <th className="px-3 py-3">冷却期(分)</th>
               <th className="px-3 py-3">最近抓取</th>
               <th className="px-3 py-3">操作</th>
             </tr>
@@ -114,32 +126,16 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
           <tbody>
             {items.map((item) => (
               <tr key={item.id} className="border-b border-slate-100 align-top">
-                <td className="px-3 py-3 text-slate-600">{item.sourceLabel}</td>
                 <td className="px-3 py-3">
                   <div className="font-medium text-slate-900">{item.name}</div>
                   {item.productUrl ? (
                     <a className="text-xs text-blue-600 hover:underline" href={item.productUrl} rel="noreferrer" target="_blank">
-                      打开普货店商品
+                      打开商品
                     </a>
                   ) : null}
                 </td>
                 <td className="px-3 py-3 font-medium text-slate-900">{item.stock}</td>
-                <td className="px-3 py-3 text-slate-600">
-                  {item.matchedOwnerShopName ? (
-                    <div className="space-y-1">
-                      <div>{item.matchedOwnerShopStock ?? 0}</div>
-                      <div className="text-xs text-slate-500">{item.matchedOwnerShopName}</div>
-                      {item.matchedOwnerShopUrl ? (
-                        <a className="text-xs text-blue-600 hover:underline" href={item.matchedOwnerShopUrl} rel="noreferrer" target="_blank">
-                          打开群主店同款
-                        </a>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <span className="text-slate-400">未匹配</span>
-                  )}
-                </td>
-                <td className="px-3 py-3 w-32">
+                <td className="px-3 py-3 w-24">
                   <Input
                     type="number"
                     min={0}
@@ -154,7 +150,7 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
                     }
                   />
                 </td>
-                <td className="px-3 py-3 w-32">
+                <td className="px-3 py-3 w-24">
                   <Input
                     type="number"
                     min={0}
@@ -185,9 +181,50 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
                     开启
                   </label>
                 </td>
-                <td className="px-3 py-3 text-slate-600">
-                  <div>普货店：{formatFetchedAt(item.lastFetchedAt)}</div>
-                  <div className="text-xs text-slate-500">群主店：{formatFetchedAt(item.matchedOwnerShopLastFetchedAt)}</div>
+                <td className="px-3 py-3 w-24">
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={item.changePercent}
+                      disabled={item.changePercentAuto}
+                      onChange={(event) =>
+                        setItems((current) =>
+                          current.map((entry) =>
+                            entry.id === item.id ? { ...entry, changePercent: Number(event.target.value || 5) } : entry,
+                          ),
+                        )
+                      }
+                    />
+                    <span className="text-xs text-slate-400">%</span>
+                  </div>
+                  <label className="flex items-center gap-1 mt-1 text-xs text-slate-500">
+                    <input
+                      type="checkbox"
+                      checked={item.changePercentAuto}
+                      onChange={(event) => handleAutoChange(item, event.target.checked)}
+                    />
+                    自动
+                  </label>
+                </td>
+                <td className="px-3 py-3 w-24">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={item.notifyCooldownMin}
+                    onChange={(event) =>
+                      setItems((current) =>
+                        current.map((entry) =>
+                          entry.id === item.id ? { ...entry, notifyCooldownMin: Number(event.target.value || 120) } : entry,
+                        ),
+                      )
+                    }
+                  />
+                </td>
+                <td className="px-3 py-3 text-slate-600 whitespace-nowrap">
+                  {formatFetchedAt(item.lastFetchedAt)}
                 </td>
                 <td className="px-3 py-3">
                   <Button type="button" disabled={item.saving} onClick={() => handleSave(item)}>
@@ -200,7 +237,7 @@ export function InventoryDashboard({ initialItems }: InventoryDashboardProps) {
         </table>
       </div>
 
-      <p className="text-sm text-slate-500">{message ?? "定时建议：普货店 1 分钟同步一次，群主店 3 分钟同步一次；通知只按普货店主商品库存判断。"}</p>
+      <p className="text-sm text-slate-500">{message ?? ""}</p>
     </div>
   );
 }

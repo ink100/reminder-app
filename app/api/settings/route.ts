@@ -6,6 +6,8 @@ import { ensureAppSettings } from "@/lib/bootstrap-settings";
 import { encryptText } from "@/lib/crypto";
 import { getEditableMailSettings } from "@/lib/mail-settings";
 import { prisma } from "@/lib/prisma";
+import { refreshAllTimers } from "@/lib/scheduler";
+import { getTaskRunLogs } from "@/lib/task-runner";
 import { settingsInputSchema } from "@/lib/validators/settings";
 
 export async function GET() {
@@ -15,7 +17,23 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return Response.json({ item: getEditableMailSettings(await ensureAppSettings()) });
+  const settings = await ensureAppSettings();
+  const logs = await getTaskRunLogs();
+
+  return Response.json({
+    item: {
+      ...getEditableMailSettings(settings),
+      inventorySyncEnabled: false,
+      inventoryGeneralInterval: settings.inventoryGeneralInterval,
+      inventoryCheckEnabled: settings.inventoryCheckEnabled,
+      inventoryCheckInterval: settings.inventoryCheckInterval,
+      reminderEmailEnabled: settings.reminderEmailEnabled,
+      reminderEmailInterval: settings.reminderEmailInterval,
+      notifyStartHour: settings.notifyStartHour,
+      notifyEndHour: settings.notifyEndHour,
+    },
+    taskLogs: logs,
+  });
 }
 
 export async function PUT(request: NextRequest) {
@@ -48,10 +66,33 @@ export async function PUT(request: NextRequest) {
           : input.smtpPass.trim()
             ? { smtpPassEncrypted: encryptText(input.smtpPass.trim()) }
             : {}),
+        // 定时任务配置
+        inventorySyncEnabled: false,
+        inventoryCheckEnabled: input.inventoryCheckEnabled ?? true,
+        inventoryCheckInterval: input.inventoryCheckInterval ?? 60,
+        reminderEmailEnabled: input.reminderEmailEnabled ?? true,
+        reminderEmailInterval: input.reminderEmailInterval ?? 1800,
+        notifyStartHour: input.notifyStartHour ?? 9,
+        notifyEndHour: input.notifyEndHour ?? 22,
       },
     });
 
-    return Response.json({ item: getEditableMailSettings(settings) });
+    // 刷新定时器
+    await refreshAllTimers();
+
+    return Response.json({
+      item: {
+        ...getEditableMailSettings(settings),
+        inventorySyncEnabled: false,
+        inventoryGeneralInterval: settings.inventoryGeneralInterval,
+        inventoryCheckEnabled: settings.inventoryCheckEnabled,
+        inventoryCheckInterval: settings.inventoryCheckInterval,
+        reminderEmailEnabled: settings.reminderEmailEnabled,
+        reminderEmailInterval: settings.reminderEmailInterval,
+        notifyStartHour: settings.notifyStartHour,
+        notifyEndHour: settings.notifyEndHour,
+      },
+    });
   } catch (error) {
     return toApiErrorResponse(error, { defaultMessage: "请求参数不合法" });
   }

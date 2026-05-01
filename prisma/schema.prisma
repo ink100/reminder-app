@@ -50,6 +50,15 @@ model AppSetting {
   smtpFromName             String?
   otpSecretEncrypted       String?
   otpConfiguredAt          DateTime?
+  inventorySyncEnabled     Boolean  @default(true)
+  inventoryGeneralInterval Int      @default(60)
+  inventoryOwnerInterval   Int      @default(180)
+  inventoryCheckEnabled    Boolean  @default(true)
+  inventoryCheckInterval   Int      @default(60)
+  reminderEmailEnabled     Boolean  @default(true)
+  reminderEmailInterval    Int      @default(1800)
+  notifyStartHour          Int      @default(9)
+  notifyEndHour            Int      @default(22)
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
@@ -64,6 +73,18 @@ model AuthSession {
   lastSeenAt       DateTime @default(now())
 
   @@index([expiresAt])
+}
+
+model TaskRunLog {
+  id         String   @id @default(cuid())
+  task       String
+  startedAt  DateTime
+  finishedAt DateTime?
+  success    Boolean
+  summary    String?
+  createdAt  DateTime @default(now())
+
+  @@index([startedAt])
 }
 
 model InventoryWatch {
@@ -81,6 +102,9 @@ model InventoryWatch {
   lastRangeMatched Boolean  @default(false)
   lastNotifiedStock Int?
   lastNotifiedAt   DateTime?
+  notifyCooldownMin Int      @default(120)
+  changePercent     Int      @default(5)
+  changePercentAuto Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

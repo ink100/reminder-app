@@ -16,7 +16,6 @@
     "db:init": "prisma migrate dev && prisma db seed",
     "db:reset": "prisma migrate reset --force && prisma db seed",
     "reminders:send": "tsx scripts/send-reminders.ts",
-    "inventory:sync:general": "tsx scripts/sync-makerich-inventory.ts",
     "inventory:sync:owner": "tsx scripts/sync-bmoplus-inventory.ts",
     "inventory:check": "tsx scripts/check-inventory.ts"
   },

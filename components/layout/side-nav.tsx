@@ -14,11 +14,11 @@ export function SideNav() {
         <Link className="block rounded-lg px-3 py-2 hover:bg-slate-100" href="/inventory">
           库存监控
         </Link>
+        <Link className="block rounded-lg px-3 py-2 hover:bg-slate-100" href="/license-key">
+          激活密匙
+        </Link>
         <Link className="block rounded-lg px-3 py-2 hover:bg-slate-100" href="/settings">
           配置中心
-        </Link>
-        <Link className="block rounded-lg px-3 py-2 hover:bg-slate-100" href="/auth">
-          OTP 登录
         </Link>
       </nav>
     </aside>

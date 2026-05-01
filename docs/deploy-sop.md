@@ -141,7 +141,8 @@ ss -ltnp | grep 63456
 检查 HTTP：
 
 ```bash
-curl -I http://127.0.0.1:63456/auth
+curl -I http://127.0.0.1:63456/
+curl -I http://127.0.0.1:63456/inventory
 ```
 
 ## 7. 首次访问验证
@@ -149,15 +150,15 @@ curl -I http://127.0.0.1:63456/auth
 浏览器打开：
 
 ```text
-http://43.166.3.129:63456/auth
+http://43.166.3.129:63456/inventory
 ```
 
 首次进入流程：
-1. 打开 `/auth`
-2. 如果还没配置 OTP，会显示二维码
+1. 打开 `/inventory`
+2. 如果还没配置 OTP，会直接显示二维码
 3. 用验证器扫码
 4. 输入动态码完成首次绑定
-5. 后续再次访问时走 OTP 登录
+5. 后续再次访问 `/inventory` 时直接在该页输入 OTP 登录
 
 ## 8. 库存监控验证
 
@@ -168,7 +169,6 @@ http://43.166.3.129:63456/inventory
 ```
 
 应该能看到：
-- 普货店库存
 - 群主店同款库存
 - 每个商品的通知开关
 - 最小 / 最大通知阈值
@@ -177,7 +177,6 @@ http://43.166.3.129:63456/inventory
 ### 8.1 手工测试抓取脚本
 
 ```bash
-npm run inventory:sync:general
 npm run inventory:sync:owner
 npm run inventory:check
 ```
@@ -189,19 +188,16 @@ npm run inventory:check
 ## 9. 定时任务 SOP
 
 当前建议的定时频率：
-- 普货店：每 1 分钟
 - 群主店：每 3 分钟
 - 通知检查：每 1 分钟
 
 如果你用 Hermes cron，任务分别是：
-- 普货店同步：`npm run inventory:sync:general`
 - 群主店同步：`npm run inventory:sync:owner`
 - 通知检查：`npm run inventory:check`
 
 如果你改用系统 crontab，也可以写成类似：
 
 ```cron
-* * * * * cd /home/agentuser/reminder-app && npm run inventory:sync:general >> /tmp/inventory-general.log 2>&1
 */3 * * * * cd /home/agentuser/reminder-app && npm run inventory:sync:owner >> /tmp/inventory-owner.log 2>&1
 * * * * * cd /home/agentuser/reminder-app && npm run inventory:check >> /tmp/inventory-check.log 2>&1
 ```
@@ -234,8 +230,8 @@ PORT=63456 npm run start
 
 ## 11. 故障排查
 
-### 11.1 访问页面跳到 /auth
-这是正常的，说明路由受保护，还没登录。
+### 11.1 访问 `/inventory` 先看到 OTP 登录卡片
+这是正常的，说明页面已把 OTP 验证集成到库存通知入口。
 
 ### 11.2 构建通过但页面不对
 检查：
@@ -255,7 +251,7 @@ PORT=63456 npm run start
 - 定时任务是否还在运行
 - `/inventory` 中的任务状态是否成功
 - 外部数据源是否可访问
-- 服务器是否能访问 makerich / bmoplus
+- 服务器是否能访问当前仍启用的库存源
 
 ## 12. 安全与隐私要求
 
@@ -290,10 +286,10 @@ PORT=63456 npm run start
 - [ ] `npm run build` 成功
 - [ ] `PORT=63456 npm run start` 成功
 - [ ] `ss -ltnp | grep 63456` 能看到监听
-- [ ] `/auth` 可访问
+- [ ] `/inventory` 可访问
 - [ ] OTP 可初始化 / 可登录
 - [ ] `/inventory` 页面正常
-- [ ] 能看到普货店和群主店库存
+- [ ] 能看到库存通知配置
 - [ ] 定时任务状态正常
 - [ ] 邮件通知配置正常（如启用）
 

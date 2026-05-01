@@ -1,13 +1,4 @@
-type InventoryTaskStatusItem = {
-  id: string;
-  label: string;
-  schedule: string;
-  enabled: boolean;
-  stateText: string;
-  lastStatusText: string;
-  nextRunAt: string | null;
-  lastRunAt: string | null;
-};
+import type { InventoryTaskStatusItem } from "@/lib/inventory-task-status";
 
 function formatTime(value: string | null) {
   if (!value) {
@@ -65,10 +56,8 @@ export function InventoryTaskStatusCard({ items }: { items: InventoryTaskStatusI
               <span className={`rounded-full px-2 py-1 text-xs ring-1 ${getStateBadgeClass(item)}`}>{item.stateText}</span>
             </div>
             <div className="mt-3 space-y-1 text-slate-700">
-              <div>周期：{item.schedule}</div>
               <div>上次结果：{item.lastStatusText}</div>
               <div>上次执行：{formatTime(item.lastRunAt)}</div>
-              <div>下次执行：{formatTime(item.nextRunAt)}</div>
             </div>
           </div>
         ))}
