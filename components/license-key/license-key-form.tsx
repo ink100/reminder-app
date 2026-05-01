@@ -1,11 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { normalizeClientKey } from "@/lib/license-key";
+import { normalizeClientKey, getLicenseFileNameFromContentDisposition } from "@/lib/license-key";
 
 export function LicenseKeyForm() {
   const searchParams = useSearchParams();
@@ -14,6 +14,15 @@ export function LicenseKeyForm() {
   const [validDays, setValidDays] = useState("7");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [download, setDownload] = useState<{ url: string; fileName: string } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (download?.url) {
+        URL.revokeObjectURL(download.url);
+      }
+    };
+  }, [download]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,6 +39,10 @@ export function LicenseKeyForm() {
 
     setSubmitting(true);
     setMessage("生成中...");
+    setDownload((current) => {
+      if (current?.url) URL.revokeObjectURL(current.url);
+      return null;
+    });
 
     try {
       const response = await fetch("/api/license/generate", {
@@ -44,18 +57,19 @@ export function LicenseKeyForm() {
       }
 
       const blob = await response.blob();
-      const disposition = response.headers.get("content-disposition") ?? "";
-      const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
-      const fileName = fileNameMatch?.[1] ?? fileNameMatch?.[2] ?? `license_${Date.now()}.key`;
+      const fileName = getLicenseFileNameFromContentDisposition(response.headers.get("content-disposition"));
       const url = URL.createObjectURL(blob);
+      setDownload({ url, fileName });
+
+      // 部分移动端/Telegram 内置浏览器会拦截异步生成后的自动下载，所以下方仍保留一个显式下载按钮兜底。
       const link = document.createElement("a");
       link.href = url;
-      link.download = decodeURIComponent(fileName);
+      link.download = fileName;
+      link.rel = "noopener";
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setMessage("授权文件已生成并开始下载");
+      setMessage("授权文件已生成。如果没有自动下载，请点击下方下载按钮。");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "生成失败");
     } finally {
@@ -86,6 +100,19 @@ export function LicenseKeyForm() {
         </p>
         <Button type="submit" disabled={submitting}>{submitting ? "生成中..." : "生成 .key 文件"}</Button>
       </div>
+
+      {download && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          <p className="mb-2 font-medium">文件已生成：{download.fileName}</p>
+          <a
+            className="inline-flex rounded-md bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700"
+            href={download.url}
+            download={download.fileName}
+          >
+            下载授权 .key 文件
+          </a>
+        </div>
+      )}
     </form>
   );
 }
