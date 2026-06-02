@@ -1,20 +1,28 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { normalizeClientKey, getLicenseFileNameFromContentDisposition } from "@/lib/license-key";
 
+function getInitialValidDays(value: string | null) {
+  const days = Number(value);
+  return Number.isInteger(days) && days > 0 ? String(days) : "7";
+}
+
 export function LicenseKeyForm() {
   const searchParams = useSearchParams();
   const initialClientKey = searchParams.get("clientKey") ?? searchParams.get("activationCode") ?? "";
+  const reminderId = searchParams.get("reminderId") ?? "";
   const [clientKey, setClientKey] = useState(initialClientKey);
-  const [validDays, setValidDays] = useState("7");
+  const [validDays, setValidDays] = useState(getInitialValidDays(searchParams.get("validDays")));
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [download, setDownload] = useState<{ url: string; fileName: string } | null>(null);
+
+  const isLinkedReminder = useMemo(() => Boolean(reminderId), [reminderId]);
 
   useEffect(() => {
     return () => {
@@ -30,6 +38,7 @@ export function LicenseKeyForm() {
     const payload = {
       clientKey: normalizeClientKey(clientKey),
       validDays: Number(validDays),
+      reminderId: reminderId || undefined,
     };
 
     if (!payload.clientKey || payload.validDays <= 0) {
@@ -58,6 +67,7 @@ export function LicenseKeyForm() {
 
       const blob = await response.blob();
       const fileName = getLicenseFileNameFromContentDisposition(response.headers.get("content-disposition"));
+      const linkedDueAt = response.headers.get("x-linked-reminder-due-at");
       const url = URL.createObjectURL(blob);
       setDownload({ url, fileName });
 
@@ -69,7 +79,12 @@ export function LicenseKeyForm() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      setMessage("授权文件已生成。如果没有自动下载，请点击下方下载按钮。");
+
+      setMessage(
+        linkedDueAt
+          ? `授权文件已生成，并已同步关联提醒的倒计时到 ${new Date(linkedDueAt).toLocaleString("zh-CN")}。`
+          : "授权文件已生成。如果没有自动下载，请点击下方下载按钮。",
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "生成失败");
     } finally {
@@ -79,6 +94,12 @@ export function LicenseKeyForm() {
 
   return (
     <form className="space-y-4 rounded-xl border border-slate-200 bg-white p-6" onSubmit={handleSubmit}>
+      {isLinkedReminder ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+          已关联提醒：本次生成成功后，会用“有效天数”自动更新该提醒的到期倒计时。
+        </div>
+      ) : null}
+
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">激活码 / Client Key</label>
         <textarea
@@ -92,6 +113,9 @@ export function LicenseKeyForm() {
       <div className="space-y-2 md:max-w-xs">
         <label className="text-sm font-medium text-slate-700">有效天数</label>
         <Input type="number" min={1} value={validDays} onChange={(event) => setValidDays(event.target.value)} />
+        {isLinkedReminder ? (
+          <p className="text-xs text-slate-500">已从提醒倒计时自动带入；如需调整，生成后会同步更新提醒到期时间。</p>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4">

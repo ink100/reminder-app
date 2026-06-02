@@ -23,10 +23,6 @@ export async function GET() {
   return Response.json({
     item: {
       ...getEditableMailSettings(settings),
-      inventorySyncEnabled: false,
-      inventoryGeneralInterval: settings.inventoryGeneralInterval,
-      inventoryCheckEnabled: settings.inventoryCheckEnabled,
-      inventoryCheckInterval: settings.inventoryCheckInterval,
       reminderEmailEnabled: settings.reminderEmailEnabled,
       reminderEmailInterval: settings.reminderEmailInterval,
       notifyStartHour: settings.notifyStartHour,
@@ -66,10 +62,6 @@ export async function PUT(request: NextRequest) {
           : input.smtpPass.trim()
             ? { smtpPassEncrypted: encryptText(input.smtpPass.trim()) }
             : {}),
-        // 定时任务配置
-        inventorySyncEnabled: false,
-        inventoryCheckEnabled: input.inventoryCheckEnabled ?? true,
-        inventoryCheckInterval: input.inventoryCheckInterval ?? 60,
         reminderEmailEnabled: input.reminderEmailEnabled ?? true,
         reminderEmailInterval: input.reminderEmailInterval ?? 1800,
         notifyStartHour: input.notifyStartHour ?? 9,
@@ -77,16 +69,11 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // 刷新定时器
     await refreshAllTimers();
 
     return Response.json({
       item: {
         ...getEditableMailSettings(settings),
-        inventorySyncEnabled: false,
-        inventoryGeneralInterval: settings.inventoryGeneralInterval,
-        inventoryCheckEnabled: settings.inventoryCheckEnabled,
-        inventoryCheckInterval: settings.inventoryCheckInterval,
         reminderEmailEnabled: settings.reminderEmailEnabled,
         reminderEmailInterval: settings.reminderEmailInterval,
         notifyStartHour: settings.notifyStartHour,

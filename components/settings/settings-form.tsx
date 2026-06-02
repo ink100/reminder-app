@@ -36,10 +36,6 @@ type SettingsFormProps = {
     smtpFromEmail: string;
     smtpFromName: string;
     smtpPasswordConfigured: boolean;
-    inventorySyncEnabled: boolean;
-    inventoryGeneralInterval: number;
-    inventoryCheckEnabled: boolean;
-    inventoryCheckInterval: number;
     reminderEmailEnabled: boolean;
     reminderEmailInterval: number;
     notifyStartHour: number;
@@ -49,7 +45,6 @@ type SettingsFormProps = {
 };
 
 const TASK_LABELS: Record<string, string> = {
-  "inventory-check": "库存通知检查",
   "reminder-email": "到期提醒邮件",
 };
 
@@ -72,8 +67,6 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
   const [message, setMessage] = useState<string | null>(null);
 
   // 定时任务配置
-  const [inventoryCheckEnabled, setInventoryCheckEnabled] = useState(initialValues.inventoryCheckEnabled);
-  const [inventoryCheckInterval, setInventoryCheckInterval] = useState(String(initialValues.inventoryCheckInterval));
   const [reminderEmailEnabled, setReminderEmailEnabled] = useState(initialValues.reminderEmailEnabled);
   const [reminderEmailInterval, setReminderEmailInterval] = useState(String(initialValues.reminderEmailInterval));
 
@@ -122,8 +115,6 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
           smtpFromEmail,
           smtpFromName,
           clearSmtpPass,
-          inventoryCheckEnabled,
-          inventoryCheckInterval: Number(inventoryCheckInterval || 60),
           reminderEmailEnabled,
           reminderEmailInterval: Number(reminderEmailInterval || 1800),
           notifyStartHour: Number(notifyStartHour || 9),
@@ -135,8 +126,6 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
         error?: string;
         item?: {
           smtpPasswordConfigured?: boolean;
-          inventoryCheckEnabled?: boolean;
-          inventoryCheckInterval?: number;
           reminderEmailEnabled?: boolean;
           reminderEmailInterval?: number;
           notifyStartHour?: number;
@@ -151,10 +140,7 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
       setClearSmtpPass(false);
       setSmtpPasswordConfigured(Boolean(data.item?.smtpPasswordConfigured));
       setTestEmail(notificationEmail.trim() ? notificationEmail.trim() : testEmail);
-      // 同步服务端返回的最新配置到本地 state
       if (data.item) {
-        if (typeof data.item.inventoryCheckEnabled === "boolean") setInventoryCheckEnabled(data.item.inventoryCheckEnabled);
-        if (typeof data.item.inventoryCheckInterval === "number") setInventoryCheckInterval(String(data.item.inventoryCheckInterval));
         if (typeof data.item.reminderEmailEnabled === "boolean") setReminderEmailEnabled(data.item.reminderEmailEnabled);
         if (typeof data.item.reminderEmailInterval === "number") setReminderEmailInterval(String(data.item.reminderEmailInterval));
         if (typeof data.item.notifyStartHour === "number") setNotifyStartHour(String(data.item.notifyStartHour));
@@ -309,8 +295,8 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
       {/* 通知时段配置 */}
       <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <div>
-          <p className="text-sm font-medium text-slate-700">库存通知时段</p>
-          <p className="text-xs text-slate-500">只有在这个时间段内才会发送邮件通知；冷却期和自适应波动幅度在库存页面配置。</p>
+          <p className="text-sm font-medium text-slate-700">通知时段</p>
+          <p className="text-xs text-slate-500">只有在这个时间段内才会发送邮件通知。</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="space-y-1">
@@ -333,27 +319,7 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
           <p className="text-xs text-slate-500">修改后保存即生效，无需重启服务。</p>
         </div>
 
-        <p className="text-xs text-slate-500">已停用的库存源不会再自动同步。</p>
-
-        <div className="border-t border-slate-200 pt-3">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={inventoryCheckEnabled}
-              onChange={(e) => setInventoryCheckEnabled(e.target.checked)}
-            />
-            启用库存通知检查（命中阈值发邮件）
-          </label>
-          {inventoryCheckEnabled && (
-            <div className="ml-6 mt-2 max-w-xs space-y-2">
-              <label className="text-sm font-medium text-slate-700">检查间隔（秒）</label>
-              <Input type="number" min={10} max={3600} value={inventoryCheckInterval} onChange={(e) => setInventoryCheckInterval(e.target.value)} />
-              <p className="text-xs text-slate-500">推荐 60 秒</p>
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-slate-200 pt-3">
+        <div>
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"

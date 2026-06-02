@@ -22,15 +22,15 @@ export function ReminderFilters({
   onPriorityChange,
 }: ReminderFiltersProps) {
   return (
-    <section className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-4">
+    <section className="flex flex-wrap items-center gap-3">
       <input
-        className="rounded-md border border-slate-200 px-3 py-2 text-sm"
-        placeholder="搜索标题或标签"
+        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 sm:w-auto"
+        placeholder="搜索标题或标签..."
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
       />
       <select
-        className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
         value={status}
         onChange={(event) => onStatusChange(event.target.value as ReminderStatusFilter)}
       >
@@ -41,7 +41,7 @@ export function ReminderFilters({
         <option value="completed">已完成</option>
       </select>
       <select
-        className="rounded-md border border-slate-200 px-3 py-2 text-sm"
+        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
         value={priority}
         onChange={(event) => onPriorityChange(event.target.value as ReminderPriorityFilter)}
       >
@@ -50,7 +50,13 @@ export function ReminderFilters({
         <option value="medium">中</option>
         <option value="low">低</option>
       </select>
-      <Link className="rounded-md bg-slate-900 px-3 py-2 text-center text-sm font-medium text-white" href="/reminders/new">
+      <Link
+        className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        href="/reminders/new"
+      >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
         新增提醒
       </Link>
     </section>

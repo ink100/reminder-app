@@ -26,6 +26,7 @@ model Reminder {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   deletedAt            DateTime?
+  attachments          Attachment[]
 
   @@index([dueAt])
   @@index([completedAt])
@@ -50,15 +51,16 @@ model AppSetting {
   smtpFromName             String?
   otpSecretEncrypted       String?
   otpConfiguredAt          DateTime?
-  inventorySyncEnabled     Boolean  @default(true)
-  inventoryGeneralInterval Int      @default(60)
-  inventoryOwnerInterval   Int      @default(180)
-  inventoryCheckEnabled    Boolean  @default(true)
-  inventoryCheckInterval   Int      @default(60)
   reminderEmailEnabled     Boolean  @default(true)
   reminderEmailInterval    Int      @default(1800)
   notifyStartHour          Int      @default(9)
   notifyEndHour            Int      @default(22)
+  r2Endpoint               String?
+  r2AccessKey              String?
+  r2SecretKey              String?
+  r2Bucket                 String?
+  r2PublicUrl              String?
+  r2CacheControl           String   @default("public, max-age=86400")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
@@ -75,6 +77,21 @@ model AuthSession {
   @@index([expiresAt])
 }
 
+model TrustedDevice {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  deviceName  String?
+  userAgent   String?
+  ipAddress   String?
+  expiresAt   DateTime
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
 model TaskRunLog {
   id         String   @id @default(cuid())
   task       String
@@ -87,28 +104,55 @@ model TaskRunLog {
   @@index([startedAt])
 }
 
-model InventoryWatch {
-  id               String   @id @default(cuid())
-  source           String
-  sourceLabel      String
-  externalId       String
-  name             String
-  stock            Int      @default(0)
-  productUrl       String?
-  lastFetchedAt    DateTime?
-  notifyEnabled    Boolean  @default(false)
-  minNotifyStock   Int      @default(0)
-  maxNotifyStock   Int      @default(99999)
-  lastRangeMatched Boolean  @default(false)
-  lastNotifiedStock Int?
-  lastNotifiedAt   DateTime?
-  notifyCooldownMin Int      @default(120)
-  changePercent     Int      @default(5)
-  changePercentAuto Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+model Image {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimetype     String
+  size         Int
+  r2Key        String
+  url          String
+  createdAt    DateTime @default(now())
+  deletedAt    DateTime?
 
-  @@unique([source, externalId])
-  @@index([source])
-  @@index([notifyEnabled])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model WebAuthnCredential {
+  id                String   @id @default(cuid())
+  credentialId      String   @unique
+  publicKey         String
+  counter           BigInt   @default(0)
+  credentialType    String   @default("public-key")
+  authenticatorType String   @default("platform")
+  deviceName        String?
+  createdAt         DateTime @default(now())
+  lastUsedAt        DateTime?
+
+  @@index([credentialId])
+}
+
+model Attachment {
+  id           String    @id @default(cuid())
+  filename     String
+  originalName String
+  mimetype     String
+  size         Int
+  r2Key        String
+  url          String
+  reminderId   String?
+  reminder     Reminder? @relation(fields: [reminderId], references: [id])
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+
+  @@index([reminderId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model WebAuthnChallenge {
+  id        String   @id
+  challenge String
+  expiresAt DateTime
 }

@@ -41,6 +41,11 @@ yarn-error.log*
 *.sqlite-*
 /prisma/*.db
 /prisma/*.db-*
+/data/*.json
+/data/*.log
+/uploads/
+/tmp/
+/logs/
 
 # vercel
 .vercel

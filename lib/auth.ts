@@ -1,11 +1,16 @@
 import { redirect } from "next/navigation";
 
 import { getCurrentSession } from "@/lib/session";
+import { hasTrustedDeviceCookie } from "@/lib/trusted-device";
 
 export async function requirePageSession() {
   const session = await getCurrentSession();
 
   if (!session) {
+    if (await hasTrustedDeviceCookie()) {
+      redirect("/api/auth/trusted/restore?next=/reminders");
+    }
+
     redirect("/auth");
   }
 

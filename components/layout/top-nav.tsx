@@ -1,12 +1,35 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export function TopNav() {
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/auth");
+    router.refresh();
+  }
+
   return (
-    <header className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+    <header className="flex items-center justify-between px-1 py-2">
       <div>
-        <p className="text-sm text-slate-500">轻量部署 · SQLite · OTP 保护</p>
-        <h2 className="text-lg font-semibold text-slate-950">第一版项目骨架</h2>
+        <h2 className="text-sm font-medium text-slate-400">第一版项目骨架</h2>
+        <p className="text-xs text-slate-300">轻量部署 · SQLite · OTP 保护</p>
       </div>
-      <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-        MVP Skeleton
+      <div className="flex items-center gap-3">
+        <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-medium tracking-wide text-emerald-600 md:inline">
+          MVP
+        </span>
+        <button
+          onClick={handleLogout}
+          className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 md:hidden"
+          title="退出登录"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
       </div>
     </header>
   );

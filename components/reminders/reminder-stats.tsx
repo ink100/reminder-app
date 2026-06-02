@@ -14,16 +14,46 @@ type ReminderStatsProps = {
 };
 
 const cards = [
-  { key: "total", label: "全部事项", className: "border-slate-200 bg-slate-50 text-slate-900" },
-  { key: "warning", label: "即将到期", className: "border-amber-200 bg-amber-50 text-amber-900" },
-  { key: "urgent", label: "24h 内", className: "border-orange-200 bg-orange-50 text-orange-900" },
-  { key: "overdue", label: "已超期", className: "border-rose-200 bg-rose-50 text-rose-900" },
-  { key: "completed", label: "已完成", className: "border-emerald-200 bg-emerald-50 text-emerald-900" },
-] as const satisfies Array<{ key: ReminderStatKey; label: string; className: string }>;
+  {
+    key: "total",
+    label: "全部事项",
+    accentColor: "bg-slate-400",
+    valueClass: "text-slate-900",
+  },
+  {
+    key: "warning",
+    label: "即将到期",
+    accentColor: "bg-amber-400",
+    valueClass: "text-amber-600",
+  },
+  {
+    key: "urgent",
+    label: "24h 内",
+    accentColor: "bg-orange-400",
+    valueClass: "text-orange-600",
+  },
+  {
+    key: "overdue",
+    label: "已超期",
+    accentColor: "bg-rose-500",
+    valueClass: "text-rose-600",
+  },
+  {
+    key: "completed",
+    label: "已完成",
+    accentColor: "bg-emerald-400",
+    valueClass: "text-emerald-600",
+  },
+] as const satisfies Array<{
+  key: ReminderStatKey;
+  label: string;
+  accentColor: string;
+  valueClass: string;
+}>;
 
 export function ReminderStats(props: ReminderStatsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-5">
+    <div className="grid grid-cols-5 gap-2 md:gap-3">
       {cards.map((card) => {
         const isActive = props.activeKey === card.key;
 
@@ -33,13 +63,16 @@ export function ReminderStats(props: ReminderStatsProps) {
             type="button"
             onClick={() => props.onSelect(card.key)}
             className={cn(
-              "rounded-xl border p-4 text-left transition hover:shadow-sm",
-              card.className,
-              isActive && "ring-2 ring-slate-900/70",
+              "relative overflow-hidden rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:shadow-md md:p-4",
+              isActive && "border-slate-400 ring-2 ring-slate-900/10",
             )}
           >
-            <p className="text-sm opacity-80">{card.label}</p>
-            <p className="mt-2 text-2xl font-semibold">{props[card.key]}</p>
+            {/* Top accent line */}
+            <div className={cn("absolute inset-x-0 top-0 h-0.5", card.accentColor)} />
+            <p className="text-[10px] font-medium text-slate-400 md:text-xs">{card.label}</p>
+            <p className={cn("mt-1 text-xl font-bold tabular-nums md:text-3xl", card.valueClass)}>
+              {props[card.key]}
+            </p>
           </button>
         );
       })}

@@ -13,12 +13,10 @@ type RegisteredTask = {
 };
 
 type IntervalSettingKey = {
-  inventoryCheckInterval: number;
   reminderEmailInterval: number;
 };
 
 type EnabledSettingKey = {
-  inventoryCheckEnabled: boolean;
   reminderEmailEnabled: boolean;
 };
 
@@ -36,55 +34,12 @@ async function watchdogLoop() {
     const elapsed = Date.now() - lastHeartbeat;
     if (elapsed > WATCHDOG_TIMEOUT_MS) {
       console.error(`[watchdog] 超时 ${Math.round(elapsed / 1000)} 秒无心跳，进程将退出`);
-      // 强制退出，由外层 wrapper 重启
       process.exit(1);
     }
   }
 }
 
 // ── 注册的任务 ───────────────────────────────
-async function inventoryCheck() {
-  const { ensureAppSettings } = await import("@/lib/bootstrap-settings");
-  const { canSendMail, createMailTransport, getMailFrom } = await import("@/lib/mailer");
-  const { updateInventoryNotificationStates } = await import("@/lib/inventory-service");
-
-  const settings = await ensureAppSettings();
-  const notifications = await updateInventoryNotificationStates();
-
-  if (notifications.length === 0) {
-    console.log("[task] no inventory notifications");
-    return;
-  }
-
-  if (!settings.emailNotificationsEnabled || !settings.notificationEmail) {
-    console.log("[task] skip inventory email: disabled or no recipient");
-    return;
-  }
-
-  if (!canSendMail(settings)) {
-    console.log("[task] skip inventory email: smtp config missing");
-    return;
-  }
-
-  const transport = createMailTransport(settings);
-  await transport.sendMail({
-    from: getMailFrom(settings),
-    to: settings.notificationEmail,
-    subject: `库存通知｜${notifications.length} 个商品命中阈值`,
-    text: [
-      `${settings.appName} - 库存通知`,
-      "",
-      "以下商品当前库存落在配置范围内：",
-      ...notifications.map(
-        (item) =>
-          `- [${item.sourceLabel}] ${item.name}｜库存 ${item.stock}｜通知区间 ${item.minNotifyStock}-${item.maxNotifyStock}${item.productUrl ? `｜${item.productUrl}` : ""}`,
-      ),
-    ].join("\n"),
-  });
-
-  console.log(`[task] sent ${notifications.length} inventory notifications`);
-}
-
 async function reminderEmailDispatch() {
   const { prisma } = await import("@/lib/prisma");
   const { canSendMail, createMailTransport, getMailFrom } = await import("@/lib/mailer");
@@ -162,7 +117,6 @@ async function reminderEmailDispatch() {
 
 // ── 调度器核心 ───────────────────────────────
 const REGISTERED_TASKS: RegisteredTask[] = [
-  { name: "inventory-check", label: "库存通知检查", fn: inventoryCheck, intervalKey: "inventoryCheckInterval", enabledKey: "inventoryCheckEnabled" },
   { name: "reminder-email", label: "到期提醒邮件", fn: reminderEmailDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
 ];
 
@@ -182,13 +136,12 @@ async function runTask(task: RegisteredTask) {
     console.error(`[task] ${task.name} failed:`, error);
     await finishTaskRun(runId, false, `${task.label} 失败: ${message}`);
   } finally {
-    heartbeat(); // 无论成功失败都打心跳
+    heartbeat();
   }
 }
 
 /** 根据数据库配置重置所有定时器 */
 export async function refreshAllTimers() {
-  // 先清空旧定时器
   for (const timer of timers.values()) {
     clearInterval(timer);
   }
@@ -197,7 +150,6 @@ export async function refreshAllTimers() {
   const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
   if (!settings) return;
 
-  // 启动看门狗（只启一次）
   if (!watchdogStarted) {
     watchdogStarted = true;
     watchdogLoop();
@@ -215,7 +167,6 @@ export async function refreshAllTimers() {
     const ms = sec * 1000;
     console.log(`[scheduler] ${task.label} 每 ${sec} 秒执行一次`);
 
-    // 注册周期定时器
     const timer = setInterval(() => {
       runTask(task).catch((err) => console.error(`[scheduler] ${task.name} 定时器异常:`, err));
     }, ms);

@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { ensureAppSettings } from "@/lib/bootstrap-settings";
 import { decryptText } from "@/lib/crypto";
 import { createSession } from "@/lib/session";
+import { createTrustedDevice } from "@/lib/trusted-device";
 import { verifyOtpToken } from "@/lib/otp";
 import { otpCodeSchema } from "@/lib/validators/auth";
 
@@ -23,8 +24,13 @@ export async function POST(request: NextRequest) {
 
   const forwardedFor = request.headers.get("x-forwarded-for");
   const ipAddress = forwardedFor?.split(",")[0]?.trim() ?? null;
+  const userAgent = request.headers.get("user-agent");
 
-  await createSession(ipAddress, request.headers.get("user-agent"));
+  await createSession(ipAddress, userAgent);
+
+  if (body.rememberDevice) {
+    await createTrustedDevice(ipAddress, userAgent);
+  }
 
   return Response.json({ success: true });
 }

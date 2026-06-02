@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FileUpload } from "@/components/ui/file-upload";
 import { isActivationReminder } from "@/lib/reminder-kind";
 
 type ReminderFormValues = {
@@ -23,12 +24,22 @@ type ReminderFormValues = {
   recurrenceInterval?: number | null;
 };
 
+type Attachment = {
+  id: string;
+  originalName: string;
+  mimetype: string;
+  size: number;
+  url: string;
+  createdAt: string;
+};
+
 type ReminderFormProps = {
   mode: "create" | "edit";
   defaultValues?: ReminderFormValues;
+  attachments?: Attachment[];
 };
 
-export function ReminderForm({ mode, defaultValues }: ReminderFormProps) {
+export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [dueAt, setDueAt] = useState(defaultValues?.dueAt ?? "");
@@ -217,6 +228,11 @@ export function ReminderForm({ mode, defaultValues }: ReminderFormProps) {
         <input type="checkbox" checked={overdueRemindEnabled} onChange={(e) => setOverdueRemindEnabled(e.target.checked)} />
         超期后继续提醒
       </label>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700">附件</label>
+        <FileUpload reminderId={defaultValues?.id} attachments={attachments} />
+      </div>
 
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-slate-500">{message ?? ""}</p>

@@ -11,11 +11,12 @@ type OtpLoginFormProps = {
   redirectTo?: string;
 };
 
-export function OtpLoginForm({ redirectTo = "/inventory" }: OtpLoginFormProps) {
+export function OtpLoginForm({ redirectTo = "/reminders" }: OtpLoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const nextPath = searchParams.get("next") || redirectTo;
@@ -37,7 +38,7 @@ export function OtpLoginForm({ redirectTo = "/inventory" }: OtpLoginFormProps) {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, rememberDevice }),
       });
 
       const data = (await response.json()) as { error?: string; success?: boolean };
@@ -82,6 +83,18 @@ export function OtpLoginForm({ redirectTo = "/inventory" }: OtpLoginFormProps) {
           required
         />
       </div>
+      <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          checked={rememberDevice}
+          onChange={(event) => setRememberDevice(event.target.checked)}
+        />
+        <span>
+          <span className="font-medium text-slate-800">信任这台设备 30 天</span>
+          <span className="block text-xs text-slate-500">之后在这台设备上可自动恢复登录，可在设置中撤销。</span>
+        </span>
+      </label>
       {message ? <p className="text-sm text-rose-600">{message}</p> : null}
       <Button className="w-full" type="submit" disabled={submitting || !isOtpCodeComplete(code)}>
         {submitting ? "验证中…" : "登录"}

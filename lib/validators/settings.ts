@@ -13,8 +13,6 @@ export const settingsInputSchema = z.object({
   smtpFromName: z.string().trim().max(200),
   clearSmtpPass: z.boolean(),
   // 定时任务配置
-  inventoryCheckEnabled: z.boolean().optional(),
-  inventoryCheckInterval: z.number().int().min(10).max(3600).optional(),
   reminderEmailEnabled: z.boolean().optional(),
   reminderEmailInterval: z.number().int().min(60).max(86400).optional(),
   notifyStartHour: z.number().int().min(0).max(23).optional(),

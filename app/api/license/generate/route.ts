@@ -3,14 +3,20 @@ import { z } from "zod";
 
 import { requireApiSession } from "@/lib/auth";
 import { normalizeClientKey } from "@/lib/license-key";
+import { prisma } from "@/lib/prisma";
 
 const generateLicenseSchema = z.object({
   clientKey: z.string().transform(normalizeClientKey).pipe(z.string().min(1, "激活码不能为空")),
   validDays: z.coerce.number().int().positive("有效天数必须大于 0"),
+  reminderId: z.string().trim().min(1).optional(),
 });
 
 function normalizeBaseUrl(url: string) {
   return url.replace(/\/+$/, "");
+}
+
+function buildDueAtFromValidDays(validDays: number) {
+  return new Date(Date.now() + validDays * 24 * 60 * 60 * 1000);
 }
 
 export async function POST(request: Request) {
@@ -22,6 +28,17 @@ export async function POST(request: Request) {
   const parsed = generateLicenseSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "参数错误" }, { status: 400 });
+  }
+
+  const linkedReminder = parsed.data.reminderId
+    ? await prisma.reminder.findFirst({
+        where: { id: parsed.data.reminderId, deletedAt: null },
+        select: { id: true },
+      })
+    : null;
+
+  if (parsed.data.reminderId && !linkedReminder) {
+    return NextResponse.json({ error: "关联提醒不存在或已删除" }, { status: 404 });
   }
 
   const baseUrl = process.env.HRB_LICENSE_API_BASE_URL;
@@ -36,7 +53,10 @@ export async function POST(request: Request) {
     const upstream = await fetch(`${normalizeBaseUrl(baseUrl)}/api/license/generate`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(parsed.data),
+      body: JSON.stringify({
+        clientKey: parsed.data.clientKey,
+        validDays: parsed.data.validDays,
+      }),
     });
 
     if (!upstream.ok) {
@@ -51,6 +71,22 @@ export async function POST(request: Request) {
       "content-disposition",
       upstream.headers.get("content-disposition") ?? `attachment; filename="license_${Date.now()}.key"`,
     );
+
+    if (linkedReminder) {
+      const dueAt = buildDueAtFromValidDays(parsed.data.validDays);
+      await prisma.reminder.update({
+        where: { id: linkedReminder.id },
+        data: {
+          activationCode: parsed.data.clientKey,
+          dueAt,
+          completedAt: null,
+          upcomingNotifiedAt: null,
+          overdueNotifiedAt: null,
+        },
+      });
+      headers.set("x-linked-reminder-id", linkedReminder.id);
+      headers.set("x-linked-reminder-due-at", dueAt.toISOString());
+    }
 
     return new Response(bytes, { status: 200, headers });
   } catch (error) {

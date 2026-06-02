@@ -9,7 +9,13 @@ export default async function EditReminderPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const reminder = await prisma.reminder.findUnique({ where: { id } });
+  const [reminder, attachments] = await Promise.all([
+    prisma.reminder.findUnique({ where: { id } }),
+    prisma.attachment.findMany({
+      where: { reminderId: id, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   if (!reminder || reminder.deletedAt) {
     notFound();
@@ -38,6 +44,14 @@ export default async function EditReminderPage({
           recurrenceType: (reminder.recurrenceType as "daily" | "weekly" | "monthly" | null) ?? null,
           recurrenceInterval: reminder.recurrenceInterval ?? 1,
         }}
+        attachments={attachments.map((a) => ({
+          id: a.id,
+          originalName: a.originalName,
+          mimetype: a.mimetype,
+          size: a.size,
+          url: a.url,
+          createdAt: a.createdAt.toISOString(),
+        }))}
       />
     </div>
   );

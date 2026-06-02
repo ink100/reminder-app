@@ -17,7 +17,7 @@ type OtpSetupCardProps = {
   redirectTo?: string;
 };
 
-export function OtpSetupCard({ redirectTo = "/inventory" }: OtpSetupCardProps) {
+export function OtpSetupCard({ redirectTo = "/reminders" }: OtpSetupCardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [payload, setPayload] = useState<SetupPayload | null>(null);
