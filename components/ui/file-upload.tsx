@@ -35,10 +35,15 @@ function fileIcon(mimetype: string): string {
   return "📎";
 }
 
+function isImageAttachment(attachment: Attachment): boolean {
+  return attachment.mimetype.startsWith("image/");
+}
+
 export function FileUpload({ reminderId, attachments: initialAttachments = [], onUploaded, onDeleted }: FileUploadProps) {
   const [attachments, setAttachments] = useState<Attachment[]>(initialAttachments);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleUpload(files: FileList | null) {
@@ -107,20 +112,75 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
       {/* 附件列表 */}
       {attachments.length > 0 && (
         <div className="space-y-2">
-          {attachments.map((att) => (
-            <div key={att.id} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-              <span className="text-lg">{fileIcon(att.mimetype)}</span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-900">{att.originalName}</p>
-                <p className="text-xs text-slate-500">{formatSize(att.size)}</p>
+          {attachments.map((att) => {
+            const canPreview = isImageAttachment(att);
+
+            return (
+              <div key={att.id} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                {canPreview ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewAttachment(att)}
+                    className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50 transition hover:ring-2 hover:ring-blue-300"
+                    title="预览图片"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={att.url} alt={att.originalName} className="h-full w-full object-cover" loading="lazy" />
+                  </button>
+                ) : (
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-slate-50 text-lg">
+                    {fileIcon(att.mimetype)}
+                  </span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-900">{att.originalName}</p>
+                  <p className="text-xs text-slate-500">{formatSize(att.size)}</p>
+                </div>
+                {canPreview ? (
+                  <button onClick={() => setPreviewAttachment(att)} className="text-xs text-blue-600 hover:underline" title="预览图片">预览</button>
+                ) : null}
+                <button onClick={() => copyUrl(att.url)} className="text-xs text-blue-600 hover:underline" title="复制链接">复制链接</button>
+                <a href={att.url} target="_blank" rel="noopener" className="text-xs text-slate-600 hover:underline">下载</a>
+                <button onClick={() => handleDelete(att.id)} className="text-xs text-red-500 hover:underline">删除</button>
               </div>
-              <button onClick={() => copyUrl(att.url)} className="text-xs text-blue-600 hover:underline" title="复制链接">复制链接</button>
-              <a href={att.url} target="_blank" rel="noopener" className="text-xs text-slate-600 hover:underline">下载</a>
-              <button onClick={() => handleDelete(att.id)} className="text-xs text-red-500 hover:underline">删除</button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      {previewAttachment ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="图片附件预览"
+          onClick={() => setPreviewAttachment(null)}
+        >
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-slate-900">{previewAttachment.originalName}</p>
+                <p className="text-xs text-slate-500">{formatSize(previewAttachment.size)}</p>
+              </div>
+              <button
+                type="button"
+                className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setPreviewAttachment(null)}
+              >
+                关闭
+              </button>
+            </div>
+            <div className="flex max-h-[75vh] items-center justify-center bg-slate-950 p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewAttachment.url}
+                alt={previewAttachment.originalName}
+                className="max-h-[72vh] max-w-full rounded object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {message && <p className="text-xs text-blue-600">{message}</p>}
     </div>

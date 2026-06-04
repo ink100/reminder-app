@@ -63,6 +63,7 @@ function isImage(mimetype: string): boolean {
 
 export function FileGallery({ files, onDelete, showSource = false }: FileGalleryProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<FileData | null>(null);
 
   const copyLink = async (file: FileData) => {
     try {
@@ -104,7 +105,8 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+    <>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {files.map((file) => (
         <div
           key={file.id}
@@ -113,12 +115,20 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
           {/* 预览区 */}
           <div className="aspect-square overflow-hidden bg-slate-50 flex items-center justify-center">
             {isImage(file.mimetype) ? (
-              <img
-                src={file.url}
-                alt={file.originalName}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+              <button
+                type="button"
+                onClick={() => setPreviewFile(file)}
+                className="h-full w-full cursor-zoom-in"
+                title="预览图片"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={file.url}
+                  alt={file.originalName}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  loading="lazy"
+                />
+              </button>
             ) : (
               <span className="text-5xl">{getFileIcon(file.mimetype, file.originalName)}</span>
             )}
@@ -145,6 +155,17 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
 
           {/* 操作按钮 */}
           <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+            {isImage(file.mimetype) ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPreviewFile(file);
+                }}
+                className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-white"
+              >
+                预览
+              </button>
+            ) : null}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -175,6 +196,41 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
           </div>
         </div>
       ))}
-    </div>
+      </div>
+
+      {previewFile ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="图片预览"
+          onClick={() => setPreviewFile(null)}
+        >
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-slate-900">{previewFile.originalName}</p>
+                <p className="text-xs text-slate-500">{formatSize(previewFile.size)} · {formatDate(previewFile.createdAt)}</p>
+              </div>
+              <button
+                type="button"
+                className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                onClick={() => setPreviewFile(null)}
+              >
+                关闭
+              </button>
+            </div>
+            <div className="flex max-h-[75vh] items-center justify-center bg-slate-950 p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewFile.url}
+                alt={previewFile.originalName}
+                className="max-h-[72vh] max-w-full rounded object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
