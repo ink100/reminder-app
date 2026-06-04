@@ -1,0 +1,17 @@
+[Unit]
+Description=Reminder Inventory Next.js App
+After=network.target hrb-license-key.service
+Wants=hrb-license-key.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/apps/reminder-app
+Environment=NODE_ENV=production
+Environment=PORT=63456
+ExecStart=/home/ubuntu/apps/reminder-app/node_modules/.bin/next start --hostname 127.0.0.1 --port 63456
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
