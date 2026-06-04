@@ -11,7 +11,7 @@ export const reminderInputSchema = z.object({
   remindBeforeDays: z.number().int().min(0).max(30).default(3),
   remindBeforeHours: z.number().int().min(0).max(168).default(0),
   overdueRemindEnabled: z.boolean().default(true),
-  recurrenceType: z.enum(["daily", "weekly", "monthly"]).optional().nullable(),
+  recurrenceType: z.enum(["daily", "weekly", "monthly", "yearly"]).optional().nullable(),
   recurrenceInterval: z.number().int().min(1).max(30).optional().nullable(),
 }).superRefine((value, ctx) => {
   if (value.recurrenceType && !value.recurrenceInterval) {

@@ -43,4 +43,24 @@ describe("reminderInputSchema", () => {
     expect(result.activationCode).toBeNull();
     expect(result.activationContact).toBeNull();
   });
+
+  it("allows yearly recurring reminders", () => {
+    const result = reminderInputSchema.parse({
+      title: "年度证书到期",
+      description: null,
+      dueAt: "2026-05-01T08:00:00.000Z",
+      priority: "medium",
+      category: "证书",
+      remindBeforeDays: 30,
+      remindBeforeHours: 0,
+      overdueRemindEnabled: true,
+      recurrenceType: "yearly",
+      recurrenceInterval: 1,
+      activationCode: null,
+      activationContact: null,
+    });
+
+    expect(result.recurrenceType).toBe("yearly");
+    expect(result.recurrenceInterval).toBe(1);
+  });
 });

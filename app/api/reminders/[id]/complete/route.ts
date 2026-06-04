@@ -4,6 +4,7 @@ import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
 import { computeNextRecurringDueAt } from "@/lib/reminder-recurrence";
+import type { ReminderRecurrenceType } from "@/lib/reminder-recurrence";
 
 export async function POST(_request: NextRequest, context: RouteContext<"/api/reminders/[id]/complete">) {
   const session = await requireApiSession();
@@ -45,7 +46,7 @@ export async function POST(_request: NextRequest, context: RouteContext<"/api/re
             activationContact: reminder.activationContact,
             dueAt: computeNextRecurringDueAt({
               completedAt,
-              recurrenceType: reminder.recurrenceType as "daily" | "weekly" | "monthly",
+              recurrenceType: reminder.recurrenceType as ReminderRecurrenceType,
               recurrenceInterval: reminder.recurrenceInterval,
             }),
             priority: reminder.priority,

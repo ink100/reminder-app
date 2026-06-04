@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ReminderForm } from "@/components/reminders/reminder-form";
 import { prisma } from "@/lib/prisma";
+import type { ReminderRecurrenceType } from "@/lib/reminder-recurrence";
 
 export default async function EditReminderPage({
   params,
@@ -41,7 +42,7 @@ export default async function EditReminderPage({
           remindBeforeDays: reminder.remindBeforeDays,
           remindBeforeHours: reminder.remindBeforeHours,
           overdueRemindEnabled: reminder.overdueRemindEnabled,
-          recurrenceType: (reminder.recurrenceType as "daily" | "weekly" | "monthly" | null) ?? null,
+          recurrenceType: (reminder.recurrenceType as ReminderRecurrenceType | null) ?? null,
           recurrenceInterval: reminder.recurrenceInterval ?? 1,
         }}
         attachments={attachments.map((a) => ({

@@ -1,4 +1,17 @@
-export type ReminderRecurrenceType = "daily" | "weekly" | "monthly";
+export type ReminderRecurrenceType = "daily" | "weekly" | "monthly" | "yearly";
+
+function addUtcMonthsClamped(date: Date, months: number) {
+  const next = new Date(date);
+  const originalDay = next.getUTCDate();
+
+  next.setUTCDate(1);
+  next.setUTCMonth(next.getUTCMonth() + months + 1, 0);
+  const maxDay = next.getUTCDate();
+  next.setUTCDate(Math.min(originalDay, maxDay));
+  next.setUTCHours(date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds(), date.getUTCMilliseconds());
+
+  return next;
+}
 
 export function computeNextRecurringDueAt({
   completedAt,
@@ -21,11 +34,9 @@ export function computeNextRecurringDueAt({
     return next;
   }
 
-  const originalDay = next.getUTCDate();
-  next.setUTCDate(1);
-  next.setUTCMonth(next.getUTCMonth() + recurrenceInterval + 1, 0);
-  const maxDay = next.getUTCDate();
-  next.setUTCDate(Math.min(originalDay, maxDay));
-  next.setUTCHours(completedAt.getUTCHours(), completedAt.getUTCMinutes(), completedAt.getUTCSeconds(), completedAt.getUTCMilliseconds());
-  return next;
+  if (recurrenceType === "yearly") {
+    return addUtcMonthsClamped(completedAt, recurrenceInterval * 12);
+  }
+
+  return addUtcMonthsClamped(completedAt, recurrenceInterval);
 }

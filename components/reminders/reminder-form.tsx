@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileUpload } from "@/components/ui/file-upload";
 import { isActivationReminder } from "@/lib/reminder-kind";
+import type { ReminderRecurrenceType } from "@/lib/reminder-recurrence";
+
+type RecurrenceSelectValue = ReminderRecurrenceType | "none";
 
 type ReminderFormValues = {
   id?: string;
@@ -20,7 +23,7 @@ type ReminderFormValues = {
   remindBeforeDays?: number;
   remindBeforeHours?: number;
   overdueRemindEnabled?: boolean;
-  recurrenceType?: "daily" | "weekly" | "monthly" | null;
+  recurrenceType?: ReminderRecurrenceType | null;
   recurrenceInterval?: number | null;
 };
 
@@ -54,7 +57,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
   const [remindBeforeDays, setRemindBeforeDays] = useState(String(defaultValues?.remindBeforeDays ?? 3));
   const [remindBeforeHours, setRemindBeforeHours] = useState(String(defaultValues?.remindBeforeHours ?? 0));
   const [overdueRemindEnabled, setOverdueRemindEnabled] = useState(defaultValues?.overdueRemindEnabled ?? true);
-  const [recurrenceType, setRecurrenceType] = useState<"daily" | "weekly" | "monthly" | "none">(
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceSelectValue>(
     defaultValues?.recurrenceType ?? "none",
   );
   const [recurrenceInterval, setRecurrenceInterval] = useState(String(defaultValues?.recurrenceInterval ?? 1));
@@ -155,12 +158,13 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
           <select
             className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
             value={recurrenceType}
-            onChange={(e) => setRecurrenceType(e.target.value as "daily" | "weekly" | "monthly" | "none")}
+            onChange={(e) => setRecurrenceType(e.target.value as RecurrenceSelectValue)}
           >
             <option value="none">不重复</option>
             <option value="daily">按天顺延</option>
             <option value="weekly">按周顺延</option>
             <option value="monthly">按月顺延</option>
+            <option value="yearly">按年顺延</option>
           </select>
         </div>
         <div className="space-y-2">
@@ -173,7 +177,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
             onChange={(e) => setRecurrenceInterval(e.target.value)}
             disabled={recurrenceType === "none"}
           />
-          <p className="text-xs text-slate-500">完成后，按这里设置的天/周/月顺延生成下一期。</p>
+          <p className="text-xs text-slate-500">完成后，按这里设置的天/周/月/年顺延生成下一期。</p>
         </div>
       </div>
 

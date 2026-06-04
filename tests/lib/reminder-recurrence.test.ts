@@ -32,4 +32,24 @@ describe("computeNextRecurringDueAt", () => {
 
     expect(result.toISOString()).toBe("2026-02-28T08:00:00.000Z");
   });
+
+  it("shifts yearly reminders from completedAt", () => {
+    const result = computeNextRecurringDueAt({
+      completedAt: new Date("2026-04-19T08:00:00.000Z"),
+      recurrenceType: "yearly",
+      recurrenceInterval: 1,
+    });
+
+    expect(result.toISOString()).toBe("2027-04-19T08:00:00.000Z");
+  });
+
+  it("clamps yearly reminders on leap day to February 28", () => {
+    const result = computeNextRecurringDueAt({
+      completedAt: new Date("2024-02-29T08:00:00.000Z"),
+      recurrenceType: "yearly",
+      recurrenceInterval: 1,
+    });
+
+    expect(result.toISOString()).toBe("2025-02-28T08:00:00.000Z");
+  });
 });
