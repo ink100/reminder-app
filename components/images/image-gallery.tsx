@@ -153,34 +153,23 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
             )}
           </div>
 
-          {/* 操作按钮 */}
-          <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-            {isImage(file.mimetype) ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPreviewFile(file);
-                }}
-                className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-white"
-              >
-                预览
-              </button>
-            ) : null}
+          {/* 底部操作按钮 */}
+          <div className="grid grid-cols-3 gap-2 border-t border-slate-100 px-3 pb-3 text-center text-xs">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 copyLink(file);
               }}
-              className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-white"
+              className="rounded-md bg-blue-50 px-2 py-1.5 font-medium text-blue-600 hover:bg-blue-100"
             >
-              {copiedId === file.id ? "✓ 已复制" : "复制链接"}
+              {copiedId === file.id ? "已复制" : "复制"}
             </button>
             <a
               href={file.url}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="rounded-lg bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-white"
+              className="rounded-md bg-slate-50 px-2 py-1.5 font-medium text-slate-600 hover:bg-slate-100"
             >
               下载
             </a>
@@ -189,7 +178,7 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
                 e.stopPropagation();
                 onDelete(file.id);
               }}
-              className="rounded-lg bg-red-500/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500"
+              className="rounded-md bg-red-50 px-2 py-1.5 font-medium text-red-500 hover:bg-red-100"
             >
               删除
             </button>

@@ -111,37 +111,40 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
 
       {/* 附件列表 */}
       {attachments.length > 0 && (
-        <div className="space-y-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {attachments.map((att) => {
             const canPreview = isImageAttachment(att);
 
             return (
-              <div key={att.id} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+              <div key={att.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 {canPreview ? (
                   <button
                     type="button"
                     onClick={() => setPreviewAttachment(att)}
-                    className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50 transition hover:ring-2 hover:ring-blue-300"
-                    title="预览图片"
+                    className="block aspect-video w-full cursor-zoom-in overflow-hidden bg-slate-100"
+                    title="点击图片放大"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={att.url} alt={att.originalName} className="h-full w-full object-cover" loading="lazy" />
+                    <img src={att.url} alt={att.originalName} className="h-full w-full object-cover transition-transform hover:scale-105" loading="lazy" />
                   </button>
                 ) : (
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-slate-50 text-lg">
+                  <div className="flex aspect-video items-center justify-center bg-slate-50 text-5xl">
                     {fileIcon(att.mimetype)}
-                  </span>
+                  </div>
                 )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-slate-900">{att.originalName}</p>
-                  <p className="text-xs text-slate-500">{formatSize(att.size)}</p>
+
+                <div className="space-y-2 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-900" title={att.originalName}>{att.originalName}</p>
+                    <p className="text-xs text-slate-500">{formatSize(att.size)}</p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-center text-xs">
+                    <button onClick={() => copyUrl(att.url)} className="rounded-md bg-blue-50 px-2 py-1.5 text-blue-600 hover:bg-blue-100" title="复制链接">复制</button>
+                    <a href={att.url} target="_blank" rel="noopener" className="rounded-md bg-slate-50 px-2 py-1.5 text-slate-600 hover:bg-slate-100">下载</a>
+                    <button onClick={() => handleDelete(att.id)} className="rounded-md bg-red-50 px-2 py-1.5 text-red-500 hover:bg-red-100">删除</button>
+                  </div>
                 </div>
-                {canPreview ? (
-                  <button onClick={() => setPreviewAttachment(att)} className="text-xs text-blue-600 hover:underline" title="预览图片">预览</button>
-                ) : null}
-                <button onClick={() => copyUrl(att.url)} className="text-xs text-blue-600 hover:underline" title="复制链接">复制链接</button>
-                <a href={att.url} target="_blank" rel="noopener" className="text-xs text-slate-600 hover:underline">下载</a>
-                <button onClick={() => handleDelete(att.id)} className="text-xs text-red-500 hover:underline">删除</button>
               </div>
             );
           })}

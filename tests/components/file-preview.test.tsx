@@ -34,10 +34,18 @@ describe("attachment image preview", () => {
     expect(screen.getByAltText("收据.png")).toHaveAttribute("src", imageAttachment.url);
     expect(screen.queryByAltText("合同.pdf")).not.toBeInTheDocument();
 
-    await user.click(screen.getAllByTitle("预览图片")[0]);
+    expect(screen.getAllByRole("button", { name: "复制" })).toHaveLength(2);
+    expect(screen.getAllByText("下载")).toHaveLength(2);
+    expect(screen.getAllByText("删除")).toHaveLength(2);
 
-    expect(screen.getByRole("dialog", { name: "图片附件预览" })).toBeInTheDocument();
+    await user.click(screen.getByTitle("点击图片放大"));
+
+    const dialog = screen.getByRole("dialog", { name: "图片附件预览" });
+    expect(dialog).toBeInTheDocument();
     expect(screen.getAllByAltText("收据.png")).toHaveLength(2);
+
+    await user.click(screen.getByRole("button", { name: "关闭" }));
+    expect(screen.queryByRole("dialog", { name: "图片附件预览" })).not.toBeInTheDocument();
   });
 
   it("opens preview dialog from file gallery image cards", async () => {
@@ -45,9 +53,17 @@ describe("attachment image preview", () => {
 
     render(<FileGallery files={[imageAttachment]} onDelete={vi.fn()} />);
 
+    expect(screen.getByRole("button", { name: "复制" })).toBeInTheDocument();
+    expect(screen.getByText("下载")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "删除" })).toBeInTheDocument();
+
     await user.click(screen.getByTitle("预览图片"));
 
-    expect(screen.getByRole("dialog", { name: "图片预览" })).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "图片预览" });
+    expect(dialog).toBeInTheDocument();
     expect(screen.getAllByAltText("收据.png")).toHaveLength(2);
+
+    await user.click(dialog);
+    expect(screen.queryByRole("dialog", { name: "图片预览" })).not.toBeInTheDocument();
   });
 });
