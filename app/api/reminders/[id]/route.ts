@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
+import { ReminderAttachmentDeleteError, softDeleteReminderWithAttachments } from "@/lib/reminder-delete";
 import { reminderInputSchema } from "@/lib/validators/reminder";
 
 export async function GET(_request: NextRequest, context: RouteContext<"/api/reminders/[id]">) {
@@ -88,13 +89,17 @@ export async function DELETE(_request: NextRequest, context: RouteContext<"/api/
       return Response.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.reminder.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    const result = await softDeleteReminderWithAttachments(prisma, id);
 
-    return Response.json({ success: true });
+    return Response.json({ success: true, deletedAttachments: result.attachmentCount });
   } catch (error) {
+    if (error instanceof ReminderAttachmentDeleteError) {
+      return Response.json(
+        { error: "删除提醒附件文件失败，请稍后重试", failedKeys: error.failedKeys },
+        { status: 500 }
+      );
+    }
+
     return toApiErrorResponse(error, { notFoundMessage: "Not found" });
   }
 }
