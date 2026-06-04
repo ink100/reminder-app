@@ -3,8 +3,7 @@ import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
-import { computeNextRecurringDueAt } from "@/lib/reminder-recurrence";
-import type { ReminderRecurrenceType } from "@/lib/reminder-recurrence";
+import { buildReminderCompletionUpdate } from "@/lib/reminder-complete";
 
 export async function POST(_request: NextRequest, context: RouteContext<"/api/reminders/[id]/complete">) {
   const session = await requireApiSession();
@@ -29,43 +28,22 @@ export async function POST(_request: NextRequest, context: RouteContext<"/api/re
 
     const completedAt = new Date();
 
-    const result = await prisma.$transaction(async (tx) => {
-      const completedReminder = await tx.reminder.update({
-        where: { id },
-        data: { completedAt },
-      });
-
-      let nextReminder = null;
-
-      if (reminder.recurrenceType && reminder.recurrenceInterval) {
-        nextReminder = await tx.reminder.create({
-          data: {
-            title: reminder.title,
-            description: reminder.description,
-            activationCode: reminder.activationCode,
-            activationContact: reminder.activationContact,
-            dueAt: computeNextRecurringDueAt({
-              completedAt,
-              recurrenceType: reminder.recurrenceType as ReminderRecurrenceType,
-              recurrenceInterval: reminder.recurrenceInterval,
-            }),
-            priority: reminder.priority,
-            category: reminder.category,
-            remindBeforeDays: reminder.remindBeforeDays,
-            remindBeforeHours: reminder.remindBeforeHours,
-            overdueRemindEnabled: reminder.overdueRemindEnabled,
-            recurrenceType: reminder.recurrenceType,
-            recurrenceInterval: reminder.recurrenceInterval,
-            upcomingNotifiedAt: null,
-            overdueNotifiedAt: null,
-          },
-        });
-      }
-
-      return { item: completedReminder, nextItem: nextReminder };
+    const completion = buildReminderCompletionUpdate({
+      completedAt,
+      recurrenceType: reminder.recurrenceType,
+      recurrenceInterval: reminder.recurrenceInterval,
     });
 
-    return Response.json(result);
+    const updatedReminder = await prisma.reminder.update({
+      where: { id },
+      data: completion.data,
+    });
+
+    return Response.json({
+      item: updatedReminder,
+      nextItem: completion.recurrenceAdvanced ? updatedReminder : null,
+      recurrenceAdvanced: completion.recurrenceAdvanced,
+    });
   } catch (error) {
     return toApiErrorResponse(error, { notFoundMessage: "Not found" });
   }
