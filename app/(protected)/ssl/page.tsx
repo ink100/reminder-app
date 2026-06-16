@@ -11,12 +11,15 @@ import {
   Calendar,
   FileText,
   Copy,
-  ExternalLink,
 } from 'lucide-react'
 
 interface SSLStatus {
   lastRenew: string | null
+  lastCheck?: string | null
   lastResult: number | null
+  lastAction?: 'skipped' | 'renewed' | 'failed' | string | null
+  skipped?: boolean
+  message?: string | null
   expiry: string | null
   updated: string | null
   daysRemaining?: number
@@ -41,6 +44,7 @@ export default function SSLPage() {
   const [error, setError] = useState<string | null>(null)
   const [renewResult, setRenewResult] = useState<{
     success: boolean
+    skipped?: boolean
     message: string
     output?: string
   } | null>(null)
@@ -65,7 +69,7 @@ export default function SSLPage() {
   }, [])
 
   const handleRenew = async () => {
-    if (!confirm('确定要手动更新 SSL 证书吗？')) return
+    if (!confirm('确定要检查 SSL 证书吗？未进入 30 天续期窗口会自动跳过，不会强制重新签发。')) return
 
     try {
       setRenewing(true)
@@ -75,6 +79,7 @@ export default function SSLPage() {
 
       setRenewResult({
         success: result.success,
+        skipped: result.skipped,
         message: result.message || result.error,
         output: result.output,
       })
@@ -180,7 +185,7 @@ export default function SSLPage() {
             ) : (
               <Shield className="w-4 h-4" />
             )}
-            {renewing ? '更新中...' : '手动更新证书'}
+            {renewing ? '检查中...' : '检查并按需更新'}
           </button>
         </div>
       </div>
@@ -189,20 +194,28 @@ export default function SSLPage() {
       {renewResult && (
         <div
           className={`p-4 rounded-lg ${
-            renewResult.success
-              ? 'bg-green-50 border border-green-200'
-              : 'bg-red-50 border border-red-200'
+            renewResult.skipped
+              ? 'bg-amber-50 border border-amber-200'
+              : renewResult.success
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
           }`}
         >
           <div className="flex items-center gap-2">
-            {renewResult.success ? (
+            {renewResult.skipped ? (
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            ) : renewResult.success ? (
               <CheckCircle className="w-5 h-5 text-green-600" />
             ) : (
               <XCircle className="w-5 h-5 text-red-600" />
             )}
             <span
               className={`font-medium ${
-                renewResult.success ? 'text-green-600' : 'text-red-600'
+                renewResult.skipped
+                  ? 'text-amber-700'
+                  : renewResult.success
+                    ? 'text-green-600'
+                    : 'text-red-600'
               }`}
             >
               {renewResult.message}
@@ -264,15 +277,20 @@ export default function SSLPage() {
           </div>
         </div>
 
-        {/* 上次更新 */}
+        {/* 上次检查 */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">上次更新</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">上次检查</p>
             <p className="text-lg font-medium mt-1">
-              {data?.status.lastRenew
-                ? formatDate(data.status.lastRenew)
+              {data?.status.lastCheck || data?.status.lastRenew
+                ? formatDate(data.status.lastCheck || data.status.lastRenew || '')
                 : '-'}
             </p>
+            {data?.status.message && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {data.status.message}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -354,7 +372,7 @@ export default function SSLPage() {
               0 3 1,15 * * /home/ubuntu/apps/reminder-app/scripts/ssl-renew.sh
             </code>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              每月 1 号和 15 号凌晨 3:00 自动检查并更新证书
+              每月 1 号和 15 号凌晨 3:00 自动检查证书；剩余天数大于 30 天时直接跳过，不重新签发
             </p>
           </div>
         </div>
@@ -398,9 +416,9 @@ export default function SSLPage() {
         </h3>
         <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
           <li>• 使用 ZeroSSL 颁发的 ECC 证书，有效期 90 天</li>
-          <li>• 系统会自动在每月 1 号和 15 号检查并更新证书</li>
-          <li>• 证书更新后会自动重载 Nginx 配置</li>
-          <li>• 建议在证书剩余 30 天内完成更新</li>
+          <li>• 系统会自动在每月 1 号和 15 号检查证书</li>
+          <li>• 证书剩余天数大于 30 天时会跳过更新，不会强制重新签发</li>
+          <li>• 进入 30 天续期窗口后，更新成功会自动重载 Nginx 配置</li>
           <li>• 支持通配符域名 *.daydreams.cn</li>
         </ul>
       </div>

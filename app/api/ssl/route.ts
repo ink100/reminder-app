@@ -15,7 +15,11 @@ const RENEW_SCRIPT = path.join(process.cwd(), 'scripts', 'ssl-renew.sh')
 
 interface SSLStatus {
   lastRenew: string | null
+  lastCheck?: string | null
   lastResult: number | null
+  lastAction?: 'skipped' | 'renewed' | 'failed' | string | null
+  skipped?: boolean
+  message?: string | null
   expiry: string | null
   updated: string | null
   daysRemaining?: number
@@ -154,21 +158,30 @@ export async function POST() {
       // 文件不存在或提醒同步失败
     }
 
+    const skipped = status.lastAction === 'skipped' || status.skipped === true
+
     return NextResponse.json({
       success: true,
-      message: '证书更新脚本已执行，并已同步 SSL 到期提醒',
+      skipped,
+      message:
+        status.message ||
+        (skipped
+          ? '证书未到续期窗口，已跳过更新'
+          : '证书更新脚本已执行，并已同步 SSL 到期提醒'),
       output: stdout,
       error: stderr || null,
       status,
       reminderSync,
     })
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '证书更新失败'
+    const commandError = error as { stdout?: string }
     console.error('证书更新失败:', error)
     return NextResponse.json(
       {
         success: false,
-        error: error.message || '证书更新失败',
-        output: error.stdout || null,
+        error: message,
+        output: commandError.stdout || null,
       },
       { status: 500 }
     )
