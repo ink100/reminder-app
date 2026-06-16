@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { uploadToR2 } from "@/lib/r2-storage";
+import { uploadAttachmentFile } from "@/lib/attachment-storage";
 
 export async function POST(request: NextRequest) {
   const session = await requireApiSession();
@@ -25,7 +25,11 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { key, url } = await uploadToR2(buffer, file.name, file.type || "application/octet-stream");
+    const { key, url } = await uploadAttachmentFile(
+      buffer,
+      file.name,
+      file.type || "application/octet-stream"
+    );
 
     const attachment = await prisma.attachment.create({
       data: {

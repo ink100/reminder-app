@@ -1,4 +1,4 @@
-import { deleteFromR2 } from "@/lib/r2-storage";
+import { deleteAttachmentFile } from "@/lib/attachment-storage";
 import type { prisma as prismaClient } from "@/lib/prisma";
 
 type PrismaClient = typeof prismaClient;
@@ -17,7 +17,7 @@ export class ReminderAttachmentDeleteError extends Error {
 
 export async function deleteReminderAttachmentObjects(
   attachments: ReminderAttachmentForDelete[],
-  deleteObject: (key: string) => Promise<void> = deleteFromR2
+  deleteObject: (key: string) => Promise<void> = deleteAttachmentFile
 ): Promise<void> {
   const failedKeys: string[] = [];
 
@@ -25,7 +25,7 @@ export async function deleteReminderAttachmentObjects(
     try {
       await deleteObject(attachment.r2Key);
     } catch (error) {
-      console.error("删除提醒附件 R2 文件失败:", {
+      console.error("删除提醒附件存储文件失败:", {
         attachmentId: attachment.id,
         r2Key: attachment.r2Key,
         error,

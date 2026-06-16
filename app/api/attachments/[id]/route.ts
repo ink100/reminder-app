@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { deleteFromR2 } from "@/lib/r2-storage";
+import { deleteAttachmentFile } from "@/lib/attachment-storage";
 
 export async function DELETE(
   _request: NextRequest,
@@ -20,7 +20,7 @@ export async function DELETE(
       return NextResponse.json({ error: "附件不存在" }, { status: 404 });
     }
 
-    await deleteFromR2(attachment.r2Key);
+    await deleteAttachmentFile(attachment.r2Key);
 
     await prisma.attachment.update({
       where: { id },
