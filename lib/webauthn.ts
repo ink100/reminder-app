@@ -7,8 +7,24 @@ import {
 import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
+  AuthenticatorTransportFuture,
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialDescriptorJSON,
+  PublicKeyCredentialRequestOptionsJSON,
 } from "@simplewebauthn/server";
 import { prisma } from "@/lib/prisma";
+
+const EXTERNAL_AUTHENTICATOR_TRANSPORTS: AuthenticatorTransportFuture[] = [
+  "hybrid",
+  "internal",
+  "usb",
+  "ble",
+  "nfc",
+];
+
+type BrowserOptimizedRegistrationOptions = PublicKeyCredentialCreationOptionsJSON & {
+  transports?: AuthenticatorTransportFuture[];
+};
 
 // 应用名称和域名配置
 const RP_NAME = "到期提醒";
@@ -44,8 +60,9 @@ export async function generateRegOptions(authenticatorAttachment?: "platform" | 
 
   // 添加 hints 提示浏览器显示手机扫码选项
   if (authenticatorAttachment === "cross-platform") {
-    (options as any).hints = ["hybrid", "security-key"];
-    (options as any).transports = ["hybrid", "internal", "usb", "ble", "nfc"];
+    const browserOptions = options as BrowserOptimizedRegistrationOptions;
+    browserOptions.hints = ["hybrid", "security-key"];
+    browserOptions.transports = EXTERNAL_AUTHENTICATOR_TRANSPORTS;
   }
 
   // 临时存储 challenge
@@ -108,21 +125,23 @@ export async function verifyRegResponse(response: RegistrationResponseJSON) {
 export async function generateAuthOptions(mode?: "platform" | "hybrid") {
   const credentials = await prisma.webAuthnCredential.findMany();
 
-  const allowCredentials = credentials.map((cred) => ({
+  const allowCredentials: PublicKeyCredentialDescriptorJSON[] = credentials.map((cred) => ({
     id: cred.credentialId,
+    type: "public-key",
     // Edge/Chrome 需要 transports 才更容易出现手机扫码 / 外部设备入口
-    transports: ["internal", "hybrid", "usb", "ble", "nfc"],
+    transports: EXTERNAL_AUTHENTICATOR_TRANSPORTS,
   }));
 
   const options = await generateAuthenticationOptions({
     rpID: RP_ID,
     userVerification: "preferred",
-    allowCredentials: allowCredentials as any,
+    allowCredentials,
   });
 
   if (mode === "hybrid") {
-    // SimpleWebAuthn 类型暂未完整暴露 hints；手动注入给 Chromium/Edge 使用
-    (options as any).hints = ["hybrid", "security-key"];
+    // SimpleWebAuthn 类型已暴露 hints；注入给 Chromium/Edge 使用
+    const browserOptions = options as PublicKeyCredentialRequestOptionsJSON;
+    browserOptions.hints = ["hybrid", "security-key"];
   }
 
   // 临时存储 challenge

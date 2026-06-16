@@ -47,7 +47,8 @@ export async function deleteFromR2(key: string): Promise<void> {
   await client.send(new DeleteObjectCommand({ Bucket: cfg.bucket, Key: key }));
 }
 
-export async function purgeCloudflareCache(_url: string): Promise<void> {
+export async function purgeCloudflareCache(url: string): Promise<void> {
+  void url;
   // CDN cache purge - requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID
   const token = process.env.CLOUDFLARE_API_TOKEN;
   const zoneId = process.env.CLOUDFLARE_ZONE_ID;

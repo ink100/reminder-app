@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     };
     const result = await testR2Connection(config);
     return NextResponse.json(result);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false, message: "测试失败" });
   }
 }

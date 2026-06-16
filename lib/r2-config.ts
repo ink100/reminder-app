@@ -68,7 +68,7 @@ export async function testR2Connection(config: R2Config): Promise<{ success: boo
 
     await client.send(command);
     return { success: true, message: "连接成功" };
-  } catch (error: any) {
-    return { success: false, message: error.message || "连接失败" };
+  } catch (error) {
+    return { success: false, message: error instanceof Error ? error.message : "连接失败" };
   }
 }

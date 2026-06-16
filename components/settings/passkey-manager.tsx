@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PasskeyRegister } from "@/components/auth/passkey-register";
 
 type Credential = {
@@ -17,7 +17,7 @@ export function PasskeyManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [showRegister, setShowRegister] = useState(false);
 
-  const fetchCredentials = async () => {
+  const fetchCredentials = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/passkey/list");
       if (res.ok) {
@@ -29,11 +29,11 @@ export function PasskeyManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchCredentials();
-  }, []);
+    void Promise.resolve().then(fetchCredentials);
+  }, [fetchCredentials]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("确定要删除这个通行密匙吗？")) return;

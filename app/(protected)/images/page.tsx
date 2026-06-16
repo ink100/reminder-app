@@ -54,7 +54,7 @@ export default function ImagesPage() {
   }, [page, search, typeFilter, activeTab]);
 
   useEffect(() => {
-    fetchFiles();
+    void Promise.resolve().then(fetchFiles);
   }, [fetchFiles]);
 
   const handleUploadSuccess = (file: FileData) => {

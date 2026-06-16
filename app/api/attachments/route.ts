@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search") || "";
   const type = searchParams.get("type") || ""; // image / file / all
 
-  const where: any = {
+  const where: Prisma.AttachmentWhereInput = {
     deletedAt: null,
   };
 

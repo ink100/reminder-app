@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Shield,
   RefreshCw,
@@ -49,7 +49,7 @@ export default function SSLPage() {
     output?: string
   } | null>(null)
 
-  const fetchSSLStatus = async () => {
+  const fetchSSLStatus = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/ssl')
@@ -62,11 +62,11 @@ export default function SSLPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    fetchSSLStatus()
-  }, [])
+    void Promise.resolve().then(fetchSSLStatus)
+  }, [fetchSSLStatus])
 
   const handleRenew = async () => {
     if (!confirm('确定要检查 SSL 证书吗？未进入 30 天续期窗口会自动跳过，不会强制重新签发。')) return

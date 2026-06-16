@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -42,7 +42,7 @@ export function TrustedDevicesCard() {
 
   const activeCount = useMemo(() => devices.length, [devices]);
 
-  async function loadDevices() {
+  const loadDevices = useCallback(async () => {
     setLoading(true);
     setMessage(null);
 
@@ -60,7 +60,7 @@ export function TrustedDevicesCard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   async function revokeDevice(id: string) {
     setRevokingId(id);
@@ -88,8 +88,8 @@ export function TrustedDevicesCard() {
   }
 
   useEffect(() => {
-    void loadDevices();
-  }, []);
+    void Promise.resolve().then(loadDevices);
+  }, [loadDevices]);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const reminderId = searchParams.get("reminderId");
 
-  const where: any = { deletedAt: null };
+  const where: Prisma.AttachmentWhereInput = { deletedAt: null };
   if (reminderId) {
     where.reminderId = reminderId;
   }
