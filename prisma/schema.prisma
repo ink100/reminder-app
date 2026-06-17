@@ -61,6 +61,13 @@ model AppSetting {
   r2Bucket                 String?
   r2PublicUrl              String?
   r2CacheControl           String   @default("public, max-age=86400")
+  telegramBotEnabled       Boolean  @default(false)
+  telegramBotTokenEncrypted String?
+  telegramBotChatId        String?
+  telegramBotName          String?
+  telegramBotUsername      String?
+  telegramBotLastTestAt    DateTime?
+  telegramBotLastTestStatus String?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
