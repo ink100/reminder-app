@@ -44,16 +44,21 @@ async function reminderEmailDispatch() {
   const { prisma } = await import("@/lib/prisma");
   const { canSendMail, createMailTransport, getMailFrom } = await import("@/lib/mailer");
   const { collectReminderNotifications } = await import("@/lib/reminder-notifications");
+  const { resolveTelegramBotToken, sendTelegramMessage } = await import("@/lib/telegram-bot");
 
   const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
 
-  if (!settings?.emailNotificationsEnabled || !settings.notificationEmail) {
-    console.log("[task] skip reminder email: disabled or no recipient");
+  if (!settings) {
+    console.log("[task] skip reminder notifications: settings missing");
     return;
   }
 
-  if (!canSendMail(settings)) {
-    console.log("[task] skip reminder email: smtp config missing");
+  const emailReady = Boolean(settings.emailNotificationsEnabled && settings.notificationEmail && canSendMail(settings));
+  const telegramToken = settings.telegramBotEnabled ? resolveTelegramBotToken(settings) : null;
+  const telegramReady = Boolean(settings.telegramBotEnabled && settings.telegramBotChatId && telegramToken);
+
+  if (!emailReady && !telegramReady) {
+    console.log("[task] skip reminder notifications: no enabled channel");
     return;
   }
 
@@ -69,8 +74,9 @@ async function reminderEmailDispatch() {
     return;
   }
 
-  const transport = createMailTransport(settings);
+  const transport = emailReady ? createMailTransport(settings) : null;
   let sent = 0;
+  const failures: string[] = [];
 
   for (const notification of notifications) {
     const reminder = reminders.find((item) => item.id === notification.id);
@@ -81,25 +87,50 @@ async function reminderEmailDispatch() {
       notification.kind === "upcoming"
         ? "这条提醒已经进入提醒窗口，请尽快处理。"
         : "这条提醒已经超期，请尽快处理。";
+    const messageLines = [
+      `${settings.appName} - ${subjectPrefix}`,
+      "",
+      intro,
+      `标题：${reminder.title}`,
+      reminder.activationCode ? `激活码：${reminder.activationCode}` : null,
+      reminder.activationContact ? `联系方式：${reminder.activationContact}` : null,
+      `分类：${reminder.category ?? "未分类"}`,
+      `截止时间：${reminder.dueAt.toLocaleString("zh-CN", { hour12: false })}`,
+      reminder.description ? `说明：${reminder.description}` : null,
+    ].filter(Boolean) as string[];
 
-    await transport.sendMail({
-      from: getMailFrom(settings),
-      to: settings.notificationEmail,
-      subject: `${subjectPrefix}｜${reminder.title}`,
-      text: [
-        `${settings.appName} - ${subjectPrefix}`,
-        "",
-        intro,
-        `标题：${reminder.title}`,
-        reminder.activationCode ? `激活码：${reminder.activationCode}` : null,
-        reminder.activationContact ? `联系方式：${reminder.activationContact}` : null,
-        `分类：${reminder.category ?? "未分类"}`,
-        `截止时间：${reminder.dueAt.toLocaleString("zh-CN", { hour12: false })}`,
-        reminder.description ? `说明：${reminder.description}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    });
+    let delivered = false;
+
+    if (transport && settings.notificationEmail) {
+      try {
+        await transport.sendMail({
+          from: getMailFrom(settings),
+          to: settings.notificationEmail,
+          subject: `${subjectPrefix}｜${reminder.title}`,
+          text: messageLines.join("\n"),
+        });
+        delivered = true;
+      } catch (error) {
+        failures.push(`邮件 ${reminder.title}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+
+    if (telegramReady && telegramToken && settings.telegramBotChatId) {
+      try {
+        await sendTelegramMessage({
+          token: telegramToken,
+          chatId: settings.telegramBotChatId,
+          text: messageLines.join("\n"),
+        });
+        delivered = true;
+      } catch (error) {
+        failures.push(`Telegram ${reminder.title}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+
+    if (!delivered) {
+      continue;
+    }
 
     await prisma.reminder.update({
       where: { id: reminder.id },
@@ -112,12 +143,91 @@ async function reminderEmailDispatch() {
     sent += 1;
   }
 
-  console.log(`[task] sent ${sent} reminder emails`);
+  const failureSummary = failures.length > 0 ? `，失败 ${failures.length} 条：${failures.slice(0, 3).join("；")}` : "";
+  console.log(`[task] sent ${sent} reminder notifications${failureSummary}`);
+
+  if (sent === 0 && failures.length > 0) {
+    throw new Error(failures.slice(0, 3).join("；"));
+  }
 }
 
-// ── 调度器核心 ───────────────────────────────
+// ── Bot 命令注册 ───────────────────────────────
+async function ensureBotCommandsRegistered() {
+  const { registerBotCommand } = await import("@/lib/telegram-bot");
+  const { redeemBindCode, getActiveBindings, unbindChatId } = await import("@/lib/telegram-binding");
+
+  const HELP_TEXT = `🤖 可用命令：
+
+/start - 查看帮助
+/bind <绑定码> - 绑定 Telegram 到账户
+/status - 查看绑定状态
+/unbind - 解绑当前账户`;
+
+  registerBotCommand("start", async ({ firstName }: { firstName?: string }) => {
+    return `👋 你好${firstName ? `，${firstName}` : ""}！
+
+${HELP_TEXT}`;
+  });
+
+  registerBotCommand("help", async () => HELP_TEXT);
+
+  registerBotCommand("bind", async ({ chatId, username, firstName, text: code }: { chatId: number; username?: string; firstName?: string; text: string }) => {
+    if (!code) {
+      return "请输入绑定码，例如：/bind ABC123\n\n绑定码请在 Web 管理页面生成。";
+    }
+    const result = await redeemBindCode(code.toUpperCase(), String(chatId), { username, firstName });
+    if (!result.success) return `❌ 绑定失败：${result.reason}`;
+    return `✅ 绑定成功！Chat ID: ${result.chatId}\n\n现在可以接收通知了。`;
+  });
+
+  registerBotCommand("status", async ({ chatId }: { chatId: number }) => {
+    const bindings = await getActiveBindings();
+    const bound = bindings.find((b) => b.chatId === String(chatId));
+    if (!bound) return "❌ 未绑定。\n\n在 Web 页面生成绑定码，发送 /bind <绑定码> 进行绑定。";
+    return `✅ 已绑定\n绑定时间：${bound.boundAt.toLocaleString("zh-CN")}\nChat ID: ${bound.chatId}${bound.username ? `\n用户名：@${bound.username}` : ""}`;
+  });
+
+  registerBotCommand("unbind", async ({ chatId }: { chatId: number }) => {
+    await unbindChatId(String(chatId));
+    return "✅ 已解绑。如需重新绑定请在 Web 页面生成新的绑定码。";
+  });
+}
+
+let commandsRegistered = false;
+
+// ── Bot 轮询任务 ───────────────────────────────
+async function botPollDispatch() {
+  const { resolveTelegramBotToken, pollTelegramBot } = await import("@/lib/telegram-bot");
+
+  if (!commandsRegistered) {
+    await ensureBotCommandsRegistered();
+    commandsRegistered = true;
+  }
+
+  const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+  if (!settings?.telegramBotEnabled) return;
+
+  const token = resolveTelegramBotToken(settings);
+  if (!token) return;
+
+  try {
+    const count = await pollTelegramBot(token);
+    if (count > 0) {
+      console.log(`[task] bot-poll 处理了 ${count} 条消息`);
+    }
+  } catch (error) {
+    // 超时或网络错误是正常的，安静忽略
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes("timeout") && !message.includes("ETIMEDOUT") && !message.includes("ENETUNREACH")) {
+      console.error("[task] bot-poll 错误:", message);
+    }
+  }
+}
+
+// ── 注册的任务 ───────────────────────────────
 const REGISTERED_TASKS: RegisteredTask[] = [
-  { name: "reminder-email", label: "到期提醒邮件", fn: reminderEmailDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
+  { name: "reminder-email", label: "到期提醒通知", fn: reminderEmailDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
+  { name: "bot-poll", label: "Bot 消息轮询", fn: botPollDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
 ];
 
 const timers: Map<string, ReturnType<typeof setInterval>> = new Map();

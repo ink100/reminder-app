@@ -45,7 +45,7 @@ type SettingsFormProps = {
 };
 
 const TASK_LABELS: Record<string, string> = {
-  "reminder-email": "到期提醒邮件",
+  "reminder-email": "到期提醒通知",
 };
 
 export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFormProps) {
@@ -326,7 +326,7 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
               checked={reminderEmailEnabled}
               onChange={(e) => setReminderEmailEnabled(e.target.checked)}
             />
-            启用到期提醒邮件发送
+            启用到期提醒通知发送
           </label>
           {reminderEmailEnabled && (
             <div className="ml-6 mt-2 max-w-xs space-y-2">

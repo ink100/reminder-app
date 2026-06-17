@@ -72,6 +72,32 @@ model AppSetting {
   updatedAt                DateTime @updatedAt
 }
 
+model TelegramBinding {
+  id           String   @id @default(cuid())
+  chatId       String   @unique
+  username     String?
+  firstName    String?
+  boundAt      DateTime @default(now())
+  lastActiveAt DateTime?
+  unboundAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([chatId])
+  @@index([unboundAt])
+}
+
+model TelegramBindCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  chatId    String?
+  createdAt DateTime @default(now())
+
+  @@index([code])
+  @@index([expiresAt])
+}
+
 model AuthSession {
   id               String   @id @default(cuid())
   sessionTokenHash String
