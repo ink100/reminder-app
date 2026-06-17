@@ -21,7 +21,9 @@ type EnabledSettingKey = {
 };
 
 // ── 看门狗 ───────────────────────────────
-const WATCHDOG_TIMEOUT_MS = 5 * 60 * 1000; // 5 分钟无心跳视为卡死
+// 定时任务最长默认 30 分钟执行一次，看门狗超时时间必须大于最长任务间隔，
+// 否则应用空闲但健康时会被误判为卡死并被 systemd 反复重启。
+const WATCHDOG_TIMEOUT_MS = 35 * 60 * 1000;
 let lastHeartbeat = Date.now();
 
 function heartbeat() {
@@ -266,8 +268,8 @@ export async function refreshAllTimers() {
   }
 
   for (const task of REGISTERED_TASKS) {
-    const enabled = settings[task.enabledKey] !== false;
-    const sec = settings[task.intervalKey] ?? 60;
+    const enabled = task.name === "bot-poll" ? settings.telegramBotEnabled : settings[task.enabledKey] !== false;
+    const sec = task.name === "bot-poll" ? 30 : settings[task.intervalKey] ?? 60;
 
     if (!enabled) {
       console.log(`[scheduler] ${task.label} 已禁用，跳过`);
@@ -281,6 +283,10 @@ export async function refreshAllTimers() {
       runTask(task).catch((err) => console.error(`[scheduler] ${task.name} 定时器异常:`, err));
     }, ms);
     timers.set(task.name, timer);
+
+    if (task.name === "bot-poll") {
+      runTask(task).catch((err) => console.error(`[scheduler] ${task.name} 首次执行异常:`, err));
+    }
   }
 
   console.log(`[scheduler] 已注册 ${timers.size} 个定时任务`);

@@ -1,4 +1,11 @@
+import * as dns from "node:dns";
+import * as https from "node:https";
+
 import { decryptText } from "@/lib/crypto";
+
+// 当前 VPS 的 IPv6 到 Telegram 不通，Node fetch 可能优先尝试 IPv6 并直接超时；
+// 强制 Telegram Bot 模块内的 DNS 结果优先使用 IPv4。
+dns.setDefaultResultOrder("ipv4first");
 
 export type TelegramBotConfigSource = {
   telegramBotEnabled: boolean;
@@ -47,21 +54,55 @@ export function resolveTelegramBotToken(source: Pick<TelegramBotConfigSource, "t
   return decryptText(source.telegramBotTokenEncrypted);
 }
 
-async function requestTelegram<T>(token: string, method: string, body?: Record<string, unknown>): Promise<T> {
-  const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-    method: body ? "POST" : "GET",
-    headers: body ? { "content-type": "application/json" } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(10_000),
+async function requestTelegram<T>(token: string, method: string, body?: Record<string, unknown>, timeoutMs = 10_000): Promise<T> {
+  const payload = body ? JSON.stringify(body) : undefined;
+
+  return new Promise<T>((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: "api.telegram.org",
+        path: `/bot${token}/${method}`,
+        method: payload ? "POST" : "GET",
+        family: 4,
+        timeout: timeoutMs,
+        headers: payload
+          ? {
+              "content-type": "application/json",
+              "content-length": Buffer.byteLength(payload),
+            }
+          : undefined,
+      },
+      (res) => {
+        let raw = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => {
+          raw += chunk;
+        });
+        res.on("end", () => {
+          try {
+            const data = JSON.parse(raw) as { ok?: boolean; result?: T; description?: string };
+            if ((res.statusCode ?? 500) >= 400 || !data.ok) {
+              reject(new Error(data.description ?? `Telegram API 请求失败：${method}`));
+              return;
+            }
+            resolve(data.result as T);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+    );
+
+    req.on("timeout", () => {
+      req.destroy(new Error(`Telegram API 请求超时：${method}`));
+    });
+    req.on("error", reject);
+
+    if (payload) {
+      req.write(payload);
+    }
+    req.end();
   });
-
-  const data = (await response.json()) as { ok?: boolean; result?: T; description?: string };
-
-  if (!response.ok || !data.ok) {
-    throw new Error(data.description ?? `Telegram API 请求失败：${method}`);
-  }
-
-  return data.result as T;
 }
 
 export async function getTelegramBotIdentity(token: string) {
@@ -88,7 +129,7 @@ export type TelegramUpdate = {
   };
 };
 
-export async function getTelegramUpdates(token: string, offset?: number, timeout = 30): Promise<TelegramUpdate[]> {
+export async function getTelegramUpdates(token: string, offset?: number, timeout = 20): Promise<TelegramUpdate[]> {
   const params: Record<string, unknown> = {
     timeout,
     allowed_updates: ["message"],
@@ -96,7 +137,7 @@ export async function getTelegramUpdates(token: string, offset?: number, timeout
   if (offset !== undefined) {
     params.offset = offset;
   }
-  return requestTelegram<TelegramUpdate[]>(token, "getUpdates", params);
+  return requestTelegram<TelegramUpdate[]>(token, "getUpdates", params, (timeout + 10) * 1000);
 }
 
 type CommandHandler = (ctx: { token: string; chatId: number; username?: string; firstName?: string; text: string }) => Promise<string>;
@@ -158,7 +199,7 @@ let lastUpdateId = 0;
 
 /** 执行一次轮询：调用 getUpdates 并处理所有新消息 */
 export async function pollTelegramBot(token: string): Promise<number> {
-  const updates = await getTelegramUpdates(token, lastUpdateId + 1, 30);
+  const updates = await getTelegramUpdates(token, lastUpdateId + 1, 20);
 
   if (updates.length === 0) return 0;
 
