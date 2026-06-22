@@ -32,6 +32,15 @@ const navItems = [
     ),
   },
   {
+    href: "/voice",
+    label: "语音转换",
+    icon: (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18.75a6 6 0 006-6v-1.5m-12 1.5a6 6 0 006 6m0 0v3.75m-3.75 0h7.5M12 15a3 3 0 003-3V5.25a3 3 0 10-6 0V12a3 3 0 003 3z" />
+      </svg>
+    ),
+  },
+  {
     href: "/ssl",
     label: "SSL 证书",
     icon: (
