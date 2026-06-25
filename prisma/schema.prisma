@@ -184,6 +184,19 @@ model Attachment {
   @@index([deletedAt])
 }
 
+model Todo {
+  id          String    @id @default(cuid())
+  title       String
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([completedAt])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
 model WebAuthnChallenge {
   id        String   @id
   challenge String
