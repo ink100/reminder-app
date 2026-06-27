@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 
 type TodoItem = {
   id: string;
@@ -52,10 +53,7 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
   }, []);
 
   const deleteTodo = useCallback(async (id: string) => {
-    if (!confirm("确定删除该待办事项？")) return;
-
     setTodos((prev) => prev.filter((t) => t.id !== id));
-
     await fetch(`/api/todos/${id}`, { method: "DELETE" });
   }, []);
 
@@ -277,16 +275,23 @@ function TodoRow({
               </svg>
             </button>
           )}
-          {/* Delete button */}
-          <button
-            onClick={onDelete}
-            aria-label="删除"
-            className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500"
-          >
-            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
+          {/* Delete button — wrapped in AlertDialog */}
+          <AlertDialog
+            trigger={
+              <button
+                aria-label="删除"
+                className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500"
+              >
+                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            }
+            title="删除待办事项"
+            description={`确定要删除「${todo.title}」吗？此操作不可撤销。`}
+            confirmLabel="删除"
+            onConfirm={onDelete}
+          />
         </div>
       )}
 
