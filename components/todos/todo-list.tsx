@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 type TodoItem = {
   id: string;
@@ -15,14 +16,6 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Keep track of initial todos to avoid stale data on re-render
-  const initialized = useRef(false);
-  useEffect(() => {
-    if (!initialized.current) {
-      initialized.current = true;
-    }
-  }, []);
 
   const addTodo = useCallback(async () => {
     const title = newTitle.trim();
@@ -42,7 +35,6 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
   }, [newTitle]);
 
   const toggleTodo = useCallback(async (id: string, currentCompleted: boolean) => {
-    // Optimistic update
     const now = new Date().toISOString();
     setTodos((prev) =>
       prev.map((t) =>
@@ -110,7 +102,9 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold text-slate-900">📋 待办事项</h1>
+      <h1 className="mb-6 text-2xl font-bold text-balance text-slate-900">
+        📋 待办事项
+      </h1>
 
       {/* Add input */}
       <div className="mb-6 flex gap-2">
@@ -133,15 +127,17 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
         </button>
       </div>
 
-      {/* Pending */}
+      {/* Empty state */}
       {pending.length === 0 && done.length === 0 ? (
-        <p className="py-12 text-center text-sm text-slate-400">暂无待办事项，添加一个吧。</p>
+        <p className="py-12 text-center text-sm text-pretty text-slate-400">
+          暂无待办事项，添加一个吧。
+        </p>
       ) : (
         <>
           {/* Pending section */}
           {pending.length > 0 && (
             <div className="mb-8">
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <h2 className="mb-3 text-xs font-semibold uppercase text-slate-400">
                 待处理 · {pending.length}
               </h2>
               <ul className="space-y-1.5">
@@ -166,7 +162,7 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
           {/* Done section */}
           {done.length > 0 && (
             <div>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <h2 className="mb-3 text-xs font-semibold uppercase text-slate-400">
                 已完成 · {done.length}
               </h2>
               <ul className="space-y-1.5">
@@ -218,24 +214,26 @@ function TodoRow({
 
   return (
     <li
-      className={`group flex items-center gap-3 rounded-lg border px-4 py-2.5 transition-colors ${
+      className={cn(
+        "group flex items-center gap-3 rounded-lg border px-4 py-2.5 transition-colors",
         isDone
           ? "border-slate-100 bg-slate-50/50"
           : "border-slate-200 bg-white hover:border-slate-300"
-      }`}
+      )}
     >
       {/* Checkbox */}
       <button
         onClick={onToggle}
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+        aria-label={isDone ? "标记待办" : "标记完成"}
+        className={cn(
+          "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
           isDone
-            ? "border-emerald-500 bg-emerald-500 text-white"
+            ? "border-blue-500 bg-blue-500 text-white"
             : "border-slate-300 hover:border-blue-400"
-        }`}
-        title={isDone ? "标记待办" : "标记完成"}
+        )}
       >
         {isDone && (
-          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         )}
@@ -254,27 +252,27 @@ function TodoRow({
         />
       ) : (
         <span
-          className={`flex-1 cursor-pointer text-sm ${
+          className={cn(
+            "flex-1 cursor-pointer text-sm",
             isDone ? "text-slate-400 line-through" : "text-slate-700"
-          }`}
+          )}
           onClick={onStartEdit}
-          title="点击编辑"
         >
           {todo.title}
         </span>
       )}
 
-      {/* Actions - show on hover */}
+      {/* Actions — show on hover */}
       {!isEditing && (
         <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          {/* Mark undone button (only for done items) */}
+          {/* Undo button (only for done items) */}
           {isDone && (
             <button
               onClick={onToggle}
+              aria-label="取消完成"
               className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-amber-500"
-              title="取消完成"
             >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
             </button>
@@ -282,17 +280,17 @@ function TodoRow({
           {/* Delete button */}
           <button
             onClick={onDelete}
+            aria-label="删除"
             className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500"
-            title="删除"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
         </div>
       )}
 
-      {/* Show time for completed items - mobile fallback: always visible, desktop: hide on hover */}
+      {/* Completed date */}
       {isDone && todo.completedAt && (
         <span className="hidden shrink-0 text-[11px] text-slate-400 group-hover:hidden sm:inline">
           {new Date(todo.completedAt).toLocaleDateString("zh-CN", { month: "short", day: "numeric" })}

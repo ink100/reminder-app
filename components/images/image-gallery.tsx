@@ -119,7 +119,7 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
                 type="button"
                 onClick={() => setPreviewFile(file)}
                 className="h-full w-full cursor-zoom-in"
-                title="预览图片"
+                aria-label="预览图片"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

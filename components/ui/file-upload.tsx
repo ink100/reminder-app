@@ -122,7 +122,7 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
                     type="button"
                     onClick={() => setPreviewAttachment(att)}
                     className="block aspect-video w-full cursor-zoom-in overflow-hidden bg-slate-100"
-                    title="点击图片放大"
+                    aria-label="点击图片放大"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={att.url} alt={att.originalName} className="h-full w-full object-cover transition-transform hover:scale-105" loading="lazy" />
@@ -140,7 +140,7 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-center text-xs">
-                    <button onClick={() => copyUrl(att.url)} className="rounded-md bg-blue-50 px-2 py-1.5 text-blue-600 hover:bg-blue-100" title="复制链接">复制</button>
+                    <button onClick={() => copyUrl(att.url)} aria-label="复制链接" className="rounded-md bg-blue-50 px-2 py-1.5 text-blue-600 hover:bg-blue-100">复制</button>
                     <a href={att.url} target="_blank" rel="noopener" className="rounded-md bg-slate-50 px-2 py-1.5 text-slate-600 hover:bg-slate-100">下载</a>
                     <button onClick={() => handleDelete(att.id)} className="rounded-md bg-red-50 px-2 py-1.5 text-red-500 hover:bg-red-100">删除</button>
                   </div>

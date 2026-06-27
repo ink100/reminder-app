@@ -18,15 +18,15 @@ export function TopNav() {
         <p className="text-xs text-slate-300">轻量部署 · SQLite · OTP 保护</p>
       </div>
       <div className="flex items-center gap-3">
-        <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-medium tracking-wide text-emerald-600 md:inline">
+        <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-medium text-emerald-600 md:inline">
           MVP
         </span>
         <button
           onClick={handleLogout}
+          aria-label="退出登录"
           className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500 md:hidden"
-          title="退出登录"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
         </button>
