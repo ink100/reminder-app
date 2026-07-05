@@ -197,6 +197,120 @@ model Todo {
   @@index([createdAt])
 }
 
+model NotificationEvent {
+  id            String         @id @default(cuid())
+  source        String
+  eventType     String
+  payload       String
+  createdAt     DateTime       @default(now())
+  notifications Notification[]
+
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  eventId   String?
+  event     NotificationEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  groupId   String
+  group     NotificationGroup @relation(fields: [groupId], references: [id])
+  title     String
+  summary   String?
+  priority  Int               @default(2)
+  status    String            @default("Created")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  jobs      QueueJob[]
+
+  @@index([status])
+  @@index([groupId])
+  @@index([createdAt])
+}
+
+model QueueJob {
+  id             String               @id @default(cuid())
+  notificationId String
+  notification   Notification         @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  channelId      String
+  channel        NotificationChannel  @relation(fields: [channelId], references: [id])
+  templateId     String
+  template       NotificationTemplate @relation(fields: [templateId], references: [id])
+  priority       Int                  @default(2)
+  retryCount     Int                  @default(0)
+  maxRetry       Int                  @default(5)
+  status         String               @default("Pending")
+  nextExecuteAt  DateTime             @default(now())
+  lockedAt       DateTime?
+  lastError      String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  sendLogs       SendLog[]
+
+  @@index([status])
+  @@index([nextExecuteAt])
+  @@index([notificationId])
+}
+
+model NotificationChannel {
+  id        String     @id @default(cuid())
+  type      String
+  name      String
+  config    String     @default("{}")
+  enabled   Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  jobs      QueueJob[]
+
+  @@index([type])
+  @@index([enabled])
+}
+
+model NotificationTemplate {
+  id          String     @id @default(cuid())
+  name        String
+  channelType String
+  content     String
+  enabled     Boolean    @default(true)
+  jobs        QueueJob[]
+
+  @@index([channelType])
+  @@index([enabled])
+}
+
+model NotificationGroup {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  description   String?
+  enabled       Boolean        @default(true)
+  notifications Notification[]
+
+  @@index([enabled])
+}
+
+model NotificationApiKey {
+  id        String    @id @default(cuid())
+  name      String
+  apiKey    String    @unique
+  enabled   Boolean   @default(true)
+  expiresAt DateTime?
+
+  @@index([apiKey])
+  @@index([enabled])
+}
+
+model SendLog {
+  id         String   @id @default(cuid())
+  queueJobId String
+  queueJob   QueueJob @relation(fields: [queueJobId], references: [id], onDelete: Cascade)
+  request    String
+  response   String
+  result     String
+  durationMs Int
+  createdAt  DateTime @default(now())
+
+  @@index([queueJobId])
+  @@index([createdAt])
+}
+
 model WebAuthnChallenge {
   id        String   @id
   challenge String

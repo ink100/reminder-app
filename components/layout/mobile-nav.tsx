@@ -24,6 +24,15 @@ const navItems = [
     ),
   },
   {
+    href: "/notification-center",
+    label: "通知",
+    icon: (
+      <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h8M8 14h5m8-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  {
     href: "/images",
     label: "文件",
     icon: (

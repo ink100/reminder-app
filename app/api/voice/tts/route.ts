@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { spawn } from "node:child_process";
+import { EdgeTTS } from "node-edge-tts";
 import { z } from "zod";
 
 import { requireApiSession } from "@/lib/auth";
@@ -37,50 +38,17 @@ function pitchToHz(pitch: number) {
 
 async function runEdgeTts(input: z.infer<typeof requestSchema>) {
   const tempDir = await mkdtemp(join(tmpdir(), "voice-tts-"));
-  const inputPath = join(tempDir, "input.txt");
   const outputPath = join(tempDir, "speech.mp3");
 
   try {
-    await writeFile(inputPath, input.input, "utf8");
-
-    const args = [
-      "-m",
-      "edge_tts",
-      "--file",
-      inputPath,
-      "--voice",
-      input.voice,
-      "--rate",
-      speedToRate(input.speed),
-      "--pitch",
-      pitchToHz(input.pitch),
-      "--volume",
-      toSignedPercent(input.volume),
-      "--write-media",
-      outputPath,
-    ];
-
-    const { stderr } = await new Promise<{ stderr: string }>((resolve, reject) => {
-      const child = spawn("python3", args, { stdio: ["ignore", "ignore", "pipe"] });
-      let stderr = "";
-
-      child.stderr.on("data", (chunk: Buffer) => {
-        stderr += chunk.toString("utf8");
-      });
-
-      child.on("error", reject);
-      child.on("close", (code) => {
-        if (code === 0) {
-          resolve({ stderr });
-        } else {
-          reject(new Error(stderr.trim() || `edge-tts 退出码 ${code}`));
-        }
-      });
+    const tts = new EdgeTTS({
+      voice: input.voice,
+      rate: speedToRate(input.speed),
+      pitch: pitchToHz(input.pitch),
+      volume: toSignedPercent(input.volume),
     });
 
-    if (stderr.toLowerCase().includes("error")) {
-      console.warn("edge-tts stderr:", stderr);
-    }
+    await tts.ttsPromise(input.input, outputPath);
 
     return await readFile(outputPath);
   } finally {

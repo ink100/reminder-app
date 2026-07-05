@@ -227,9 +227,28 @@ async function botPollDispatch() {
 }
 
 // ── 注册的任务 ───────────────────────────────
+async function notificationCenterDispatch() {
+  const { dispatchQueueJobs, cleanupNotificationData } = await import("@/lib/notification-center/dispatcher");
+  const result = await dispatchQueueJobs(20);
+
+  if (result.processed > 0 || result.failed > 0) {
+    console.log(`[task] notification-center processed=${result.processed}, failed=${result.failed}`);
+  }
+
+  const minute = new Date().getMinutes();
+  if (minute === 0) {
+    const cleanup = await cleanupNotificationData();
+    const total = cleanup.events + cleanup.queue_jobs + cleanup.send_logs;
+    if (total > 0) {
+      console.log(`[task] notification-center retention cleanup`, cleanup);
+    }
+  }
+}
+
 const REGISTERED_TASKS: RegisteredTask[] = [
   { name: "reminder-email", label: "到期提醒通知", fn: reminderEmailDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
   { name: "bot-poll", label: "Bot 消息轮询", fn: botPollDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
+  { name: "notification-center", label: "通知中心派发", fn: notificationCenterDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
 ];
 
 const timers: Map<string, ReturnType<typeof setInterval>> = new Map();
@@ -268,8 +287,9 @@ export async function refreshAllTimers() {
   }
 
   for (const task of REGISTERED_TASKS) {
-    const enabled = task.name === "bot-poll" ? settings.telegramBotEnabled : settings[task.enabledKey] !== false;
-    const sec = task.name === "bot-poll" ? 30 : settings[task.intervalKey] ?? 60;
+    const notificationCenterEnabled = task.name === "notification-center";
+    const enabled = task.name === "bot-poll" ? settings.telegramBotEnabled : task.name === "notification-center" ? notificationCenterEnabled : settings[task.enabledKey] !== false;
+    const sec = task.name === "bot-poll" ? 30 : task.name === "notification-center" ? 15 : settings[task.intervalKey] ?? 60;
 
     if (!enabled) {
       console.log(`[scheduler] ${task.label} 已禁用，跳过`);
