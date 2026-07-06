@@ -21,6 +21,8 @@ function toIso(value: Date | null | undefined) {
   return value ? value.toISOString() : null;
 }
 
+const MIRROR_REQUEST_TIMEOUT_MS = 10_000;
+
 async function upsertRow(table: string, row: SupabaseRow, conflict = "id") {
   const config = getSupabaseConfig();
   if (!config) return { skipped: true as const, reason: "missing-supabase-config" };
@@ -35,6 +37,7 @@ async function upsertRow(table: string, row: SupabaseRow, conflict = "id") {
         prefer: "resolution=merge-duplicates",
       },
       body: JSON.stringify(row),
+      signal: AbortSignal.timeout(MIRROR_REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -61,6 +64,7 @@ async function deleteRows(table: string, filter: string) {
         authorization: `Bearer ${config.key}`,
         prefer: "return=minimal",
       },
+      signal: AbortSignal.timeout(MIRROR_REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
