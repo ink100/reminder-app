@@ -80,6 +80,7 @@ export async function createNotificationFromEvent(input: {
   eventType: string;
   title: string;
   summary?: string | null;
+  dedupeKey?: string | null;
   payload: unknown;
   priority?: number;
 }) {
@@ -90,11 +91,29 @@ export async function createNotificationFromEvent(input: {
     throw new Error(`通知分组不存在或已禁用：${input.group}`);
   }
 
+  const source = input.source || "worker";
+  const payload = normalizeNotificationPayload(input.payload, input.dedupeKey);
+  if (input.dedupeKey) {
+    const existingEvent = await prisma.notificationEvent.findFirst({
+      where: {
+        source,
+        eventType: input.eventType,
+        payload: { contains: `"dedupe_key":${JSON.stringify(input.dedupeKey)}` },
+      },
+      orderBy: { createdAt: "desc" },
+      include: { notifications: { include: { jobs: true }, orderBy: { createdAt: "desc" }, take: 1 } },
+    });
+    const existingNotification = existingEvent?.notifications[0];
+    if (existingNotification) {
+      return { notification: existingNotification, duplicate: true };
+    }
+  }
+
   const event = await prisma.notificationEvent.create({
     data: {
-      source: input.source || "worker",
+      source,
       eventType: input.eventType,
-      payload: stringifyJson(input.payload),
+      payload: stringifyJson(payload),
     },
   });
   await mirrorNotificationEvent(event);
@@ -169,7 +188,16 @@ export async function createNotificationFromEvent(input: {
     await refreshNotificationStatus(notification.id);
   }
 
-  return prisma.notification.findUniqueOrThrow({ where: { id: notification.id }, include: { jobs: true } });
+  const createdNotification = await prisma.notification.findUniqueOrThrow({ where: { id: notification.id }, include: { jobs: true } });
+  return { notification: createdNotification, duplicate: false };
+}
+
+function normalizeNotificationPayload(payload: unknown, dedupeKey?: string | null) {
+  if (!dedupeKey) return payload;
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    return { ...(payload as Record<string, unknown>), dedupe_key: dedupeKey };
+  }
+  return { value: payload, dedupe_key: dedupeKey };
 }
 
 export async function refreshNotificationStatus(notificationId: string) {

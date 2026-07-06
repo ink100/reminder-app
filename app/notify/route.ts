@@ -11,6 +11,7 @@ const notifySchema = z.object({
   title: z.string().trim().min(1),
   summary: z.string().optional(),
   source: z.string().optional(),
+  dedupe_key: z.string().trim().min(1).optional(),
   priority: z.coerce.number().int().min(0).max(3).optional(),
   payload: z.unknown().default({}),
 });
@@ -31,10 +32,11 @@ export async function POST(request: NextRequest) {
       title: input.title,
       summary: input.summary,
       source: input.source,
+      dedupeKey: input.dedupe_key,
       payload: input.payload,
       priority: input.priority,
     });
-    return Response.json({ success: true, notification_id: notification.id });
+    return Response.json({ success: true, notification_id: notification.notification.id, duplicate: notification.duplicate });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid request";
     return error("BAD_REQUEST", message, 400);
