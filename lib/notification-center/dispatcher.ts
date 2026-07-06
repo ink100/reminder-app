@@ -5,6 +5,7 @@ import { refreshNotificationStatus } from "@/lib/notification-center/manager";
 import { createPushLedgerForJob, updatePushLedgerForJob } from "@/lib/notification-center/ledger";
 import { renderTemplate } from "@/lib/notification-center/renderer";
 import { parseJsonObject, RETRY_DELAYS_MS, stringifyJson } from "@/lib/notification-center/types";
+import { deleteSupabaseRowsById, mirrorQueueJob, mirrorSendLog } from "@/lib/notification-center/supabase-mirror";
 
 async function sendWebhook(url: string, body: unknown) {
   const response = await fetch(url, {
@@ -33,6 +34,7 @@ async function dispatchOne(jobId: string) {
       notification: { include: { event: true } },
     },
   });
+  await mirrorQueueJob(job);
 
   await refreshNotificationStatus(job.notificationId);
 
@@ -85,7 +87,7 @@ async function dispatchOne(jobId: string) {
       throw new Error(`Unsupported channel type: ${job.channel.type}`);
     }
 
-    await prisma.$transaction([
+    const [sendLog, updatedJob] = await prisma.$transaction([
       prisma.sendLog.create({
         data: {
           queueJobId: job.id,
@@ -97,6 +99,8 @@ async function dispatchOne(jobId: string) {
       }),
       prisma.queueJob.update({ where: { id: job.id }, data: { status: "Success", lockedAt: null, lastError: null } }),
     ]);
+    await mirrorSendLog(sendLog);
+    await mirrorQueueJob(updatedJob);
     await updatePushLedgerForJob(job.id, "Success", {
       response: responsePayload,
       error: null,
@@ -111,7 +115,7 @@ async function dispatchOne(jobId: string) {
     const dead = retryCount > job.maxRetry;
     const delay = RETRY_DELAYS_MS[Math.min(retryCount - 1, RETRY_DELAYS_MS.length - 1)];
 
-    await prisma.$transaction([
+    const [sendLog, updatedJob] = await prisma.$transaction([
       prisma.sendLog.create({
         data: {
           queueJobId: job.id,
@@ -132,6 +136,8 @@ async function dispatchOne(jobId: string) {
         },
       }),
     ]);
+    await mirrorSendLog(sendLog);
+    await mirrorQueueJob(updatedJob);
     await updatePushLedgerForJob(job.id, dead ? "DeadLetter" : "RetryWaiting", {
       response: { error: messageText },
       error: messageText,
@@ -167,10 +173,18 @@ export async function dispatchQueueJobs(limit = 10) {
 
 export async function cleanupNotificationData(now = new Date()) {
   const days = (value: number) => new Date(now.getTime() - value * 24 * 60 * 60 * 1000);
-  const [logs, jobs, events] = await prisma.$transaction([
-    prisma.sendLog.deleteMany({ where: { createdAt: { lt: days(30) } } }),
-    prisma.queueJob.deleteMany({ where: { createdAt: { lt: days(30) } } }),
-    prisma.notificationEvent.deleteMany({ where: { createdAt: { lt: days(14) } } }),
+  const [oldLogs, oldJobs, oldEvents] = await Promise.all([
+    prisma.sendLog.findMany({ where: { createdAt: { lt: days(30) } }, select: { id: true } }),
+    prisma.queueJob.findMany({ where: { createdAt: { lt: days(30) } }, select: { id: true } }),
+    prisma.notificationEvent.findMany({ where: { createdAt: { lt: days(14) } }, select: { id: true } }),
   ]);
+  const [logs, jobs, events] = await prisma.$transaction([
+    prisma.sendLog.deleteMany({ where: { id: { in: oldLogs.map((item) => item.id) } } }),
+    prisma.queueJob.deleteMany({ where: { id: { in: oldJobs.map((item) => item.id) } } }),
+    prisma.notificationEvent.deleteMany({ where: { id: { in: oldEvents.map((item) => item.id) } } }),
+  ]);
+  await deleteSupabaseRowsById("send_logs", oldLogs.map((item) => item.id));
+  await deleteSupabaseRowsById("queue_jobs", oldJobs.map((item) => item.id));
+  await deleteSupabaseRowsById("notification_events", oldEvents.map((item) => item.id));
   return { events: events.count, queue_jobs: jobs.count, send_logs: logs.count };
 }

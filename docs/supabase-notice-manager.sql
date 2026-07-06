@@ -2,6 +2,7 @@
 -- 用途：在 Supabase/PostgreSQL 中创建通知中心全量表，并为每张表、每个字段写入数据库级 COMMENT。
 -- 执行位置：Supabase SQL Editor，或使用 psql 连接 Supabase Postgres 后执行。
 -- 注意：当前应用仍以本地 Prisma/SQLite 为主库；本 SQL 用于 Supabase 侧建表、镜像、审计和后续迁移准备。
+-- AI/运维执行：设置 SUPABASE_DB_URL 后运行 `npm run supabase:notice-manager:apply` 可执行本文件；设置 SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY 后运行 `npm run supabase:notice-manager:sync` 可同步本地 NoticeManager 数据。
 
 begin;
 

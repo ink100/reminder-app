@@ -17,7 +17,9 @@
     "db:reset": "prisma migrate reset --force && prisma db seed",
     "reminders:send": "tsx scripts/send-reminders.ts",
     "inventory:sync:owner": "tsx scripts/sync-bmoplus-inventory.ts",
-    "inventory:check": "tsx scripts/check-inventory.ts"
+    "inventory:check": "tsx scripts/check-inventory.ts",
+    "supabase:notice-manager:apply": "tsx scripts/apply-supabase-notice-manager.ts",
+    "supabase:notice-manager:sync": "tsx scripts/sync-notice-manager-supabase.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1055.0",

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stringifyJson } from "@/lib/notification-center/types";
+import { mirrorNotificationChannel } from "@/lib/notification-center/supabase-mirror";
 
 const schema = z.object({ type: z.string().min(1), name: z.string().min(1), config: z.record(z.string(), z.unknown()).optional(), enabled: z.boolean().optional() });
 
@@ -18,5 +19,6 @@ export async function POST(request: NextRequest) {
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
   const input = schema.parse(await request.json());
   const item = await prisma.notificationChannel.create({ data: { type: input.type, name: input.name, config: stringifyJson(input.config ?? {}), enabled: input.enabled ?? true } });
+  await mirrorNotificationChannel(item);
   return Response.json({ item }, { status: 201 });
 }

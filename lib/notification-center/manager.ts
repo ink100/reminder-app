@@ -2,8 +2,18 @@ import { randomBytes } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 import { parseJsonObject, stringifyJson } from "@/lib/notification-center/types";
-import { createPushLedgerForJob } from "@/lib/notification-center/ledger";
+import { createPushLedgerForJob, updatePushLedgerForJob } from "@/lib/notification-center/ledger";
 import { renderTemplate } from "@/lib/notification-center/renderer";
+import {
+  mirrorNotification,
+  mirrorNotificationApiKey,
+  mirrorNotificationChannel,
+  mirrorNotificationEvent,
+  mirrorNotificationGroup,
+  mirrorNotificationTemplate,
+  mirrorPushLedgersByIds,
+  mirrorQueueJob,
+} from "@/lib/notification-center/supabase-mirror";
 
 export function generateNotificationApiKey() {
   return `nc_${randomBytes(24).toString("base64url")}`;
@@ -15,8 +25,9 @@ export async function ensureNotificationDefaults() {
     update: {},
     create: { name: "server", description: "默认服务器通知分组", enabled: true },
   });
+  await mirrorNotificationGroup(group);
 
-  await prisma.notificationTemplate.upsert({
+  const telegramTemplate = await prisma.notificationTemplate.upsert({
     where: { id: "default-telegram-template" },
     update: {},
     create: {
@@ -27,8 +38,9 @@ export async function ensureNotificationDefaults() {
       enabled: true,
     },
   });
+  await mirrorNotificationTemplate(telegramTemplate);
 
-  await prisma.notificationTemplate.upsert({
+  const webhookTemplate = await prisma.notificationTemplate.upsert({
     where: { id: "default-webhook-template" },
     update: {},
     create: {
@@ -39,12 +51,16 @@ export async function ensureNotificationDefaults() {
       enabled: true,
     },
   });
+  await mirrorNotificationTemplate(webhookTemplate);
 
   const existingKey = await prisma.notificationApiKey.findFirst({ where: { enabled: true } });
-  if (!existingKey) {
-    await prisma.notificationApiKey.create({
+  if (existingKey) {
+    await mirrorNotificationApiKey(existingKey);
+  } else {
+    const createdKey = await prisma.notificationApiKey.create({
       data: { name: "Default Worker Key", apiKey: generateNotificationApiKey(), enabled: true },
     });
+    await mirrorNotificationApiKey(createdKey);
   }
 
   return group;
@@ -81,6 +97,7 @@ export async function createNotificationFromEvent(input: {
       payload: stringifyJson(input.payload),
     },
   });
+  await mirrorNotificationEvent(event);
 
   const notification = await prisma.notification.create({
     data: {
@@ -92,8 +109,12 @@ export async function createNotificationFromEvent(input: {
       status: "Created",
     },
   });
+  await mirrorNotification(notification);
 
   const channels = await prisma.notificationChannel.findMany({ where: { enabled: true }, orderBy: { createdAt: "asc" } });
+  for (const channel of channels) {
+    await mirrorNotificationChannel(channel);
+  }
   const jobs = [];
 
   for (const channel of channels) {
@@ -102,6 +123,7 @@ export async function createNotificationFromEvent(input: {
       orderBy: { name: "asc" },
     });
     if (!template) continue;
+    await mirrorNotificationTemplate(template);
     jobs.push(
       prisma.queueJob.create({
         data: {
@@ -119,6 +141,7 @@ export async function createNotificationFromEvent(input: {
   if (jobs.length > 0) {
     const createdJobs = await prisma.$transaction(jobs);
     for (const job of createdJobs) {
+      await mirrorQueueJob(job);
       const channel = channels.find((item) => item.id === job.channelId);
       if (!channel) continue;
       const template = await prisma.notificationTemplate.findUnique({ where: { id: job.templateId } });
@@ -152,7 +175,6 @@ export async function createNotificationFromEvent(input: {
 export async function refreshNotificationStatus(notificationId: string) {
   const notification = await prisma.notification.findUnique({
     where: { id: notificationId },
-    select: { status: true },
   });
   if (!notification || notification.status === "Cancelled") return;
 
@@ -169,15 +191,32 @@ export async function refreshNotificationStatus(notificationId: string) {
   else status = "Queued";
 
   if (status !== notification.status) {
-    await prisma.notification.update({ where: { id: notificationId }, data: { status } });
+    const updated = await prisma.notification.update({ where: { id: notificationId }, data: { status } });
+    await mirrorNotification(updated);
+  } else {
+    await mirrorNotification(notification);
   }
 }
 
 export async function cancelNotification(id: string) {
+  const affectedJobs = await prisma.queueJob.findMany({
+    where: { notificationId: id, status: { in: ["Pending", "RetryWaiting"] } },
+    select: { id: true },
+  });
   await prisma.$transaction([
     prisma.queueJob.updateMany({ where: { notificationId: id, status: { in: ["Pending", "RetryWaiting"] } }, data: { status: "DeadLetter", lastError: "Cancelled by user" } }),
+    prisma.pushLedger.updateMany({ where: { notificationId: id, status: { in: ["Pending", "Processing", "RetryWaiting"] } }, data: { status: "Cancelled", error: "Cancelled by user" } }),
     prisma.notification.update({ where: { id }, data: { status: "Cancelled" } }),
   ]);
+
+  const [notification, jobs, ledgers] = await Promise.all([
+    prisma.notification.findUnique({ where: { id } }),
+    prisma.queueJob.findMany({ where: { id: { in: affectedJobs.map((job) => job.id) } } }),
+    prisma.pushLedger.findMany({ where: { notificationId: id }, select: { id: true } }),
+  ]);
+  if (notification) await mirrorNotification(notification);
+  for (const job of jobs) await mirrorQueueJob(job);
+  await mirrorPushLedgersByIds(ledgers.map((ledger) => ledger.id));
 }
 
 export async function retryQueueJob(id: string) {
@@ -185,6 +224,8 @@ export async function retryQueueJob(id: string) {
     where: { id },
     data: { status: "Pending", nextExecuteAt: new Date(), lockedAt: null, lastError: null },
   });
+  await mirrorQueueJob(job);
+  await updatePushLedgerForJob(job.id, "Pending", { error: null, retryCount: job.retryCount });
   await refreshNotificationStatus(job.notificationId);
   return job;
 }

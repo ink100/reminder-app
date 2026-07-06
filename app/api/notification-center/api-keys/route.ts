@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateNotificationApiKey } from "@/lib/notification-center/manager";
+import { mirrorNotificationApiKey } from "@/lib/notification-center/supabase-mirror";
 
 const schema = z.object({ name: z.string().min(1).default("Worker Key"), enabled: z.boolean().optional() });
 
@@ -19,5 +20,6 @@ export async function POST(request: NextRequest) {
   const input = schema.parse(await request.json());
   const apiKey = generateNotificationApiKey();
   const item = await prisma.notificationApiKey.create({ data: { name: input.name, apiKey, enabled: input.enabled ?? true } });
+  await mirrorNotificationApiKey(item);
   return Response.json({ item: { ...item, apiKey } }, { status: 201 });
 }
