@@ -245,6 +245,7 @@ model QueueJob {
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
   sendLogs       SendLog[]
+  pushLedger     PushLedger?
 
   @@index([status])
   @@index([nextExecuteAt])
@@ -309,6 +310,42 @@ model SendLog {
 
   @@index([queueJobId])
   @@index([createdAt])
+}
+
+model PushLedger {
+  id             String    @id @default(cuid())
+  notificationId String?
+  queueJobId     String?   @unique
+  queueJob       QueueJob? @relation(fields: [queueJobId], references: [id], onDelete: SetNull)
+  channelId      String?
+  channelType    String
+  channelName    String
+  target         String?
+  title          String
+  content        String
+  rawPayload     String    @default("{}")
+  businessType   String?
+  businessId     String?
+  status         String    @default("Pending")
+  retryCount     Int       @default(0)
+  attemptCount   Int       @default(0)
+  request        String?
+  response       String?
+  error          String?
+  durationMs     Int?
+  queuedAt       DateTime  @default(now())
+  startedAt      DateTime?
+  sentAt         DateTime?
+  failedAt       DateTime?
+  lastRetryAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([channelType])
+  @@index([businessId])
+  @@index([notificationId])
 }
 
 model WebAuthnChallenge {

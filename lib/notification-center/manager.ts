@@ -2,6 +2,8 @@ import { randomBytes } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 import { parseJsonObject, stringifyJson } from "@/lib/notification-center/types";
+import { createPushLedgerForJob } from "@/lib/notification-center/ledger";
+import { renderTemplate } from "@/lib/notification-center/renderer";
 
 export function generateNotificationApiKey() {
   return `nc_${randomBytes(24).toString("base64url")}`;
@@ -115,7 +117,32 @@ export async function createNotificationFromEvent(input: {
   }
 
   if (jobs.length > 0) {
-    await prisma.$transaction(jobs);
+    const createdJobs = await prisma.$transaction(jobs);
+    for (const job of createdJobs) {
+      const channel = channels.find((item) => item.id === job.channelId);
+      if (!channel) continue;
+      const template = await prisma.notificationTemplate.findUnique({ where: { id: job.templateId } });
+      if (!template) continue;
+      const payload = parseJsonObject(event.payload);
+      const content = renderTemplate(template.content, {
+        title: notification.title,
+        summary: notification.summary ?? "",
+        source: event.source,
+        event_type: event.eventType,
+        payload,
+      });
+      await createPushLedgerForJob({
+        queueJobId: job.id,
+        notificationId: notification.id,
+        channelId: channel.id,
+        channelType: channel.type,
+        channelName: channel.name,
+        channelConfig: channel.config,
+        title: notification.title,
+        content,
+        rawPayload: payload,
+      });
+    }
     await refreshNotificationStatus(notification.id);
   }
 

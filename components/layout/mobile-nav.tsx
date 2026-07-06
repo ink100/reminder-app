@@ -33,6 +33,15 @@ const navItems = [
     ),
   },
   {
+    href: "/push-ledger",
+    label: "台账",
+    icon: (
+      <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6h6v6m-8 4h10a2 2 0 002-2V7.414a2 2 0 00-.586-1.414L15 2.586A2 2 0 0013.586 2H7a2 2 0 00-2 2v15a2 2 0 002 2z" />
+      </svg>
+    ),
+  },
+  {
     href: "/images",
     label: "文件",
     icon: (

@@ -12,6 +12,9 @@ const envSchema = z.object({
   SMTP_PASS: z.string().min(1).optional(),
   SMTP_FROM_EMAIL: z.string().email().optional(),
   SMTP_FROM_NAME: z.string().min(1).optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
@@ -28,6 +31,9 @@ const parsed = envSchema.safeParse({
   SMTP_PASS: process.env.SMTP_PASS,
   SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL,
   SMTP_FROM_NAME: process.env.SMTP_FROM_NAME,
+  SUPABASE_URL: process.env.SUPABASE_URL,
+  SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   NODE_ENV: process.env.NODE_ENV ?? "development",
 });
 
