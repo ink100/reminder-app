@@ -1,66 +1,75 @@
 import { randomBytes } from "node:crypto";
 
-import { prisma } from "@/lib/prisma";
 import { parseJsonObject, stringifyJson } from "@/lib/notification-center/types";
 import { createPushLedgerForJob, updatePushLedgerForJob } from "@/lib/notification-center/ledger";
 import { renderTemplate } from "@/lib/notification-center/renderer";
 import {
-  mirrorNotification,
-  mirrorNotificationApiKey,
-  mirrorNotificationChannel,
-  mirrorNotificationEvent,
-  mirrorNotificationGroup,
-  mirrorNotificationTemplate,
-  mirrorPushLedgersByIds,
-  mirrorQueueJob,
-} from "@/lib/notification-center/supabase-mirror";
+  channelConfigString,
+  eq,
+  ilikeContains,
+  inList,
+  insertRow,
+  newId,
+  NotificationApiKeyRow,
+  NotificationChannelRow,
+  NotificationEventRow,
+  NotificationGroupRow,
+  NotificationRow,
+  NotificationTemplateRow,
+  QueueJobRow,
+  selectOne,
+  selectRows,
+  updateRows,
+  upsertRow,
+} from "@/lib/notification-center/store";
+
+export type NotificationWithContext = NotificationRow & {
+  group?: NotificationGroupRow | null;
+  event?: NotificationEventRow | null;
+};
 
 export function generateNotificationApiKey() {
   return `nc_${randomBytes(24).toString("base64url")}`;
 }
 
 export async function ensureNotificationDefaults() {
-  const group = await prisma.notificationGroup.upsert({
-    where: { name: "server" },
-    update: {},
-    create: { name: "server", description: "默认服务器通知分组", enabled: true },
-  });
-  await mirrorNotificationGroup(group);
+  const existingGroup = await selectOne<NotificationGroupRow>("notification_groups", { filters: { name: eq("server") } });
+  const group = existingGroup
+    ? (await updateRows<NotificationGroupRow>("notification_groups", { id: eq(existingGroup.id) }, { description: existingGroup.description ?? "默认服务器通知分组", enabled: true }))[0] ?? existingGroup
+    : await insertRow<NotificationGroupRow>("notification_groups", {
+        id: "default-server-group",
+        name: "server",
+        description: "默认服务器通知分组",
+        enabled: true,
+      });
 
-  const telegramTemplate = await prisma.notificationTemplate.upsert({
-    where: { id: "default-telegram-template" },
-    update: {},
-    create: {
-      id: "default-telegram-template",
-      name: "默认 Telegram 模板",
-      channelType: "Telegram",
-      content: "**{{title}}**\n\n{{summary}}\n\n事件：{{event_type}}\n来源：{{source}}\nPayload：{{payload}}",
+  await upsertRow<NotificationTemplateRow>("notification_templates", {
+    id: "default-telegram-template",
+    name: "默认 Telegram 模板",
+    channel_type: "Telegram",
+    content: "**{{title}}**\n\n{{summary}}\n\n事件：{{event_type}}\n来源：{{source}}\nPayload：{{payload}}",
+    enabled: true,
+  });
+
+  await upsertRow<NotificationTemplateRow>("notification_templates", {
+    id: "default-webhook-template",
+    name: "默认 Webhook 模板",
+    channel_type: "Webhook",
+    content: "{{json}}",
+    enabled: true,
+  });
+
+  const existingKey = await selectOne<NotificationApiKeyRow>("notification_api_keys", {
+    filters: { enabled: eq(true) },
+    order: "id.desc",
+  });
+  if (!existingKey) {
+    await insertRow<NotificationApiKeyRow>("notification_api_keys", {
+      id: newId("nak"),
+      name: "Default Worker Key",
+      api_key: generateNotificationApiKey(),
       enabled: true,
-    },
-  });
-  await mirrorNotificationTemplate(telegramTemplate);
-
-  const webhookTemplate = await prisma.notificationTemplate.upsert({
-    where: { id: "default-webhook-template" },
-    update: {},
-    create: {
-      id: "default-webhook-template",
-      name: "默认 Webhook 模板",
-      channelType: "Webhook",
-      content: "{{json}}",
-      enabled: true,
-    },
-  });
-  await mirrorNotificationTemplate(webhookTemplate);
-
-  const existingKey = await prisma.notificationApiKey.findFirst({ where: { enabled: true } });
-  if (existingKey) {
-    await mirrorNotificationApiKey(existingKey);
-  } else {
-    const createdKey = await prisma.notificationApiKey.create({
-      data: { name: "Default Worker Key", apiKey: generateNotificationApiKey(), enabled: true },
     });
-    await mirrorNotificationApiKey(createdKey);
   }
 
   return group;
@@ -68,9 +77,9 @@ export async function ensureNotificationDefaults() {
 
 export async function validateNotificationApiKey(apiKey: string | null) {
   if (!apiKey) return null;
-  const record = await prisma.notificationApiKey.findUnique({ where: { apiKey } });
+  const record = await selectOne<NotificationApiKeyRow>("notification_api_keys", { filters: { api_key: eq(apiKey) } });
   if (!record?.enabled) return null;
-  if (record.expiresAt && record.expiresAt <= new Date()) return null;
+  if (record.expires_at && new Date(record.expires_at) <= new Date()) return null;
   return record;
 }
 
@@ -86,110 +95,95 @@ export async function createNotificationFromEvent(input: {
 }) {
   await ensureNotificationDefaults();
 
-  const group = await prisma.notificationGroup.findFirst({ where: { name: input.group, enabled: true } });
-  if (!group) {
-    throw new Error(`通知分组不存在或已禁用：${input.group}`);
-  }
+  const group = await selectOne<NotificationGroupRow>("notification_groups", {
+    filters: { name: eq(input.group), enabled: eq(true) },
+  });
+  if (!group) throw new Error(`通知分组不存在或已禁用：${input.group}`);
 
   const source = input.source || "worker";
   const payload = normalizeNotificationPayload(input.payload, input.dedupeKey);
   if (input.dedupeKey) {
-    const existingEvent = await prisma.notificationEvent.findFirst({
-      where: {
-        source,
-        eventType: input.eventType,
-        payload: { contains: `"dedupe_key":${JSON.stringify(input.dedupeKey)}` },
-      },
-      orderBy: { createdAt: "desc" },
-      include: { notifications: { include: { jobs: true }, orderBy: { createdAt: "desc" }, take: 1 } },
+    const existingEvents = await selectRows<NotificationEventRow>("notification_events", {
+      filters: { source: eq(source), event_type: eq(input.eventType), payload: `cs.{"dedupe_key":"${input.dedupeKey.replaceAll('"', '\\"')}"}` },
+      order: "created_at.desc",
+      limit: 1,
     });
-    const existingNotification = existingEvent?.notifications[0];
-    if (existingNotification) {
-      return { notification: existingNotification, duplicate: true };
+    const existingEvent = existingEvents[0];
+    if (existingEvent) {
+      const existingNotification = await selectOne<NotificationRow>("notifications", {
+        filters: { event_id: eq(existingEvent.id) },
+        order: "created_at.desc",
+      });
+      if (existingNotification) {
+        const jobs = await selectRows<QueueJobRow>("queue_jobs", { filters: { notification_id: eq(existingNotification.id) } });
+        return { notification: { ...existingNotification, jobs }, duplicate: true };
+      }
     }
   }
 
-  const event = await prisma.notificationEvent.create({
-    data: {
-      source,
-      eventType: input.eventType,
-      payload: stringifyJson(payload),
-    },
+  const event = await insertRow<NotificationEventRow>("notification_events", {
+    id: newId("nev"),
+    source,
+    event_type: input.eventType,
+    payload,
   });
-  await mirrorNotificationEvent(event);
 
-  const notification = await prisma.notification.create({
-    data: {
-      eventId: event.id,
-      groupId: group.id,
-      title: input.title,
-      summary: input.summary || null,
-      priority: input.priority ?? 2,
-      status: "Created",
-    },
+  const notification = await insertRow<NotificationRow>("notifications", {
+    id: newId("not"),
+    event_id: event.id,
+    group_id: group.id,
+    title: input.title,
+    summary: input.summary || null,
+    priority: input.priority ?? 2,
+    status: "Created",
   });
-  await mirrorNotification(notification);
 
-  const channels = await prisma.notificationChannel.findMany({ where: { enabled: true }, orderBy: { createdAt: "asc" } });
-  for (const channel of channels) {
-    await mirrorNotificationChannel(channel);
-  }
-  const jobs = [];
+  const channels = await selectRows<NotificationChannelRow>("notification_channels", {
+    filters: { enabled: eq(true) },
+    order: "created_at.asc",
+  });
 
+  const createdJobs: QueueJobRow[] = [];
   for (const channel of channels) {
-    const template = await prisma.notificationTemplate.findFirst({
-      where: { channelType: channel.type, enabled: true },
-      orderBy: { name: "asc" },
+    const template = await selectOne<NotificationTemplateRow>("notification_templates", {
+      filters: { channel_type: eq(channel.type), enabled: eq(true) },
+      order: "name.asc",
     });
     if (!template) continue;
-    await mirrorNotificationTemplate(template);
-    jobs.push(
-      prisma.queueJob.create({
-        data: {
-          notificationId: notification.id,
-          channelId: channel.id,
-          templateId: template.id,
-          priority: input.priority ?? 2,
-          status: "Pending",
-          nextExecuteAt: new Date(),
-        },
-      }),
-    );
+    const job = await insertRow<QueueJobRow>("queue_jobs", {
+      id: newId("qj"),
+      notification_id: notification.id,
+      channel_id: channel.id,
+      template_id: template.id,
+      priority: input.priority ?? 2,
+      status: "Pending",
+      next_execute_at: new Date().toISOString(),
+    });
+    createdJobs.push(job);
+
+    const content = renderTemplate(template.content, {
+      title: notification.title,
+      summary: notification.summary ?? "",
+      source: event.source,
+      event_type: event.event_type,
+      payload: event.payload,
+    });
+    await createPushLedgerForJob({
+      queueJobId: job.id,
+      notificationId: notification.id,
+      channelId: channel.id,
+      channelType: channel.type,
+      channelName: channel.name,
+      channelConfig: channelConfigString(channel),
+      title: notification.title,
+      content,
+      rawPayload: event.payload,
+    });
   }
 
-  if (jobs.length > 0) {
-    const createdJobs = await prisma.$transaction(jobs);
-    for (const job of createdJobs) {
-      await mirrorQueueJob(job);
-      const channel = channels.find((item) => item.id === job.channelId);
-      if (!channel) continue;
-      const template = await prisma.notificationTemplate.findUnique({ where: { id: job.templateId } });
-      if (!template) continue;
-      const payload = parseJsonObject(event.payload);
-      const content = renderTemplate(template.content, {
-        title: notification.title,
-        summary: notification.summary ?? "",
-        source: event.source,
-        event_type: event.eventType,
-        payload,
-      });
-      await createPushLedgerForJob({
-        queueJobId: job.id,
-        notificationId: notification.id,
-        channelId: channel.id,
-        channelType: channel.type,
-        channelName: channel.name,
-        channelConfig: channel.config,
-        title: notification.title,
-        content,
-        rawPayload: payload,
-      });
-    }
-    await refreshNotificationStatus(notification.id);
-  }
-
-  const createdNotification = await prisma.notification.findUniqueOrThrow({ where: { id: notification.id }, include: { jobs: true } });
-  return { notification: createdNotification, duplicate: false };
+  if (createdJobs.length > 0) await refreshNotificationStatus(notification.id);
+  const createdNotification = await getNotificationWithJobs(notification.id);
+  return { notification: createdNotification ?? { ...notification, jobs: createdJobs }, duplicate: false };
 }
 
 function normalizeNotificationPayload(payload: unknown, dedupeKey?: string | null) {
@@ -201,16 +195,10 @@ function normalizeNotificationPayload(payload: unknown, dedupeKey?: string | nul
 }
 
 export async function refreshNotificationStatus(notificationId: string) {
-  const notification = await prisma.notification.findUnique({
-    where: { id: notificationId },
-  });
+  const notification = await selectOne<NotificationRow>("notifications", { filters: { id: eq(notificationId) } });
   if (!notification || notification.status === "Cancelled") return;
 
-  const jobs = await prisma.queueJob.findMany({
-    where: { notificationId },
-    select: { status: true },
-  });
-
+  const jobs = await selectRows<QueueJobRow>("queue_jobs", { filters: { notification_id: eq(notificationId) } });
   let status = "Created";
   if (jobs.length === 0) status = "Created";
   else if (jobs.every((job) => job.status === "Success")) status = "Completed";
@@ -219,56 +207,88 @@ export async function refreshNotificationStatus(notificationId: string) {
   else status = "Queued";
 
   if (status !== notification.status) {
-    const updated = await prisma.notification.update({ where: { id: notificationId }, data: { status } });
-    await mirrorNotification(updated);
-  } else {
-    await mirrorNotification(notification);
+    await updateRows<NotificationRow>("notifications", { id: eq(notificationId) }, { status, updated_at: new Date().toISOString() });
   }
 }
 
 export async function cancelNotification(id: string) {
-  const affectedJobs = await prisma.queueJob.findMany({
-    where: { notificationId: id, status: { in: ["Pending", "RetryWaiting"] } },
-    select: { id: true },
+  const affectedJobs = await selectRows<QueueJobRow>("queue_jobs", {
+    filters: { notification_id: eq(id), status: inList(["Pending", "RetryWaiting"]) },
   });
-  await prisma.$transaction([
-    prisma.queueJob.updateMany({ where: { notificationId: id, status: { in: ["Pending", "RetryWaiting"] } }, data: { status: "DeadLetter", lastError: "Cancelled by user" } }),
-    prisma.pushLedger.updateMany({ where: { notificationId: id, status: { in: ["Pending", "Processing", "RetryWaiting"] } }, data: { status: "Cancelled", error: "Cancelled by user" } }),
-    prisma.notification.update({ where: { id }, data: { status: "Cancelled" } }),
-  ]);
-
-  const [notification, jobs, ledgers] = await Promise.all([
-    prisma.notification.findUnique({ where: { id } }),
-    prisma.queueJob.findMany({ where: { id: { in: affectedJobs.map((job) => job.id) } } }),
-    prisma.pushLedger.findMany({ where: { notificationId: id }, select: { id: true } }),
-  ]);
-  if (notification) await mirrorNotification(notification);
-  for (const job of jobs) await mirrorQueueJob(job);
-  await mirrorPushLedgersByIds(ledgers.map((ledger) => ledger.id));
+  await updateRows<QueueJobRow>("queue_jobs", { notification_id: eq(id), status: inList(["Pending", "RetryWaiting"]) }, {
+    status: "DeadLetter",
+    last_error: "Cancelled by user",
+    updated_at: new Date().toISOString(),
+  });
+  await updateRows("push_ledgers", { notification_id: eq(id), status: inList(["Pending", "Processing", "RetryWaiting"]) }, {
+    status: "Cancelled",
+    error: "Cancelled by user",
+    updated_at: new Date().toISOString(),
+  });
+  await updateRows<NotificationRow>("notifications", { id: eq(id) }, { status: "Cancelled", updated_at: new Date().toISOString() });
+  return { affectedJobs: affectedJobs.length };
 }
 
 export async function retryQueueJob(id: string) {
-  const job = await prisma.queueJob.update({
-    where: { id },
-    data: { status: "Pending", nextExecuteAt: new Date(), lockedAt: null, lastError: null },
+  const rows = await updateRows<QueueJobRow>("queue_jobs", { id: eq(id) }, {
+    status: "Pending",
+    next_execute_at: new Date().toISOString(),
+    locked_at: null,
+    last_error: null,
+    updated_at: new Date().toISOString(),
   });
-  await mirrorQueueJob(job);
-  await updatePushLedgerForJob(job.id, "Pending", { error: null, retryCount: job.retryCount });
-  await refreshNotificationStatus(job.notificationId);
+  const job = rows[0];
+  if (!job) throw new Error("Queue job not found");
+  await updatePushLedgerForJob(job.id, "Pending", { error: null, retryCount: job.retry_count });
+  await refreshNotificationStatus(job.notification_id);
   return job;
 }
 
-export function serializeNotification(notification: {
-  id: string;
-  status: string;
-  title: string;
-  summary: string | null;
-  priority: number;
-  createdAt: Date;
-  updatedAt: Date;
-  group?: { name: string } | null;
-  event?: { source: string; eventType: string; payload: string } | null;
-}) {
+export async function getNotificationWithContext(id: string): Promise<NotificationWithContext | null> {
+  const notification = await selectOne<NotificationRow>("notifications", { filters: { id: eq(id) } });
+  if (!notification) return null;
+  const [group, event] = await Promise.all([
+    selectOne<NotificationGroupRow>("notification_groups", { filters: { id: eq(notification.group_id) } }),
+    notification.event_id ? selectOne<NotificationEventRow>("notification_events", { filters: { id: eq(notification.event_id) } }) : Promise.resolve(null),
+  ]);
+  return { ...notification, group, event };
+}
+
+export async function getNotificationWithJobs(id: string) {
+  const notification = await getNotificationWithContext(id);
+  if (!notification) return null;
+  const jobs = await selectRows<QueueJobRow>("queue_jobs", { filters: { notification_id: eq(id) }, order: "created_at.desc" });
+  return { ...notification, jobs };
+}
+
+export async function listNotifications(input: { status?: string; group?: string; limit: number; offset: number }) {
+  const filters: Record<string, string> = {};
+  if (input.status) filters.status = eq(input.status);
+  if (input.group) {
+    const group = await selectOne<NotificationGroupRow>("notification_groups", { filters: { name: eq(input.group) } });
+    if (!group) return [];
+    filters.group_id = eq(group.id);
+  }
+  const notifications = await selectRows<NotificationRow>("notifications", {
+    filters,
+    order: "created_at.desc",
+    limit: input.limit,
+    offset: input.offset,
+  });
+  const groupIds = [...new Set(notifications.map((item) => item.group_id))];
+  const eventIds = [...new Set(notifications.map((item) => item.event_id).filter((id): id is string => Boolean(id)))];
+  const [groups, events] = await Promise.all([
+    groupIds.length ? selectRows<NotificationGroupRow>("notification_groups", { filters: { id: inList(groupIds) } }) : Promise.resolve([]),
+    eventIds.length ? selectRows<NotificationEventRow>("notification_events", { filters: { id: inList(eventIds) } }) : Promise.resolve([]),
+  ]);
+  return notifications.map((notification) => ({
+    ...notification,
+    group: groups.find((group) => group.id === notification.group_id) ?? null,
+    event: events.find((event) => event.id === notification.event_id) ?? null,
+  }));
+}
+
+export function serializeNotification(notification: NotificationWithContext) {
   return {
     id: notification.id,
     status: notification.status,
@@ -277,9 +297,29 @@ export function serializeNotification(notification: {
     priority: notification.priority,
     group: notification.group?.name ?? null,
     source: notification.event?.source ?? null,
-    event_type: notification.event?.eventType ?? null,
-    payload: notification.event ? parseJsonObject(notification.event.payload) : null,
-    created_at: notification.createdAt.toISOString(),
-    updated_at: notification.updatedAt.toISOString(),
+    event_type: notification.event?.event_type ?? null,
+    payload: notification.event ? parseJsonObject(stringifyJson(notification.event.payload)) : null,
+    created_at: new Date(notification.created_at).toISOString(),
+    updated_at: new Date(notification.updated_at).toISOString(),
   };
+}
+
+export function serializeJob(job: QueueJobRow & { channel?: NotificationChannelRow | null; notification?: NotificationRow | null }) {
+  return {
+    id: job.id,
+    notification_id: job.notification_id,
+    notification_title: job.notification?.title ?? "",
+    channel: job.channel?.name ?? "",
+    type: job.channel?.type ?? "",
+    status: job.status,
+    retry_count: job.retry_count,
+    max_retry: job.max_retry,
+    next_execute_at: new Date(job.next_execute_at).toISOString(),
+    last_error: job.last_error,
+  };
+}
+
+export function notificationPayloadContainsQuery(q: string) {
+  const safe = q.replace(/[(),]/g, " ");
+  return `title.${ilikeContains(safe)},content.${ilikeContains(safe)},target.${ilikeContains(safe)},business_id.${ilikeContains(safe)},error.${ilikeContains(safe)}`;
 }

@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { serializeJob } from "@/lib/notification-center/manager";
+import { eq, NotificationChannelRow, NotificationRow, QueueJobRow, selectOne, selectRows } from "@/lib/notification-center/store";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,11 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const status = url.searchParams.get("status") || undefined;
   const limit = Math.min(Number(url.searchParams.get("limit") || 50), 200);
-  const jobs = await prisma.queueJob.findMany({ where: status ? { status } : {}, include: { channel: true, notification: true }, orderBy: { createdAt: "desc" }, take: limit });
-  return Response.json({ items: jobs.map((job) => ({ id: job.id, notification_id: job.notificationId, notification_title: job.notification.title, channel: job.channel.name, type: job.channel.type, status: job.status, retry_count: job.retryCount, max_retry: job.maxRetry, next_execute_at: job.nextExecuteAt.toISOString(), last_error: job.lastError })) });
+  const jobs = await selectRows<QueueJobRow>("queue_jobs", { filters: status ? { status: eq(status) } : {}, order: "created_at.desc", limit });
+  const items = await Promise.all(jobs.map(async (job) => ({
+    ...job,
+    channel: await selectOne<NotificationChannelRow>("notification_channels", { filters: { id: eq(job.channel_id) } }),
+    notification: await selectOne<NotificationRow>("notifications", { filters: { id: eq(job.notification_id) } }),
+  })));
+  return Response.json({ items: items.map(serializeJob) });
 }

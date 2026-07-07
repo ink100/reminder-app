@@ -1,6 +1,6 @@
 import { requireApiSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { serializeNotification } from "@/lib/notification-center/manager";
+import { getNotificationWithContext, serializeNotification } from "@/lib/notification-center/manager";
+import { eq, NotificationChannelRow, NotificationTemplateRow, QueueJobRow, selectOne, selectRows, SendLogRow } from "@/lib/notification-center/store";
 
 export const runtime = "nodejs";
 
@@ -9,8 +9,31 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;
-  const item = await prisma.notification.findUnique({ where: { id }, include: { group: true, event: true, jobs: { include: { channel: true, template: true, sendLogs: { orderBy: { createdAt: "desc" }, take: 10 } } } } });
+  const item = await getNotificationWithContext(id);
   if (!item) return Response.json({ error: true, code: "NOT_FOUND", message: "Notification not found" }, { status: 404 });
 
-  return Response.json({ item: serializeNotification(item), jobs: item.jobs.map((job) => ({ id: job.id, channel: job.channel.name, type: job.channel.type, status: job.status, retry_count: job.retryCount, max_retry: job.maxRetry, next_execute_at: job.nextExecuteAt.toISOString(), last_error: job.lastError, logs: job.sendLogs.map((log) => ({ id: log.id, result: log.result, duration_ms: log.durationMs, created_at: log.createdAt.toISOString(), response: log.response })) })) });
+  const jobs = await selectRows<QueueJobRow>("queue_jobs", { filters: { notification_id: eq(id) }, order: "created_at.desc" });
+  const enriched = await Promise.all(jobs.map(async (job) => {
+    const [channel, template, logs] = await Promise.all([
+      selectOne<NotificationChannelRow>("notification_channels", { filters: { id: eq(job.channel_id) } }),
+      selectOne<NotificationTemplateRow>("notification_templates", { filters: { id: eq(job.template_id) } }),
+      selectRows<SendLogRow>("send_logs", { filters: { queue_job_id: eq(job.id) }, order: "created_at.desc", limit: 10 }),
+    ]);
+    return { job, channel, template, logs };
+  }));
+
+  return Response.json({
+    item: serializeNotification(item),
+    jobs: enriched.map(({ job, channel, logs }) => ({
+      id: job.id,
+      channel: channel?.name ?? "",
+      type: channel?.type ?? "",
+      status: job.status,
+      retry_count: job.retry_count,
+      max_retry: job.max_retry,
+      next_execute_at: new Date(job.next_execute_at).toISOString(),
+      last_error: job.last_error,
+      logs: logs.map((log) => ({ id: log.id, result: log.result, duration_ms: log.duration_ms, created_at: new Date(log.created_at).toISOString(), response: log.response })),
+    })),
+  });
 }

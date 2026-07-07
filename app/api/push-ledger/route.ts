@@ -1,39 +1,38 @@
 import type { NextRequest } from "next/server";
 
 import { requireApiSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { parseJsonObject } from "@/lib/notification-center/types";
+import { countRows, eq, ilikeContains, PushLedgerRow, selectRows } from "@/lib/notification-center/store";
 
 export const runtime = "nodejs";
 
-function serializeLedger(item: Awaited<ReturnType<typeof prisma.pushLedger.findMany>>[number]) {
+function serializeLedger(item: PushLedgerRow) {
   return {
     id: item.id,
-    notification_id: item.notificationId,
-    queue_job_id: item.queueJobId,
-    channel_id: item.channelId,
-    channel_type: item.channelType,
-    channel_name: item.channelName,
+    notification_id: item.notification_id,
+    queue_job_id: item.queue_job_id,
+    channel_id: item.channel_id,
+    channel_type: item.channel_type,
+    channel_name: item.channel_name,
     target: item.target,
     title: item.title,
     content: item.content,
-    raw_payload: parseJsonObject(item.rawPayload),
-    business_type: item.businessType,
-    business_id: item.businessId,
+    raw_payload: item.raw_payload,
+    business_type: item.business_type,
+    business_id: item.business_id,
     status: item.status,
-    retry_count: item.retryCount,
-    attempt_count: item.attemptCount,
-    request: item.request ? parseJsonObject(item.request) : null,
-    response: item.response ? parseJsonObject(item.response) : null,
+    retry_count: item.retry_count,
+    attempt_count: item.attempt_count,
+    request: item.request,
+    response: item.response,
     error: item.error,
-    duration_ms: item.durationMs,
-    queued_at: item.queuedAt.toISOString(),
-    started_at: item.startedAt?.toISOString() ?? null,
-    sent_at: item.sentAt?.toISOString() ?? null,
-    failed_at: item.failedAt?.toISOString() ?? null,
-    last_retry_at: item.lastRetryAt?.toISOString() ?? null,
-    created_at: item.createdAt.toISOString(),
-    updated_at: item.updatedAt.toISOString(),
+    duration_ms: item.duration_ms,
+    queued_at: new Date(item.queued_at).toISOString(),
+    started_at: item.started_at ? new Date(item.started_at).toISOString() : null,
+    sent_at: item.sent_at ? new Date(item.sent_at).toISOString() : null,
+    failed_at: item.failed_at ? new Date(item.failed_at).toISOString() : null,
+    last_retry_at: item.last_retry_at ? new Date(item.last_retry_at).toISOString() : null,
+    created_at: new Date(item.created_at).toISOString(),
+    updated_at: new Date(item.updated_at).toISOString(),
   };
 }
 
@@ -48,25 +47,14 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(Number(url.searchParams.get("limit") || 50), 200);
   const offset = Number(url.searchParams.get("offset") || 0);
 
-  const where = {
-    ...(status ? { status } : {}),
-    ...(channelType ? { channelType } : {}),
-    ...(q
-      ? {
-          OR: [
-            { title: { contains: q } },
-            { content: { contains: q } },
-            { target: { contains: q } },
-            { businessId: { contains: q } },
-            { error: { contains: q } },
-          ],
-        }
-      : {}),
-  };
+  const filters: Record<string, string> = {};
+  if (status) filters.status = eq(status);
+  if (channelType) filters.channel_type = eq(channelType);
+  const or = q ? `title.${ilikeContains(q)},content.${ilikeContains(q)},target.${ilikeContains(q)},business_id.${ilikeContains(q)},error.${ilikeContains(q)}` : undefined;
 
   const [items, total] = await Promise.all([
-    prisma.pushLedger.findMany({ where, orderBy: { createdAt: "desc" }, take: limit, skip: offset }),
-    prisma.pushLedger.count({ where }),
+    selectRows<PushLedgerRow>("push_ledgers", { filters, or, order: "created_at.desc", limit, offset }),
+    countRows("push_ledgers", { filters, or }),
   ]);
 
   return Response.json({ items: items.map(serializeLedger), total, limit, offset });

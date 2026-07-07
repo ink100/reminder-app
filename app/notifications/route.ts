@@ -1,8 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { requireApiSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { serializeNotification } from "@/lib/notification-center/manager";
+import { listNotifications, serializeNotification } from "@/lib/notification-center/manager";
 
 export const runtime = "nodejs";
 
@@ -16,16 +15,6 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(Number(url.searchParams.get("limit") || 50), 200);
   const offset = Number(url.searchParams.get("offset") || 0);
 
-  const items = await prisma.notification.findMany({
-    where: {
-      ...(status ? { status } : {}),
-      ...(group ? { group: { name: group } } : {}),
-    },
-    include: { group: true, event: true },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    skip: offset,
-  });
-
+  const items = await listNotifications({ status, group, limit, offset });
   return Response.json({ items: items.map(serializeNotification) });
 }
