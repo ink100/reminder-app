@@ -27,9 +27,32 @@ model Reminder {
   updatedAt            DateTime @updatedAt
   deletedAt            DateTime?
   attachments          Attachment[]
+  licenseStoreAccounts LicenseStoreAccount[]
 
   @@index([dueAt])
   @@index([completedAt])
+  @@index([deletedAt])
+}
+
+
+model LicenseStoreAccount {
+  id             String    @id @default(cuid())
+  shopName       String
+  phone          String
+  remoteCode     String
+  remotePassword String
+  isOtherAccount Boolean   @default(false)
+  expiresAt      DateTime
+  activationCode String
+  reminderId     String?
+  reminder       Reminder? @relation(fields: [reminderId], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  @@index([expiresAt])
+  @@index([activationCode])
+  @@index([reminderId])
   @@index([deletedAt])
 }
 
