@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/env", () => ({ env: { SUPABASE_URL: "https://example.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "secret" } }));
 
-import { attachmentStore, createCuid, mapRow, reminderStore } from "@/lib/reminders/store";
+import { attachmentStore, createCuid, imageStore, mapRow, reminderStore, taskRunLogStore, todoStore } from "@/lib/reminders/store";
 
 function jsonResponse(value: unknown) {
   return new Response(JSON.stringify(value), { status: 200, headers: { "content-type": "application/json" } });
@@ -59,5 +59,42 @@ describe("Supabase reminder store", () => {
   it("generates Prisma-compatible CUID v1 identifiers", () => {
     const first = createCuid(1_720_742_400_000); const second = createCuid(1_720_742_400_000);
     expect(first).toMatch(/^c[a-z0-9]{24}$/); expect(second).toMatch(/^c[a-z0-9]{24}$/); expect(first).not.toBe(second);
+  });
+
+  it("applies create defaults and reports a zero-row TaskRunLog update", async () => {
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body));
+        return jsonResponse([{ ...body, started_at: "2026-07-12T00:00:00.000Z", success: false }]);
+      })
+      .mockResolvedValueOnce(jsonResponse([]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const created = await taskRunLogStore.create({ data: { task: "scheduler", startedAt: new Date("2026-07-12T00:00:00.000Z"), success: false } });
+    const createBody = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    expect(createBody.id).toMatch(/^c[a-z0-9]{24}$/);
+    expect(new Date(createBody.created_at)).toBeInstanceOf(Date);
+    expect(createBody.updated_at).toBeUndefined();
+    expect(created.startedAt).toBeInstanceOf(Date);
+
+    await expect(taskRunLogStore.update({ where: { id: created.id }, data: { finishedAt: new Date(), success: true } })).rejects.toThrow("task_run_logs row not found");
+  });
+
+  it("preserves new-model filtering, pagination, count and date semantics", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse([{ id: "t1", created_at: "2026-07-12T00:00:00.000Z", updated_at: "2026-07-12T00:00:01.000Z" }]))
+      .mockResolvedValueOnce(new Response("", { status: 200, headers: { "content-range": "0-0/7" } }))
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse([{ id: "l1", started_at: "2026-07-12T00:00:00.000Z", finished_at: null }]));
+    vi.stubGlobal("fetch", fetchMock);
+    const todos = await todoStore.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "desc" } });
+    expect(todos[0].createdAt).toBeInstanceOf(Date); expect(todos[0].updatedAt).toBeInstanceOf(Date);
+    expect(await imageStore.count({ where: { originalName: { contains: "a%_b" } } })).toBe(7);
+    await imageStore.findMany({ where: { mimetype: { not: { startsWith: "image/" } } }, skip: 20, take: 10 });
+    const imageUrl = new URL(fetchMock.mock.calls[2][0]);
+    expect(imageUrl.searchParams.get("mimetype")).toBe('not.like."image/*"');
+    expect(imageUrl.searchParams.get("offset")).toBe("20"); expect(imageUrl.searchParams.get("limit")).toBe("10");
+    const logs = await taskRunLogStore.findMany({ orderBy: { startedAt: "desc" }, take: 50 });
+    expect(logs[0].startedAt).toBeInstanceOf(Date); expect(logs[0].finishedAt).toBeNull();
   });
 });

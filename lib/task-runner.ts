@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { taskRunLogStore } from "@/lib/reminders/store";
 
 export type TaskRunRecord = {
   id: string;
@@ -11,7 +11,7 @@ export type TaskRunRecord = {
 
 /** 获取最近 50 条任务运行记录 */
 export async function getTaskRunLogs(): Promise<TaskRunRecord[]> {
-  return (await prisma.taskRunLog.findMany({
+  return (await taskRunLogStore.findMany({
     orderBy: { startedAt: "desc" },
     take: 50,
   })).map((item) => ({
@@ -26,7 +26,7 @@ export async function getTaskRunLogs(): Promise<TaskRunRecord[]> {
 
 /** 记录一次任务运行的开始 */
 export async function startTaskRun(task: string): Promise<string> {
-  const record = await prisma.taskRunLog.create({
+  const record = await taskRunLogStore.create({
     data: {
       task,
       startedAt: new Date(),
@@ -38,7 +38,7 @@ export async function startTaskRun(task: string): Promise<string> {
 
 /** 更新任务运行结果 */
 export async function finishTaskRun(id: string, success: boolean, summary: string) {
-  await prisma.taskRunLog.update({
+  await taskRunLogStore.update({
     where: { id },
     data: {
       finishedAt: new Date(),

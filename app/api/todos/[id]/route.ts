@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
+import { todoStore } from "@/lib/reminders/store";
 import { z } from "zod";
 
 const todoUpdateSchema = z.object({
@@ -23,7 +23,7 @@ export async function PATCH(
   const { id } = await params;
 
   try {
-    const existing = await prisma.todo.findFirst({
+    const existing = await todoStore.findFirst({
       where: { id, deletedAt: null },
     });
     if (!existing) {
@@ -38,7 +38,7 @@ export async function PATCH(
       data.completedAt = input.completed ? new Date() : null;
     }
 
-    const todo = await prisma.todo.update({
+    const todo = await todoStore.update({
       where: { id },
       data,
     });
@@ -68,14 +68,14 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const existing = await prisma.todo.findFirst({
+  const existing = await todoStore.findFirst({
     where: { id, deletedAt: null },
   });
   if (!existing) {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
 
-  await prisma.todo.update({
+  await todoStore.update({
     where: { id },
     data: { deletedAt: new Date() },
   });

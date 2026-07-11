@@ -3,8 +3,8 @@ import type { NextRequest } from "next/server";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
-import { uploadToR2 } from "@/lib/r2-storage";
+import { imageStore } from "@/lib/reminders/store";
+import { deleteFromR2, uploadToR2 } from "@/lib/r2-storage";
 import { randomUUID } from "crypto";
 import path from "path";
 
@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
   }
 
   const [total, items] = await Promise.all([
-    prisma.image.count({ where }),
-    prisma.image.findMany({
+    imageStore.count({ where }),
+    imageStore.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
@@ -86,17 +86,25 @@ export async function POST(request: NextRequest) {
     // 上传到 R2
     const { key, url } = await uploadToR2(buffer, originalName, file.type || "application/octet-stream");
 
-    // 保存到数据库
-    const item = await prisma.image.create({
-      data: {
-        filename,
-        originalName,
-        mimetype: file.type || "application/octet-stream",
-        size: file.size,
-        r2Key: key,
-        url,
-      },
-    });
+    // 保存到数据库；失败时补偿删除刚上传的对象，避免产生孤立 R2 文件。
+    let item;
+    try {
+      item = await imageStore.create({
+        data: {
+          filename,
+          originalName,
+          mimetype: file.type || "application/octet-stream",
+          size: file.size,
+          r2Key: key,
+          url,
+        },
+      });
+    } catch (error) {
+      await deleteFromR2(key).catch((cleanupError) => {
+        console.error("数据库写入失败后清理 R2 文件失败:", { key, cleanupError });
+      });
+      throw error;
+    }
 
     return Response.json({ success: true, data: item }, { status: 201 });
   } catch (error) {

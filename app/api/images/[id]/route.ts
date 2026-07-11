@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
+import { imageStore } from "@/lib/reminders/store";
 import { deleteFromR2 } from "@/lib/r2-storage";
 
 export async function DELETE(
@@ -18,7 +18,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const image = await prisma.image.findUnique({
+    const image = await imageStore.findUnique({
       where: { id },
     });
 
@@ -30,7 +30,7 @@ export async function DELETE(
     await deleteFromR2(image.r2Key);
 
     // 软删除数据库记录
-    await prisma.image.update({
+    await imageStore.update({
       where: { id },
       data: { deletedAt: new Date() },
     });

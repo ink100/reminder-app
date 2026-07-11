@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-import type { Attachment, LicenseStoreAccount, Reminder } from "@prisma/client";
+import type { Attachment, Image, LicenseStoreAccount, Reminder, TaskRunLog, Todo } from "@prisma/client";
 import { countRows, eq, insertRow, selectOne, selectRows, updateRows } from "@/lib/notification-center/store";
 
 type Scalar = string | number | boolean | null | Date;
@@ -22,7 +22,7 @@ type Store<T> = {
   updateMany(args: Args): Promise<{ count: number }>;
 };
 
-const dateFields = new Set(["dueAt", "upcomingNotifiedAt", "overdueNotifiedAt", "completedAt", "createdAt", "updatedAt", "deletedAt", "expiresAt"]);
+const dateFields = new Set(["dueAt", "upcomingNotifiedAt", "overdueNotifiedAt", "completedAt", "createdAt", "updatedAt", "deletedAt", "expiresAt", "startedAt", "finishedAt"]);
 const snake = (value: string) => value.replace(/[A-Z]/g, (character) => `_${character.toLowerCase()}`);
 
 export function mapRow<T = Row>(row: Row): T {
@@ -181,4 +181,7 @@ function model<T>(table: string, timestamps = true): Store<T> {
 export const reminderStore = model<Reminder>("reminders");
 export const attachmentStore = model<RelatedReminder<Attachment>>("attachments", false);
 export const licenseStoreAccountStore = model<RelatedReminder<LicenseStoreAccount>>("license_store_accounts");
-export const supabaseModels = { reminder: reminderStore, attachment: attachmentStore, licenseStoreAccount: licenseStoreAccountStore };
+export const todoStore = model<Todo>("todos");
+export const imageStore = model<Image>("images", false);
+export const taskRunLogStore = model<TaskRunLog>("task_run_logs", false);
+export const supabaseModels = { reminder: reminderStore, attachment: attachmentStore, licenseStoreAccount: licenseStoreAccountStore, todo: todoStore, image: imageStore, taskRunLog: taskRunLogStore };

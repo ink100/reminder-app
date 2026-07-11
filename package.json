@@ -19,7 +19,8 @@
     "inventory:sync:owner": "tsx scripts/sync-bmoplus-inventory.ts",
     "inventory:check": "tsx scripts/check-inventory.ts",
     "supabase:notice-manager:apply": "tsx scripts/apply-supabase-notice-manager.ts",
-    "supabase:reminders:migrate": "tsx scripts/migrate-reminders-to-supabase.ts"
+    "supabase:reminders:migrate": "tsx scripts/migrate-reminders-to-supabase.ts",
+    "supabase:todos-images-task-logs:migrate": "tsx scripts/migrate-todos-images-task-logs-to-supabase.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1055.0",

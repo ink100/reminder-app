@@ -1,10 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { todoStore } from "@/lib/reminders/store";
 import { TodoList } from "@/components/todos/todo-list";
 
 export const dynamic = "force-dynamic";
 
 export default async function TodosPage() {
-  const todos = await prisma.todo.findMany({
+  const todos = await todoStore.findMany({
     where: { deletedAt: null },
     orderBy: { createdAt: "desc" },
     take: 200,

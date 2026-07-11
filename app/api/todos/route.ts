@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
+import { todoStore } from "@/lib/reminders/store";
 import { z } from "zod";
 
 const todoCreateSchema = z.object({
@@ -16,7 +16,7 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const todos = await prisma.todo.findMany({
+  const todos = await todoStore.findMany({
     where: { deletedAt: null },
     orderBy: { createdAt: "desc" },
   });
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const input = todoCreateSchema.parse(await request.json());
-    const todo = await prisma.todo.create({
+    const todo = await todoStore.create({
       data: { title: input.title },
     });
 
