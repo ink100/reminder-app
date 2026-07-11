@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { notFound } from "next/navigation";
+import { supabaseModels } from "@/lib/reminders/store";
 
 import { ReminderForm } from "@/components/reminders/reminder-form";
-import { prisma } from "@/lib/prisma";
 import type { ReminderRecurrenceType } from "@/lib/reminder-recurrence";
 
 export default async function EditReminderPage({
@@ -11,8 +12,8 @@ export default async function EditReminderPage({
 }) {
   const { id } = await params;
   const [reminder, attachments] = await Promise.all([
-    prisma.reminder.findUnique({ where: { id } }),
-    prisma.attachment.findMany({
+    supabaseModels.reminder.findUnique({ where: { id } }),
+    supabaseModels.attachment.findMany({
       where: { reminderId: id, deletedAt: null },
       orderBy: { createdAt: "desc" },
     }),
@@ -45,7 +46,7 @@ export default async function EditReminderPage({
           recurrenceType: (reminder.recurrenceType as ReminderRecurrenceType | null) ?? null,
           recurrenceInterval: reminder.recurrenceInterval ?? 1,
         }}
-        attachments={attachments.map((a) => ({
+        attachments={attachments.map((a: any) => ({
           id: a.id,
           originalName: a.originalName,
           mimetype: a.mimetype,

@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
+import { supabaseModels } from "@/lib/reminders/store";
 
 import { prisma } from "@/lib/prisma";
 import { canSendMail, createMailTransport, getMailFrom } from "@/lib/mailer";
@@ -17,7 +19,7 @@ async function main() {
     return;
   }
 
-  const reminders = await prisma.reminder.findMany({
+  const reminders = await supabaseModels.reminder.findMany({
     where: {
       deletedAt: null,
       completedAt: null,
@@ -36,7 +38,7 @@ async function main() {
   let sent = 0;
 
   for (const notification of notifications) {
-    const reminder = reminders.find((item) => item.id === notification.id);
+    const reminder = reminders.find((item: any) => item.id === notification.id);
     if (!reminder) {
       continue;
     }
@@ -66,7 +68,7 @@ async function main() {
         .join("\n"),
     });
 
-    await prisma.reminder.update({
+    await supabaseModels.reminder.update({
       where: { id: reminder.id },
       data:
         notification.kind === "upcoming"

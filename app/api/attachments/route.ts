@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Prisma } from "@prisma/client";
+import { supabaseModels } from "@/lib/reminders/store";
 import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   const session = await requireApiSession();
@@ -30,8 +31,8 @@ export async function GET(request: NextRequest) {
   }
 
   const [total, items] = await Promise.all([
-    prisma.attachment.count({ where }),
-    prisma.attachment.findMany({
+    supabaseModels.attachment.count({ where }),
+    supabaseModels.attachment.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   // 转换为前端需要的格式
-  const formattedItems = items.map((item) => ({
+  const formattedItems = items.map((item: any) => ({
     id: item.id,
     filename: item.filename,
     originalName: item.originalName,

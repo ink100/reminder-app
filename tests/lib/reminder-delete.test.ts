@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { deleteReminderAttachmentObjects, ReminderAttachmentDeleteError } from "@/lib/reminder-delete";
+import { deleteReminderAttachmentObjects } from "@/lib/reminder-delete";
 
 describe("deleteReminderAttachmentObjects", () => {
   it("deletes all reminder attachment objects from storage", async () => {
-    const deleteObject = vi.fn<[string], Promise<void>>().mockResolvedValue(undefined);
+    const deleteObject = vi.fn<(key: string) => Promise<void>>().mockResolvedValue(undefined);
 
     await deleteReminderAttachmentObjects(
       [
@@ -20,7 +20,7 @@ describe("deleteReminderAttachmentObjects", () => {
   });
 
   it("reports failed keys when any storage deletion fails", async () => {
-    const deleteObject = vi.fn<[string], Promise<void>>().mockImplementation(async (key) => {
+    const deleteObject = vi.fn<(key: string) => Promise<void>>().mockImplementation(async (key) => {
       if (key === "files/b.pdf") {
         throw new Error("R2 unavailable");
       }
@@ -34,7 +34,7 @@ describe("deleteReminderAttachmentObjects", () => {
         ],
         deleteObject
       )
-    ).rejects.toMatchObject<Partial<ReminderAttachmentDeleteError>>({
+    ).rejects.toMatchObject({
       failedKeys: ["files/b.pdf"],
     });
 

@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
+import { supabaseModels } from "@/lib/reminders/store";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
 import { reminderInputSchema } from "@/lib/validators/reminder";
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const reminders = await prisma.reminder.findMany({
+  const reminders = await supabaseModels.reminder.findMany({
     where: { deletedAt: null },
     orderBy: { dueAt: "asc" },
   });
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const input = reminderInputSchema.parse(await request.json());
-    const reminder = await prisma.reminder.create({
+    const reminder = await supabaseModels.reminder.create({
       data: {
         title: input.title,
         description: input.description ?? null,

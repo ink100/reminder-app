@@ -1,7 +1,6 @@
 import { deleteFromR2 } from "@/lib/r2-storage";
-import type { prisma as prismaClient } from "@/lib/prisma";
-
-type PrismaClient = typeof prismaClient;
+import { attachmentStore } from "@/lib/reminders/store";
+import { callRpc } from "@/lib/notification-center/store";
 
 type ReminderAttachmentForDelete = {
   id: string;
@@ -40,27 +39,20 @@ export async function deleteReminderAttachmentObjects(
 }
 
 export async function softDeleteReminderWithAttachments(
-  db: PrismaClient,
   reminderId: string,
   deletedAt = new Date()
 ): Promise<{ attachmentCount: number }> {
-  const attachments = await db.attachment.findMany({
+  const attachments = await attachmentStore.findMany({
     where: { reminderId, deletedAt: null },
     select: { id: true, r2Key: true },
   });
 
-  await deleteReminderAttachmentObjects(attachments);
+  await deleteReminderAttachmentObjects(attachments as ReminderAttachmentForDelete[]);
 
-  await db.$transaction([
-    db.attachment.updateMany({
-      where: { reminderId, deletedAt: null },
-      data: { deletedAt },
-    }),
-    db.reminder.update({
-      where: { id: reminderId },
-      data: { deletedAt },
-    }),
-  ]);
+  await callRpc<number>("soft_delete_reminder_with_attachments", {
+    p_reminder_id: reminderId,
+    p_deleted_at: deletedAt.toISOString(),
+  });
 
   return { attachmentCount: attachments.length };
 }

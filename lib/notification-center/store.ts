@@ -137,6 +137,16 @@ export async function deleteRows(table: string, filters: Record<string, string>)
   await parseResponse<null>(response);
 }
 
+export async function callRpc<T>(name: string, body: Record<string, unknown>): Promise<T> {
+  const response = await fetch(endpoint(`rpc/${name}`), {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  return parseResponse<T>(response);
+}
+
 export function eq(value: QueryValue) {
   return `eq.${encodeValue(value)}`;
 }

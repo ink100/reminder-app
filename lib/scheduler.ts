@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
+import { supabaseModels } from "@/lib/reminders/store";
 import { startTaskRun, finishTaskRun } from "@/lib/task-runner";
 
 // ── 类型 ───────────────────────────────
@@ -64,7 +66,7 @@ async function reminderEmailDispatch() {
     return;
   }
 
-  const reminders = await prisma.reminder.findMany({
+  const reminders = await supabaseModels.reminder.findMany({
     where: { deletedAt: null, completedAt: null },
     orderBy: { dueAt: "asc" },
   });
@@ -81,7 +83,7 @@ async function reminderEmailDispatch() {
   const failures: string[] = [];
 
   for (const notification of notifications) {
-    const reminder = reminders.find((item) => item.id === notification.id);
+    const reminder = reminders.find((item: any) => item.id === notification.id);
     if (!reminder) continue;
 
     const subjectPrefix = notification.kind === "upcoming" ? "即将到期提醒" : "已超期提醒";
@@ -134,7 +136,7 @@ async function reminderEmailDispatch() {
       continue;
     }
 
-    await prisma.reminder.update({
+    await supabaseModels.reminder.update({
       where: { id: reminder.id },
       data:
         notification.kind === "upcoming"

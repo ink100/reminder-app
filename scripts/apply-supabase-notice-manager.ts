@@ -10,6 +10,7 @@ loadEnvConfig(process.cwd());
 
 const databaseUrl = process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL || process.env.DATABASE_DIRECT_URL;
 const schemaPath = resolve(process.cwd(), "docs/supabase-notice-manager.sql");
+const caPath = resolve(process.cwd(), "scripts/certs/supabase-root-2021-ca.crt");
 
 // Supabase direct DB endpoints can be IPv6-only. This operational script must
 // use the IPv4-capable Session Pooler configured in SUPABASE_DB_URL.
@@ -29,17 +30,16 @@ if (!existsSync(schemaPath)) {
 async function main() {
   const sql = await readFile(schemaPath, "utf8");
   const url = new URL(databaseUrl!);
-  if (!url.hostname.includes(".pooler.supabase.com")) {
+  if (!url.hostname.endsWith(".pooler.supabase.com")) {
     throw new Error("SUPABASE_DB_URL 必须使用 Supabase IPv4 Session Pooler 连接串，不能使用 db.<project-ref>.supabase.co 直连地址。");
   }
   // Let the explicit ssl option below control certificate handling.
   url.searchParams.delete("sslmode");
 
-  // Supabase Pooler presents a certificate chain not included in this VPS image.
-  // The encrypted connection is still required; do not log the URL or password.
+  const ca = await readFile(caPath, "utf8");
   const client = new Client({
     connectionString: url.toString(),
-    ssl: { rejectUnauthorized: false },
+    ssl: { ca, rejectUnauthorized: true },
     connectionTimeoutMillis: 10_000,
   });
 

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { supabaseModels } from "@/lib/reminders/store";
 
 export const SSL_CERT_REMINDER_TITLE = "SSL 证书到期：daydreams.cn";
 export const SSL_CERT_REMINDER_CATEGORY = "SSL证书";
@@ -44,7 +44,7 @@ export async function syncSslCertificateReminder(expiryInput: string | Date) {
   const description = buildDescription(expiry, normalizedDaysRemaining);
   const priority = getPriority(normalizedDaysRemaining);
 
-  const existing = await prisma.reminder.findFirst({
+  const existing = await supabaseModels.reminder.findFirst({
     where: {
       deletedAt: null,
       category: SSL_CERT_REMINDER_CATEGORY,
@@ -54,7 +54,7 @@ export async function syncSslCertificateReminder(expiryInput: string | Date) {
   });
 
   if (!existing) {
-    const reminder = await prisma.reminder.create({
+    const reminder = await supabaseModels.reminder.create({
       data: {
         title: SSL_CERT_REMINDER_TITLE,
         description,
@@ -94,7 +94,7 @@ export async function syncSslCertificateReminder(expiryInput: string | Date) {
     } satisfies SyncSslCertificateReminderResult;
   }
 
-  const reminder = await prisma.reminder.update({
+  const reminder = await supabaseModels.reminder.update({
     where: { id: existing.id },
     data: {
       description,

@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
+import { supabaseModels } from "@/lib/reminders/store";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
 import { licenseStoreAccountInputSchema } from "@/lib/validators/license-store-account";
 
 const reminderSelect = {
@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/lice
 
   try {
     const { id } = await context.params;
-    const exists = await prisma.licenseStoreAccount.findFirst({
+    const exists = await supabaseModels.licenseStoreAccount.findFirst({
       where: { id, deletedAt: null },
       select: { id: true },
     });
@@ -35,7 +35,7 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/lice
     const reminderId = input.reminderId || null;
 
     if (reminderId) {
-      const reminder = await prisma.reminder.findFirst({
+      const reminder = await supabaseModels.reminder.findFirst({
         where: { id: reminderId, deletedAt: null },
         select: { id: true },
       });
@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/lice
       }
     }
 
-    const item = await prisma.licenseStoreAccount.update({
+    const item = await supabaseModels.licenseStoreAccount.update({
       where: { id },
       data: {
         shopName: input.shopName,
@@ -78,7 +78,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext<"/api/
 
   try {
     const { id } = await context.params;
-    const exists = await prisma.licenseStoreAccount.findFirst({
+    const exists = await supabaseModels.licenseStoreAccount.findFirst({
       where: { id, deletedAt: null },
       select: { id: true },
     });
@@ -87,7 +87,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext<"/api/
       return Response.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.licenseStoreAccount.update({
+    await supabaseModels.licenseStoreAccount.update({
       where: { id },
       data: { deletedAt: new Date() },
     });

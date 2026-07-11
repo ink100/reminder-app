@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
+import { supabaseModels } from "@/lib/reminders/store";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
 import { licenseStoreAccountInputSchema } from "@/lib/validators/license-store-account";
 
 function buildSearchWhere(search: string) {
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams.get("q") ?? "";
 
   const [items, activationReminders] = await Promise.all([
-    prisma.licenseStoreAccount.findMany({
+    supabaseModels.licenseStoreAccount.findMany({
       where: buildSearchWhere(search),
       include: {
         reminder: {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       },
       orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
     }),
-    prisma.reminder.findMany({
+    supabaseModels.reminder.findMany({
       where: {
         deletedAt: null,
         activationCode: { not: null },
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const reminderId = input.reminderId || null;
 
     if (reminderId) {
-      const reminder = await prisma.reminder.findFirst({
+      const reminder = await supabaseModels.reminder.findFirst({
         where: { id: reminderId, deletedAt: null },
         select: { id: true },
       });
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const item = await prisma.licenseStoreAccount.create({
+    const item = await supabaseModels.licenseStoreAccount.create({
       data: {
         shopName: input.shopName,
         phone: input.phone,

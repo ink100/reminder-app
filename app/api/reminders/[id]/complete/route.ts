@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
+import { supabaseModels } from "@/lib/reminders/store";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
 import { buildReminderCompletionUpdate } from "@/lib/reminder-complete";
 
 export async function POST(_request: NextRequest, context: RouteContext<"/api/reminders/[id]/complete">) {
@@ -14,7 +14,7 @@ export async function POST(_request: NextRequest, context: RouteContext<"/api/re
 
   try {
     const { id } = await context.params;
-    const reminder = await prisma.reminder.findFirst({
+    const reminder = await supabaseModels.reminder.findFirst({
       where: { id, deletedAt: null },
     });
 
@@ -34,7 +34,7 @@ export async function POST(_request: NextRequest, context: RouteContext<"/api/re
       recurrenceInterval: reminder.recurrenceInterval,
     });
 
-    const updatedReminder = await prisma.reminder.update({
+    const updatedReminder = await supabaseModels.reminder.update({
       where: { id },
       data: completion.data,
     });

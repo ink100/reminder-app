@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { supabaseModels } from "@/lib/reminders/store";
 import { z } from "zod";
 
 import { requireApiSession } from "@/lib/auth";
 import { normalizeClientKey } from "@/lib/license-key";
-import { prisma } from "@/lib/prisma";
 
 const generateLicenseSchema = z.object({
   clientKey: z.string().transform(normalizeClientKey).pipe(z.string().min(1, "激活码不能为空")),
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   }
 
   const linkedReminder = parsed.data.reminderId
-    ? await prisma.reminder.findFirst({
+    ? await supabaseModels.reminder.findFirst({
         where: { id: parsed.data.reminderId, deletedAt: null },
         select: { id: true },
       })
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 
     if (linkedReminder) {
       const dueAt = buildDueAtFromValidDays(parsed.data.validDays);
-      await prisma.reminder.update({
+      await supabaseModels.reminder.update({
         where: { id: linkedReminder.id },
         data: {
           activationCode: parsed.data.clientKey,

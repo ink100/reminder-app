@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseModels } from "@/lib/reminders/store";
 import { requireApiSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { deleteFromR2 } from "@/lib/r2-storage";
 
 export async function DELETE(
@@ -14,7 +14,7 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    const attachment = await prisma.attachment.findUnique({ where: { id } });
+    const attachment = await supabaseModels.attachment.findUnique({ where: { id } });
 
     if (!attachment || attachment.deletedAt) {
       return NextResponse.json({ error: "附件不存在" }, { status: 404 });
@@ -22,7 +22,7 @@ export async function DELETE(
 
     await deleteFromR2(attachment.r2Key);
 
-    await prisma.attachment.update({
+    await supabaseModels.attachment.update({
       where: { id },
       data: { deletedAt: new Date() },
     });

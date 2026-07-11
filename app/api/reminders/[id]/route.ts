@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
+import { supabaseModels } from "@/lib/reminders/store";
 
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
-import { prisma } from "@/lib/prisma";
 import { ReminderAttachmentDeleteError, softDeleteReminderWithAttachments } from "@/lib/reminder-delete";
 import { reminderInputSchema } from "@/lib/validators/reminder";
 
@@ -14,7 +14,7 @@ export async function GET(_request: NextRequest, context: RouteContext<"/api/rem
   }
 
   const { id } = await context.params;
-  const reminder = await prisma.reminder.findUnique({ where: { id } });
+  const reminder = await supabaseModels.reminder.findUnique({ where: { id } });
 
   if (!reminder || reminder.deletedAt) {
     return Response.json({ error: "Not found" }, { status: 404 });
@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/remi
 
   try {
     const { id } = await context.params;
-    const exists = await prisma.reminder.findFirst({
+    const exists = await supabaseModels.reminder.findFirst({
       where: { id, deletedAt: null },
       select: { id: true },
     });
@@ -42,7 +42,7 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/remi
     }
 
     const input = reminderInputSchema.parse(await request.json());
-    const reminder = await prisma.reminder.update({
+    const reminder = await supabaseModels.reminder.update({
       where: { id },
       data: {
         title: input.title,
@@ -80,7 +80,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext<"/api/
 
   try {
     const { id } = await context.params;
-    const reminder = await prisma.reminder.findFirst({
+    const reminder = await supabaseModels.reminder.findFirst({
       where: { id, deletedAt: null },
       select: { id: true },
     });
@@ -89,7 +89,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext<"/api/
       return Response.json({ error: "Not found" }, { status: 404 });
     }
 
-    const result = await softDeleteReminderWithAttachments(prisma, id);
+    const result = await softDeleteReminderWithAttachments(id);
 
     return Response.json({ success: true, deletedAttachments: result.attachmentCount });
   } catch (error) {
