@@ -8,6 +8,9 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/apps/reminder-app
 Environment=NODE_ENV=production
+# Supabase DNS records include IPv6, but this VPS must connect through IPv4 only.
+# Disable Node's dual-stack family racing and select IPv4 addresses first.
+Environment="NODE_OPTIONS=--dns-result-order=ipv4first --no-network-family-autoselection"
 Environment=PORT=63456
 ExecStart=/home/ubuntu/apps/reminder-app/node_modules/.bin/next start --hostname 127.0.0.1 --port 63456
 Restart=always
