@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 
 // 默认 R2 配置（兜底用）
 const DEFAULTS = {
@@ -24,7 +24,7 @@ export interface R2Config {
  */
 export async function getR2Config(): Promise<R2Config> {
   try {
-    const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+    const settings = await appSettingStore.findUnique({ where: { id: 1 } });
 
     return {
       endpoint: settings?.r2Endpoint || process.env.R2_ENDPOINT || DEFAULTS.endpoint,

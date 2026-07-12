@@ -4,7 +4,7 @@ import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { ensureAppSettings } from "@/lib/bootstrap-settings";
 import { encryptText } from "@/lib/crypto";
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import {
   getEditableTelegramBotSettings,
   getTelegramBotIdentity,
@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const settings = await prisma.appSetting.update({
+    const settings = await appSettingStore.update({
       where: { id: 1 },
       data: {
         telegramBotEnabled: input.enabled,
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     const text = input.message || `✅ ${settings.appName} Telegram Bot 测试通知发送成功。`;
     await sendTelegramMessage({ token, chatId: settings.telegramBotChatId, text });
 
-    const updated = await prisma.appSetting.update({
+    const updated = await appSettingStore.update({
       where: { id: 1 },
       data: {
         telegramBotLastTestAt: new Date(),
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ success: true, item: getEditableTelegramBotSettings(updated) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "测试通知发送失败";
-    const updated = await prisma.appSetting.update({
+    const updated = await appSettingStore.update({
       where: { id: 1 },
       data: {
         telegramBotLastTestAt: new Date(),

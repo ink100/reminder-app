@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import { canSendMail, createMailTransport, getMailFrom } from "@/lib/mailer";
 import { resolveTelegramBotToken, sendTelegramMessage } from "@/lib/telegram-bot";
 import { refreshNotificationStatus } from "@/lib/notification-center/manager";
@@ -103,13 +103,13 @@ async function dispatchOne(jobId: string) {
   try {
     let responsePayload: unknown = {};
     if (job.channel.type === "Telegram") {
-      const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+      const settings = await appSettingStore.findUnique({ where: { id: 1 } });
       const token = typeof config.token === "string" ? config.token : settings ? resolveTelegramBotToken(settings) : null;
       const chatId = typeof config.chatId === "string" ? config.chatId : settings?.telegramBotChatId;
       if (!token || !chatId) throw new Error("Telegram channel missing token/chatId");
       responsePayload = await sendTelegramMessage({ token, chatId, text: message });
     } else if (job.channel.type === "Email") {
-      const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+      const settings = await appSettingStore.findUnique({ where: { id: 1 } });
       if (!settings || !settings.notificationEmail || !canSendMail(settings)) throw new Error("Email channel is not configured");
       const transport = createMailTransport(settings);
       responsePayload = await transport.sendMail({ from: getMailFrom(settings), to: settings.notificationEmail, subject: job.notification.title, text: message });

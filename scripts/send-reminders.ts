@@ -2,12 +2,12 @@
 import "dotenv/config";
 import { supabaseModels } from "@/lib/reminders/store";
 
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import { canSendMail, createMailTransport, getMailFrom } from "@/lib/mailer";
 import { collectReminderNotifications } from "@/lib/reminder-notifications";
 
 async function main() {
-  const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+  const settings = await appSettingStore.findUnique({ where: { id: 1 } });
 
   if (!settings?.emailNotificationsEnabled || !settings.notificationEmail) {
     console.log("skip: email notifications disabled or recipient missing");
@@ -82,11 +82,7 @@ async function main() {
   console.log(`sent ${sent} reminder emails`);
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

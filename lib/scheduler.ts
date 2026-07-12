@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import { supabaseModels } from "@/lib/reminders/store";
 import { startTaskRun, finishTaskRun } from "@/lib/task-runner";
 
@@ -45,12 +45,11 @@ async function watchdogLoop() {
 
 // ── 注册的任务 ───────────────────────────────
 async function reminderEmailDispatch() {
-  const { prisma } = await import("@/lib/prisma");
   const { canSendMail, createMailTransport, getMailFrom } = await import("@/lib/mailer");
   const { collectReminderNotifications } = await import("@/lib/reminder-notifications");
   const { resolveTelegramBotToken, sendTelegramMessage } = await import("@/lib/telegram-bot");
 
-  const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+  const settings = await appSettingStore.findUnique({ where: { id: 1 } });
 
   if (!settings) {
     console.log("[task] skip reminder notifications: settings missing");
@@ -208,7 +207,7 @@ async function botPollDispatch() {
     commandsRegistered = true;
   }
 
-  const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+  const settings = await appSettingStore.findUnique({ where: { id: 1 } });
   if (!settings?.telegramBotEnabled) return;
 
   const token = resolveTelegramBotToken(settings);
@@ -280,7 +279,7 @@ export async function refreshAllTimers() {
   }
   timers.clear();
 
-  const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+  const settings = await appSettingStore.findUnique({ where: { id: 1 } });
   if (!settings) return;
 
   if (!watchdogStarted) {

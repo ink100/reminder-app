@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { ensureAppSettings } from "@/lib/bootstrap-settings";
 import { OTP_SETUP_COOKIE_NAME } from "@/lib/constants/auth";
 import { decryptText, encryptText } from "@/lib/crypto";
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import { createSession } from "@/lib/session";
 import { verifyOtpToken } from "@/lib/otp";
 import { otpCodeSchema } from "@/lib/validators/auth";
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "验证码错误" }, { status: 400 });
   }
 
-  await prisma.appSetting.update({
+  await appSettingStore.update({
     where: { id: 1 },
     data: {
       otpSecretEncrypted: encryptText(secret),

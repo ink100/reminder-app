@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { requireApiSession } from "@/lib/auth";
 import { createMailTransport, getMailFrom } from "@/lib/mailer";
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import { buildTestMail } from "@/lib/test-mail";
 
 const inputSchema = z.object({
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const input = inputSchema.parse(await request.json());
-    const settings = await prisma.appSetting.findUnique({ where: { id: 1 } });
+    const settings = await appSettingStore.findUnique({ where: { id: 1 } });
 
     if (!settings) {
       return Response.json({ error: "配置不存在" }, { status: 404 });

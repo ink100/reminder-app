@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import { getR2Config, testR2Connection } from "@/lib/r2-config";
 
 // 测试 R2 连接
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
 
-    await prisma.appSetting.update({
+    await appSettingStore.update({
       where: { id: 1 },
       data: {
         r2Endpoint: body.endpoint?.trim() || null,

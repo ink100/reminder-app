@@ -5,7 +5,7 @@ import { toApiErrorResponse } from "@/lib/api-error";
 import { ensureAppSettings } from "@/lib/bootstrap-settings";
 import { encryptText } from "@/lib/crypto";
 import { getEditableMailSettings } from "@/lib/mail-settings";
-import { prisma } from "@/lib/prisma";
+import { appSettingStore } from "@/lib/app-settings/store";
 import { refreshAllTimers } from "@/lib/scheduler";
 import { getTaskRunLogs } from "@/lib/task-runner";
 import { settingsInputSchema } from "@/lib/validators/settings";
@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest) {
     const smtpUser = input.smtpUser.trim() || null;
     const smtpFromEmail = input.smtpFromEmail.trim() || null;
     const smtpFromName = input.smtpFromName.trim() || null;
-    const settings = await prisma.appSetting.update({
+    const settings = await appSettingStore.update({
       where: { id: 1 },
       data: {
         appName: input.appName,
