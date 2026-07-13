@@ -11,7 +11,7 @@ export default async function SettingsPage() {
   const [settings, logs] = await Promise.all([ensureAppSettings(), getTaskRunLogs()]);
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <p className="text-sm text-slate-500">配置页面</p>
         <h1 className="text-2xl font-semibold text-slate-950">提醒规则与安全设置</h1>

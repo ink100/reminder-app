@@ -96,7 +96,7 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
     <div className="space-y-3">
       {/* 上传区域 */}
       <div
-        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 p-4 text-sm text-slate-500 hover:border-blue-400 hover:text-blue-500"
+        className="flex min-h-16 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 p-3 text-center text-sm text-slate-500 hover:border-blue-400 hover:text-blue-500 sm:p-4"
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
         onDrop={(e) => { e.preventDefault(); handleUpload(e.dataTransfer.files); }}
@@ -141,9 +141,9 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-center text-xs">
-                    <button onClick={() => copyUrl(att.url)} className="rounded-md bg-blue-50 px-2 py-1.5 text-blue-600 hover:bg-blue-100">复制</button>
-                    <a href={att.url} target="_blank" rel="noopener" className="rounded-md bg-slate-50 px-2 py-1.5 text-slate-600 hover:bg-slate-100">下载</a>
-                    <button onClick={() => handleDelete(att.id)} className="rounded-md bg-red-50 px-2 py-1.5 text-red-500 hover:bg-red-100">删除</button>
+                    <button onClick={() => copyUrl(att.url)} className="min-h-11 rounded-md bg-blue-50 px-2 py-1.5 text-blue-600 hover:bg-blue-100 sm:min-h-9">复制</button>
+                    <a href={att.url} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-50 px-2 py-1.5 text-slate-600 hover:bg-slate-100 sm:min-h-9">下载</a>
+                    <button onClick={() => handleDelete(att.id)} className="min-h-11 rounded-md bg-red-50 px-2 py-1.5 text-red-500 hover:bg-red-100 sm:min-h-9">删除</button>
                   </div>
                 </div>
               </div>
@@ -154,13 +154,13 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
 
       {previewAttachment ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="图片附件预览"
           onClick={() => setPreviewAttachment(null)}
         >
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-slate-900">{previewAttachment.originalName}</p>
@@ -168,7 +168,7 @@ export function FileUpload({ reminderId, attachments: initialAttachments = [], o
               </div>
               <button
                 type="button"
-                className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                className="inline-flex min-h-11 shrink-0 items-center rounded-md px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                 onClick={() => setPreviewAttachment(null)}
               >
                 关闭

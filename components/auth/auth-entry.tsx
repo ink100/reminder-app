@@ -31,7 +31,7 @@ export function AuthEntry({
   );
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-5xl items-center justify-center px-4 py-6 md:py-10 md:px-6">
+    <main className="mx-auto flex min-h-dvh max-w-5xl items-center justify-center px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] min-[360px]:px-4 md:px-6 md:py-10">
       <div className="flex w-full flex-col gap-6 md:flex-row md:gap-8">
         {/* Description — hidden on mobile to save space */}
         <section className="hidden flex-col justify-center rounded-2xl bg-slate-950 p-6 text-white shadow-xl md:flex md:w-[55%] md:rounded-3xl md:p-8">
@@ -54,7 +54,7 @@ export function AuthEntry({
               type="button"
               onClick={() => setMethod("passkey")}
               className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium transition-colors",
+                "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition-colors min-[360px]:px-3",
                 method === "passkey"
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-600 active:bg-white/50"
@@ -69,7 +69,7 @@ export function AuthEntry({
               type="button"
               onClick={() => setMethod("otp")}
               className={cn(
-                "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium transition-colors",
+                "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition-colors min-[360px]:px-3",
                 method === "otp"
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-600 active:bg-white/50"

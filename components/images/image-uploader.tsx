@@ -128,7 +128,7 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     <div className="space-y-4">
       {/* 上传区域 */}
       <div
-        className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
+        className={`cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all sm:p-8 ${
           isDragging
             ? "border-blue-500 bg-blue-50"
             : "border-slate-300 hover:border-blue-400 hover:bg-slate-50"
@@ -184,20 +184,20 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       {/* 上传成功后的 URL 回显 */}
       {uploadedFiles.length > 0 && (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-sm font-semibold text-green-800">
               ✅ 上传成功 ({uploadedFiles.length} 个文件)
             </h3>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex">
               <button
                 onClick={copyAllUrls}
-                className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
+                className="min-h-11 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 sm:min-h-0"
               >
                 {copiedId === "all" ? "✓ 已复制" : "复制全部链接"}
               </button>
               <button
                 onClick={() => setUploadedFiles([])}
-                className="rounded-lg border border-green-300 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100"
+                className="min-h-11 rounded-lg border border-green-300 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 sm:min-h-0"
               >
                 关闭
               </button>
@@ -208,7 +208,7 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
             {uploadedFiles.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center gap-3 rounded-lg bg-white p-3 border border-green-100"
+                className="flex min-w-0 flex-col gap-3 rounded-lg border border-green-100 bg-white p-3 sm:flex-row sm:items-center"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-700 truncate">
@@ -218,22 +218,22 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
                     {file.url}
                   </p>
                 </div>
-                <div className="flex gap-1 shrink-0">
+                <div className="grid w-full shrink-0 grid-cols-3 gap-1 sm:w-auto sm:flex">
                   <button
                     onClick={() => copyUrl(file.url, file.id)}
-                    className="rounded-md bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200"
+                    className="min-h-11 rounded-md bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 sm:min-h-0"
                   >
                     {copiedId === file.id ? "✓" : "URL"}
                   </button>
                   <button
                     onClick={() => copyUrl(`![image](${file.url})`, `md-${file.id}`)}
-                    className="rounded-md bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200"
+                    className="min-h-11 rounded-md bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 sm:min-h-0"
                   >
                     {copiedId === `md-${file.id}` ? "✓" : "MD"}
                   </button>
                   <button
                     onClick={() => copyUrl(`<img src="${file.url}" />`, `html-${file.id}`)}
-                    className="rounded-md bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200"
+                    className="min-h-11 rounded-md bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 sm:min-h-0"
                   >
                     {copiedId === `html-${file.id}` ? "✓" : "HTML"}
                   </button>

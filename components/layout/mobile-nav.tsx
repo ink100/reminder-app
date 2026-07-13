@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -98,29 +99,179 @@ const navItems = [
   },
 ];
 
+const primaryItems = navItems.slice(0, 4);
+const moreItems = navItems.slice(4);
+const moreDialogId = "mobile-more-navigation-dialog";
+const focusableSelector = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+function matchesPath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function MobileNav() {
   const pathname = usePathname();
+  const [openAtPath, setOpenAtPath] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const moreTriggerRef = useRef<HTMLButtonElement>(null);
+  const moreOpen = openAtPath === pathname;
+
+  useEffect(() => {
+    if (!moreOpen) return;
+
+    const originalBodyOverflow = document.body.style.overflow;
+    const moreTrigger = moreTriggerRef.current;
+    document.body.style.overflow = "hidden";
+
+    const dialog = dialogRef.current;
+    const initialFocus =
+      dialog?.querySelector<HTMLElement>('[aria-current="page"]') ?? closeButtonRef.current;
+    initialFocus?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpenAtPath(null);
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialog) return;
+
+      const focusableElements = Array.from(
+        dialog.querySelectorAll<HTMLElement>(focusableSelector),
+      ).filter((element) => element.getClientRects().length > 0);
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && (activeElement === firstElement || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && (activeElement === lastElement || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalBodyOverflow;
+      moreTrigger?.focus();
+    };
+  }, [moreOpen]);
+
+  const moreIsActive = moreItems.some((item) => matchesPath(pathname, item.href));
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white md:hidden">
-      <div className="flex items-center justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/reminders" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[11px] transition-colors",
-                isActive ? "text-blue-600" : "text-slate-400"
-              )}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      {moreOpen ? (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <button
+            type="button"
+            aria-label="关闭更多导航"
+            className="absolute inset-0 size-full bg-slate-950/40"
+            onClick={() => setOpenAtPath(null)}
+          />
+          <section
+            id={moreDialogId}
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="更多导航"
+            className="absolute inset-x-2 bottom-[max(0.75rem,env(safe-area-inset-bottom))] max-h-[min(70dvh,28rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl min-[360px]:inset-x-4"
+          >
+            <div className="mb-2 flex min-h-11 items-center justify-between px-2">
+              <h2 className="font-semibold text-slate-900">更多</h2>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                aria-label="关闭更多导航"
+                className="flex size-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100"
+                onClick={() => setOpenAtPath(null)}
+              >
+                <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {moreItems.map((item) => {
+                const isActive = matchesPath(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => setOpenAtPath(null)}
+                    className={cn(
+                      "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                      isActive ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50"
+                    )}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur md:hidden" aria-label="主导航">
+        <div className="grid grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)] pt-1">
+          {primaryItems.map((item) => {
+            const isActive = matchesPath(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex min-h-[3.75rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[11px] transition-colors",
+                  isActive ? "text-blue-600" : "text-slate-500"
+                )}
+              >
+                {item.icon}
+                <span className="truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+          <button
+            ref={moreTriggerRef}
+            type="button"
+            aria-expanded={moreOpen}
+            aria-controls={moreDialogId}
+            aria-label="打开更多导航"
+            onClick={() => setOpenAtPath(pathname)}
+            className={cn(
+              "flex min-h-[3.75rem] min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[11px] transition-colors",
+              moreIsActive || moreOpen ? "text-blue-600" : "text-slate-500"
+            )}
+          >
+            <svg className="size-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5" cy="12" r="1.75" />
+              <circle cx="12" cy="12" r="1.75" />
+              <circle cx="19" cy="12" r="1.75" />
+            </svg>
+            <span>更多</span>
+          </button>
+        </div>
+      </nav>
+    </>
   );
 }

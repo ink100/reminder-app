@@ -92,6 +92,7 @@ export function LicenseStoreAccountTable() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [revealedCredentialIds, setRevealedCredentialIds] = useState<Set<string>>(() => new Set());
   const [message, setMessage] = useState<string | null>(null);
 
   const selectedReminder = useMemo(
@@ -140,6 +141,24 @@ export function LicenseStoreAccountTable() {
   function resetForm() {
     setForm(emptyForm);
     setEditingId(null);
+  }
+
+  function startEditing(item: StoreAccount) {
+    setEditingId(item.id);
+    setForm(buildFormFromItem(item));
+    setMessage(`正在编辑：${item.shopName}`);
+  }
+
+  function toggleCredentialVisibility(itemId: string) {
+    setRevealedCredentialIds((current) => {
+      const next = new Set(current);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -197,7 +216,7 @@ export function LicenseStoreAccountTable() {
   }
 
   return (
-    <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+    <section className="min-w-0 space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm text-slate-500">店铺账号维护</p>
@@ -207,7 +226,7 @@ export function LicenseStoreAccountTable() {
           </p>
         </div>
         <form
-          className="flex gap-2"
+          className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2 md:w-auto"
           onSubmit={(event) => {
             event.preventDefault();
             void loadItems(search);
@@ -218,7 +237,7 @@ export function LicenseStoreAccountTable() {
         </form>
       </div>
 
-      <form className="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleSubmit}>
+      <form className="grid min-w-0 gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-4" onSubmit={handleSubmit}>
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600">店铺名</label>
           <Input value={form.shopName} onChange={(event) => updateForm("shopName", event.target.value)} placeholder="店铺名" />
@@ -242,7 +261,7 @@ export function LicenseStoreAccountTable() {
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-600">关联激活码提醒</label>
           <select
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400"
+            className="min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 md:min-h-0"
             value={form.reminderId}
             onChange={(event) => handleReminderChange(event.target.value)}
           >
@@ -258,7 +277,7 @@ export function LicenseStoreAccountTable() {
           <label className="text-xs font-medium text-slate-600">对应激活码</label>
           <Input value={form.activationCode} onChange={(event) => updateForm("activationCode", event.target.value)} placeholder="选择提醒后会自动填入，也可手动维护" />
         </div>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex min-h-11 items-center gap-2 text-sm text-slate-700 md:min-h-0">
           <input
             type="checkbox"
             checked={form.isOtherAccount}
@@ -267,22 +286,72 @@ export function LicenseStoreAccountTable() {
           是否他人账号
         </label>
         {selectedReminder ? (
-          <p className="text-xs text-slate-500 md:col-span-2 xl:col-span-3">
+          <p className="break-words text-xs text-slate-500 md:col-span-2 xl:col-span-3">
             当前关联：{selectedReminder.title}，提醒到期 {formatDateTime(selectedReminder.dueAt)}。
           </p>
         ) : null}
-        <div className="flex flex-wrap gap-2 md:col-span-2 xl:col-span-4">
-          <Button type="submit" disabled={saving}>{saving ? "保存中..." : editingId ? "保存修改" : "新增店铺账号"}</Button>
+        <div className="grid gap-2 border-t border-slate-200 pt-3 sm:flex sm:flex-wrap md:col-span-2 xl:col-span-4">
+          <Button className="min-h-11 w-full sm:w-auto" type="submit" disabled={saving}>{saving ? "保存中..." : editingId ? "保存修改" : "新增店铺账号"}</Button>
           {editingId ? (
-            <Button type="button" className="bg-slate-200 text-slate-700 hover:bg-slate-300" onClick={resetForm} disabled={saving}>
+            <Button type="button" className="min-h-11 w-full bg-slate-200 text-slate-700 hover:bg-slate-300 sm:w-auto" onClick={resetForm} disabled={saving}>
               取消编辑
             </Button>
           ) : null}
-          <p className="min-h-5 self-center text-sm text-slate-500">{message}</p>
+          <p className="min-h-5 break-words text-sm text-slate-500 sm:self-center">{message}</p>
         </div>
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <div className="space-y-3 md:hidden">
+        {items.map((item) => {
+          const remainingDays = getRemainingDays(item.expiresAt);
+          const isExpired = remainingDays !== null && remainingDays < 0;
+          const isExpiringSoon = remainingDays !== null && remainingDays >= 0 && remainingDays <= 7;
+          const credentialsRevealed = revealedCredentialIds.has(item.id);
+          return (
+            <article key={item.id} className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="break-words font-semibold text-slate-900">{item.shopName}</h3>
+                  <p className={isExpired ? "text-sm text-red-600" : isExpiringSoon ? "text-sm text-amber-600" : "text-sm text-slate-600"}>
+                    {formatDateTime(item.expiresAt)}
+                  </p>
+                  {remainingDays !== null ? <p className="text-xs text-slate-500">{isExpired ? `已过期 ${Math.abs(remainingDays)} 天` : `剩余 ${remainingDays} 天`}</p> : null}
+                </div>
+                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{item.isOtherAccount ? "他人账号" : "自有账号"}</span>
+              </div>
+              <dl className="mt-4 grid grid-cols-[5rem_minmax(0,1fr)] gap-x-2 gap-y-2 text-sm">
+                <dt className="text-slate-500">手机号</dt><dd className="break-all text-slate-800">{item.phone}</dd>
+                <dt className="text-slate-500">远程码</dt><dd className="break-all text-slate-800">{credentialsRevealed ? item.remoteCode : "••••••••"}</dd>
+                <dt className="text-slate-500">远程密码</dt><dd className="break-all font-mono text-slate-800">{credentialsRevealed ? item.remotePassword : "••••••••"}</dd>
+                <dt className="text-slate-500">激活码</dt><dd className="break-all text-sky-700">{credentialsRevealed ? item.activationCode : "••••••••"}</dd>
+                <dt className="text-slate-500">关联提醒</dt>
+                <dd className="min-w-0 break-words">
+                  {item.reminder ? <Link className="text-sky-600" href={`/reminders/${item.reminder.id}/edit`}>{item.reminder.title}</Link> : <span className="text-slate-400">未关联</span>}
+                </dd>
+              </dl>
+              <button
+                type="button"
+                className="mt-3 flex min-h-11 w-full items-center justify-center rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                aria-expanded={credentialsRevealed}
+                aria-label={`${credentialsRevealed ? "隐藏" : "显示"}${item.shopName}的远程密码和激活码`}
+                onClick={() => toggleCredentialVisibility(item.id)}
+              >
+                {credentialsRevealed ? "隐藏凭据" : "显示凭据"}
+              </button>
+              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                <Button type="button" className="min-h-11 bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={() => startEditing(item)}>编辑</Button>
+                <Button type="button" className="min-h-11 bg-red-600 hover:bg-red-700" disabled={deletingId === item.id} onClick={() => void handleDelete(item)}>
+                  {deletingId === item.id ? "删除中" : "删除"}
+                </Button>
+              </div>
+            </article>
+          );
+        })}
+        {!loading && items.length === 0 ? <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">暂无店铺账号记录</div> : null}
+        {loading ? <div className="rounded-lg border border-slate-200 p-6 text-center text-sm text-slate-500">加载中...</div> : null}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-lg border border-slate-200 md:block">
         <table className="min-w-[1100px] w-full divide-y divide-slate-200 text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
@@ -330,11 +399,7 @@ export function LicenseStoreAccountTable() {
                       <Button
                         type="button"
                         className="bg-slate-100 px-3 py-1.5 text-slate-700 hover:bg-slate-200"
-                        onClick={() => {
-                          setEditingId(item.id);
-                          setForm(buildFormFromItem(item));
-                          setMessage(`正在编辑：${item.shopName}`);
-                        }}
+                        onClick={() => startEditing(item)}
                       >
                         编辑
                       </Button>

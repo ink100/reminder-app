@@ -99,11 +99,11 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
 
   return (
     <div className="group rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm">
-      <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
         {/* Main content */}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+            <h3 className="min-w-0 break-words text-sm font-semibold text-slate-900">{title}</h3>
             <span
               className={cn(
                 "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium",
@@ -117,8 +117,8 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
               {reminderRiskLabels[riskLevel]}
             </span>
           </div>
-          {activationCode ? <p className="mt-1 text-xs text-sky-600">激活码：{activationCode}</p> : null}
-          {activationContact ? <p className="mt-1 text-xs text-sky-600">联系方式：{activationContact}</p> : null}
+          {activationCode ? <p className="mt-1 break-all text-xs text-sky-600">激活码：{activationCode}</p> : null}
+          {activationContact ? <p className="mt-1 break-all text-xs text-sky-600">联系方式：{activationContact}</p> : null}
           <p className="mt-1 text-xs text-slate-400">
             {category ?? "未分类"} · {priorityLabels[priority] ?? priority}
           </p>
@@ -126,7 +126,7 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
         </div>
 
         {/* Time — right aligned, merged format */}
-        <div className="shrink-0 text-right">
+        <div className="shrink-0 text-left sm:text-right">
           <p className="text-xs text-slate-400">
             {dueAtDate.toLocaleString("zh-CN", {
               year: "numeric",
@@ -140,10 +140,10 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
         </div>
 
         {/* Actions — always visible on mobile, hover-reveal on desktop */}
-        <div className="flex shrink-0 items-center gap-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+        <div className="flex shrink-0 items-center justify-end gap-1 border-t border-slate-100 pt-2 sm:border-0 sm:pt-0 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
           {activationCode ? (
             <Link
-              className="rounded-md p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-600"
+              className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-sky-50 hover:text-sky-600 sm:size-9"
               href={`/license-key?clientKey=${encodeURIComponent(activationCode)}&reminderId=${encodeURIComponent(id)}&validDays=${remainingValidDays}`}
               aria-label="生成密匙"
             >
@@ -153,7 +153,7 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
             </Link>
           ) : null}
           <Link
-            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 sm:size-9"
             href={`/reminders/${id}/edit`}
             aria-label="编辑"
           >
@@ -162,7 +162,7 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
             </svg>
           </Link>
           <button
-            className="rounded-md p-1.5 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-30"
+            className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-30 sm:size-9"
             type="button"
             onClick={handleComplete}
             disabled={submitting || riskLevel === "completed"}
@@ -175,7 +175,7 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
           <AlertDialog
             trigger={
               <button
-                className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-30"
+                className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-30 sm:size-9"
                 type="button"
                 disabled={deleting}
                 aria-label="删除"

@@ -58,7 +58,7 @@ export function OtpLoginForm({ redirectTo = "/reminders" }: OtpLoginFormProps) {
 
   return (
     <form
-      className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+      className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm min-[360px]:p-5 md:p-6"
       onSubmit={handleSubmit}
     >
       <div>
@@ -68,9 +68,13 @@ export function OtpLoginForm({ redirectTo = "/reminders" }: OtpLoginFormProps) {
         </p>
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">6 位动态验证码</label>
+        <label htmlFor="otp-login-code" className="text-sm font-medium text-slate-700">6 位动态验证码</label>
         <Input
+          id="otp-login-code"
+          name="code"
+          autoComplete="one-time-code"
           inputMode="numeric"
+          pattern="[0-9]*"
           maxLength={6}
           placeholder="123456"
           value={code}

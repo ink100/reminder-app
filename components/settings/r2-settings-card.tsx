@@ -62,49 +62,49 @@ export function R2SettingsCard({ initialValues }: R2SettingsProps) {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-slate-950">图床存储配置（R2）</h2>
       <p className="mt-1 text-sm text-slate-500">配置 Cloudflare R2 对象存储，用于文件上传和图床功能。</p>
 
       <div className="mt-4 space-y-3">
         <div>
           <label className="text-sm font-medium text-slate-700">Endpoint</label>
-          <input className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://xxx.r2.cloudflarestorage.com" />
+          <input className="mt-1 min-h-11 w-full rounded-md border border-slate-200 px-3 py-2 text-sm md:min-h-0" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} placeholder="https://xxx.r2.cloudflarestorage.com" />
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <div>
             <label className="text-sm font-medium text-slate-700">Access Key ID</label>
-            <input className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={accessKey} onChange={(e) => setAccessKey(e.target.value)} placeholder="R2 Access Key" />
+            <input className="mt-1 min-h-11 w-full rounded-md border border-slate-200 px-3 py-2 text-sm md:min-h-0" value={accessKey} onChange={(e) => setAccessKey(e.target.value)} placeholder="R2 Access Key" />
           </div>
           <div>
             <label className="text-sm font-medium text-slate-700">Secret Access Key</label>
-            <input type="password" className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} placeholder="R2 Secret Key" />
+            <input type="password" className="mt-1 min-h-11 w-full rounded-md border border-slate-200 px-3 py-2 text-sm md:min-h-0" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} placeholder="R2 Secret Key" />
           </div>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <div>
             <label className="text-sm font-medium text-slate-700">Bucket</label>
-            <input className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={bucket} onChange={(e) => setBucket(e.target.value)} placeholder="storage-r2-1" />
+            <input className="mt-1 min-h-11 w-full rounded-md border border-slate-200 px-3 py-2 text-sm md:min-h-0" value={bucket} onChange={(e) => setBucket(e.target.value)} placeholder="storage-r2-1" />
           </div>
           <div>
             <label className="text-sm font-medium text-slate-700">公开访问域名</label>
-            <input className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={publicUrl} onChange={(e) => setPublicUrl(e.target.value)} placeholder="https://img.daydreams.cn" />
+            <input className="mt-1 min-h-11 w-full rounded-md border border-slate-200 px-3 py-2 text-sm md:min-h-0" value={publicUrl} onChange={(e) => setPublicUrl(e.target.value)} placeholder="https://img.daydreams.cn" />
           </div>
         </div>
         <div>
           <label className="text-sm font-medium text-slate-700">Cache-Control</label>
-          <input className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={cacheControl} onChange={(e) => setCacheControl(e.target.value)} placeholder="public, max-age=86400" />
+          <input className="mt-1 min-h-11 w-full rounded-md border border-slate-200 px-3 py-2 text-sm md:min-h-0" value={cacheControl} onChange={(e) => setCacheControl(e.target.value)} placeholder="public, max-age=86400" />
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
-        <button onClick={handleTest} disabled={testing} className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button onClick={handleTest} disabled={testing} className="min-h-11 w-full rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50 sm:w-auto md:min-h-0">
           {testing ? "测试中..." : "测试连接"}
         </button>
-        <button onClick={handleSave} disabled={saving} className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-50">
+        <button onClick={handleSave} disabled={saving} className="min-h-11 w-full rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-50 sm:w-auto md:min-h-0">
           {saving ? "保存中..." : "保存配置"}
         </button>
-        {message && <span className="text-sm">{message}</span>}
+        {message && <span className="break-words text-sm">{message}</span>}
       </div>
     </div>
   );

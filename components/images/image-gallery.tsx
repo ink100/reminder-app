@@ -106,7 +106,7 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
       {files.map((file) => (
         <div
           key={file.id}
@@ -161,7 +161,7 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
                 e.stopPropagation();
                 copyLink(file);
               }}
-              className="rounded-md bg-blue-50 px-2 py-1.5 font-medium text-blue-600 hover:bg-blue-100"
+              className="inline-flex min-h-11 items-center justify-center rounded-md bg-blue-50 px-2 py-1.5 font-medium text-blue-600 hover:bg-blue-100 sm:min-h-9"
             >
               {copiedId === file.id ? "已复制" : "复制"}
             </button>
@@ -170,7 +170,7 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="rounded-md bg-slate-50 px-2 py-1.5 font-medium text-slate-600 hover:bg-slate-100"
+              className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-50 px-2 py-1.5 font-medium text-slate-600 hover:bg-slate-100 sm:min-h-9"
             >
               下载
             </a>
@@ -179,7 +179,7 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
                 e.stopPropagation();
                 onDelete(file.id);
               }}
-              className="rounded-md bg-red-50 px-2 py-1.5 font-medium text-red-500 hover:bg-red-100"
+              className="inline-flex min-h-11 items-center justify-center rounded-md bg-red-50 px-2 py-1.5 font-medium text-red-500 hover:bg-red-100 sm:min-h-9"
             >
               删除
             </button>
@@ -190,13 +190,13 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
 
       {previewFile ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="图片预览"
           onClick={() => setPreviewFile(null)}
         >
-          <div className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl overflow-hidden rounded-xl bg-white shadow-2xl sm:max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-slate-900">{previewFile.originalName}</p>
@@ -204,7 +204,7 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
               </div>
               <button
                 type="button"
-                className="rounded-md px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                className="inline-flex min-h-11 shrink-0 items-center rounded-md px-3 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                 onClick={() => setPreviewFile(null)}
               >
                 关闭

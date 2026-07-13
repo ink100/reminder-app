@@ -53,7 +53,7 @@ const cards = [
 
 export function ReminderStats(props: ReminderStatsProps) {
   return (
-    <div className="grid grid-cols-5 gap-2 md:gap-3">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 md:gap-3">
       {cards.map((card) => {
         const isActive = props.activeKey === card.key;
 
@@ -63,7 +63,7 @@ export function ReminderStats(props: ReminderStatsProps) {
             type="button"
             onClick={() => props.onSelect(card.key)}
             className={cn(
-              "relative overflow-hidden rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:shadow-md md:p-4",
+              "relative min-h-20 overflow-hidden rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:shadow-md md:p-4",
               isActive && "border-slate-400 ring-2 ring-slate-900/10",
             )}
           >

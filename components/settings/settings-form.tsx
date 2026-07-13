@@ -183,20 +183,20 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
   }
 
   return (
-    <form className="space-y-4 rounded-xl border border-slate-200 bg-white p-6" onSubmit={handleSubmit}>
+    <form className="min-w-0 space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-6" onSubmit={handleSubmit}>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">系统名称</label>
-          <Input value={appName} onChange={(e) => setAppName(e.target.value)} required />
+          <Input value={appName} onChange={(e) => setAppName(e.target.value)} className="md:min-h-0" required />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">时区</label>
-          <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} required />
+          <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} className="md:min-h-0" required />
         </div>
       </div>
 
       <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-700 md:min-h-0">
           <input
             type="checkbox"
             checked={emailNotificationsEnabled}
@@ -209,6 +209,7 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
           <Input
             type="email"
             value={notificationEmail}
+            className="md:min-h-0"
             onChange={(e) => setNotificationEmail(e.target.value)}
             placeholder="name@example.com"
           />
@@ -218,13 +219,14 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
           <Input
             type="email"
             value={testEmail}
+            className="md:min-h-0"
             onChange={(e) => setTestEmail(e.target.value)}
             placeholder="留空则使用提醒接收邮箱"
           />
-          <div className="flex justify-end">
+          <div className="flex justify-stretch sm:justify-end">
             <Button
               type="button"
-              className="bg-white text-slate-900 ring-1 ring-slate-200 hover:bg-slate-100"
+              className="min-h-11 w-full bg-white text-slate-900 ring-1 ring-slate-200 hover:bg-slate-100 sm:w-auto md:min-h-0"
               disabled={testingEmail}
               onClick={handleTestEmail}
             >
@@ -243,21 +245,22 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">SMTP Host</label>
-            <Input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="smtp.example.com" />
+            <Input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} className="md:min-h-0" placeholder="smtp.example.com" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">SMTP Port</label>
-            <Input value={smtpPort} type="number" min={1} max={65535} onChange={(e) => setSmtpPort(e.target.value)} placeholder="587" />
+            <Input value={smtpPort} type="number" min={1} max={65535} onChange={(e) => setSmtpPort(e.target.value)} className="md:min-h-0" placeholder="587" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">SMTP User</label>
-            <Input value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} placeholder="mailer@example.com" />
+            <Input value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} className="md:min-h-0" placeholder="mailer@example.com" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">SMTP Password</label>
             <Input
               type="password"
               value={smtpPass}
+              className="md:min-h-0"
               onChange={(e) => {
                 setSmtpPass(e.target.value);
                 if (e.target.value) {
@@ -267,7 +270,7 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
               placeholder={smtpPasswordConfigured ? "已保存密码；留空则保持不变" : "输入 SMTP 密码"}
             />
             <p className="text-xs text-slate-500">{smtpPasswordConfigured ? "当前已保存 SMTP 密码。" : "当前未保存 SMTP 密码。"}</p>
-            <label className="flex items-center gap-2 text-xs text-slate-600">
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-slate-600 md:min-h-0">
               <input
                 type="checkbox"
                 checked={clearSmtpPass}
@@ -283,11 +286,11 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">发件邮箱</label>
-            <Input value={smtpFromEmail} type="email" onChange={(e) => setSmtpFromEmail(e.target.value)} placeholder="bot@example.com" />
+            <Input value={smtpFromEmail} type="email" onChange={(e) => setSmtpFromEmail(e.target.value)} className="md:min-h-0" placeholder="bot@example.com" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">发件人名称</label>
-            <Input value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="提醒助手" />
+            <Input value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} className="md:min-h-0" placeholder="提醒助手" />
           </div>
         </div>
       </div>
@@ -298,15 +301,15 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
           <p className="text-sm font-medium text-slate-700">通知时段</p>
           <p className="text-xs text-slate-500">只有在这个时间段内才会发送邮件通知。</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="space-y-1">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2 sm:flex sm:items-center sm:gap-4">
+          <div className="min-w-0 space-y-1">
             <label className="text-xs font-medium text-slate-700">开始时间（时）</label>
-            <Input type="number" min={0} max={23} value={notifyStartHour} onChange={(e) => setNotifyStartHour(e.target.value)} className="w-24" />
+            <Input type="number" min={0} max={23} value={notifyStartHour} onChange={(e) => setNotifyStartHour(e.target.value)} className="w-full sm:w-24 md:min-h-0" />
           </div>
-          <span className="pt-5 text-slate-400">~</span>
-          <div className="space-y-1">
+          <span className="pb-3 text-slate-400">~</span>
+          <div className="min-w-0 space-y-1">
             <label className="text-xs font-medium text-slate-700">结束时间（时）</label>
-            <Input type="number" min={0} max={23} value={notifyEndHour} onChange={(e) => setNotifyEndHour(e.target.value)} className="w-24" />
+            <Input type="number" min={0} max={23} value={notifyEndHour} onChange={(e) => setNotifyEndHour(e.target.value)} className="w-full sm:w-24 md:min-h-0" />
           </div>
         </div>
         <p className="text-xs text-slate-500">默认 9~22（早 9 点到晚 10 点）</p>
@@ -320,7 +323,7 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
         </div>
 
         <div>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-700 md:min-h-0">
             <input
               type="checkbox"
               checked={reminderEmailEnabled}
@@ -329,9 +332,9 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
             启用到期提醒通知发送
           </label>
           {reminderEmailEnabled && (
-            <div className="ml-6 mt-2 max-w-xs space-y-2">
+            <div className="mt-2 max-w-xs space-y-2 sm:ml-6">
               <label className="text-sm font-medium text-slate-700">发送间隔（秒）</label>
-              <Input type="number" min={60} max={86400} value={reminderEmailInterval} onChange={(e) => setReminderEmailInterval(e.target.value)} />
+              <Input type="number" min={60} max={86400} value={reminderEmailInterval} onChange={(e) => setReminderEmailInterval(e.target.value)} className="md:min-h-0" />
               <p className="text-xs text-slate-500">推荐 1800 秒（30 分钟）</p>
             </div>
           )}
@@ -365,7 +368,7 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
                   <span className={`mt-0.5 inline-block h-2 w-2 shrink-0 rounded-full ${log.success ? "bg-green-500" : "bg-rose-500"}`} />
                   <div className="min-w-0">
                     <p className="font-medium text-slate-800">{TASK_LABELS[log.task] ?? log.task}</p>
-                    <p className="text-slate-500">{log.summary ?? ""} · {new Date(log.startedAt).toLocaleString("zh-CN")}</p>
+                    <p className="break-words text-slate-500">{log.summary ?? ""} · {new Date(log.startedAt).toLocaleString("zh-CN")}</p>
                   </div>
                 </div>
               ))}
@@ -374,9 +377,9 @@ export function SettingsForm({ initialValues, initialTaskLogs = [] }: SettingsFo
         </details>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-slate-500">{message ?? ""}</p>
-        <Button type="submit" disabled={saving}>{saving ? "保存中..." : "保存配置"}</Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <p className="break-words text-sm text-slate-500">{message ?? ""}</p>
+        <Button type="submit" className="min-h-11 w-full sm:w-auto md:min-h-0" disabled={saving}>{saving ? "保存中..." : "保存配置"}</Button>
       </div>
     </form>
   );

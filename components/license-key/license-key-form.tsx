@@ -93,7 +93,7 @@ export function LicenseKeyForm() {
   }
 
   return (
-    <form className="space-y-4 rounded-xl border border-slate-200 bg-white p-6" onSubmit={handleSubmit}>
+    <form className="min-w-0 space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-6" onSubmit={handleSubmit}>
       {isLinkedReminder ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
           已关联提醒：本次生成成功后，会用“有效天数”自动更新该提醒的到期倒计时。
@@ -103,7 +103,7 @@ export function LicenseKeyForm() {
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">激活码 / Client Key</label>
         <textarea
-          className="min-h-40 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+          className="min-h-40 w-full resize-y break-all rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
           value={clientKey}
           onChange={(event) => setClientKey(event.target.value)}
           placeholder="请输入客户端提供的激活码 / Client Key"
@@ -118,18 +118,18 @@ export function LicenseKeyForm() {
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="min-h-5 text-sm text-slate-500">
+      <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+        <p className="min-h-5 min-w-0 break-words text-sm text-slate-500">
           {message ?? "激活码和 Client Key 按同一个字段处理；当前生成密匙暂不需要 OTP 验证码。"}
         </p>
-        <Button type="submit" disabled={submitting}>{submitting ? "生成中..." : "生成 .key 文件"}</Button>
+        <Button className="min-h-11 w-full sm:w-auto" type="submit" disabled={submitting}>{submitting ? "生成中..." : "生成 .key 文件"}</Button>
       </div>
 
       {download && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-          <p className="mb-2 font-medium">文件已生成：{download.fileName}</p>
+          <p className="mb-2 break-all font-medium">文件已生成：{download.fileName}</p>
           <a
-            className="inline-flex rounded-md bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700 sm:w-auto"
             href={download.url}
             download={download.fileName}
           >

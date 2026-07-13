@@ -66,8 +66,8 @@ export function PasskeyManager() {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-950">通行密匙管理</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -76,7 +76,7 @@ export function PasskeyManager() {
         </div>
         <button
           onClick={() => setShowRegister(!showRegister)}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="min-h-11 w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 sm:w-auto"
         >
           {showRegister ? "取消" : "+ 添加通行密匙"}
         </button>
@@ -122,9 +122,9 @@ export function PasskeyManager() {
           {credentials.map((cred) => (
             <div
               key={cred.id}
-              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4"
+              className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
                   {cred.authenticatorType === "platform" ? (
                     <svg className="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,11 +136,11 @@ export function PasskeyManager() {
                     </svg>
                   )}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-900">
                     {cred.deviceName || "通行密匙"}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="break-words text-xs text-slate-500">
                     {cred.authenticatorType === "platform" ? "设备内置" : "外部密钥"} · 
                     添加于 {formatDate(cred.createdAt)} · 
                     最后使用 {formatDate(cred.lastUsedAt)}
@@ -149,7 +149,7 @@ export function PasskeyManager() {
               </div>
               <button
                 onClick={() => handleDelete(cred.id)}
-                className="rounded-lg px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                className="min-h-11 w-full rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 sm:w-auto"
               >
                 删除
               </button>

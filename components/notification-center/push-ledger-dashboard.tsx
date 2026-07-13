@@ -49,14 +49,14 @@ function getStatusLabel(status: string) {
 
 export function PushLedgerDashboard({ items, stats }: { items: PushLedgerItem[]; stats: { total: number; success: number; pending: number; failed: number } }) {
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <p className="text-sm font-medium text-blue-600">Push Ledger</p>
         <h1 className="text-2xl font-semibold text-slate-950">推送台账</h1>
         <p className="mt-1 text-sm text-slate-500">记录每一次推送的内容、时间、渠道、状态、重试与错误信息，方便审计和排查。</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ["台账总数", stats.total],
           ["推送成功", stats.success],
@@ -71,26 +71,26 @@ export function PushLedgerDashboard({ items, stats }: { items: PushLedgerItem[];
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 p-5">
+        <div className="border-b border-slate-100 p-4 sm:p-5">
           <h2 className="font-semibold text-slate-950">最近推送记录</h2>
           <p className="mt-1 text-xs text-slate-500">默认展示最近 100 条。完整数据也可通过 `/api/push-ledger` 查询。</p>
         </div>
         <div className="divide-y divide-slate-100">
           {items.map((item) => (
-            <article key={item.id} className="p-5">
+            <article key={item.id} className="min-w-0 p-4 sm:p-5">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-medium text-slate-950">{item.title}</h3>
+                    <h3 className="break-words font-medium text-slate-950">{item.title}</h3>
                     <span className={`rounded-full px-2 py-1 text-xs ${statusStyles[item.status] ?? "bg-slate-100 text-slate-700"}`}>{getStatusLabel(item.status)}</span>
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{item.channelName} / {item.channelType}</span>
                   </div>
                   <p className="mt-2 whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{item.content}</p>
-                  {item.error ? <p className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">错误：{item.error}</p> : null}
+                  {item.error ? <p className="mt-2 break-all rounded-lg bg-red-50 p-3 text-sm text-red-700">错误：{item.error}</p> : null}
                 </div>
-                <div className="w-full shrink-0 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600 lg:w-72">
-                  <p>目标：{item.target || "-"}</p>
-                  <p>业务：{item.businessType || "-"} / {item.businessId || "-"}</p>
+                <div className="w-full min-w-0 shrink-0 space-y-1 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600 lg:w-72">
+                  <p className="break-all">目标：{item.target || "-"}</p>
+                  <p className="break-all">业务：{item.businessType || "-"} / {item.businessId || "-"}</p>
                   <p>创建时间：{formatTime(item.createdAt)}</p>
                   <p>排队时间：{formatTime(item.queuedAt)}</p>
                   <p>开始时间：{formatTime(item.startedAt)}</p>

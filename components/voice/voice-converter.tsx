@@ -203,8 +203,8 @@ export function VoiceConverter() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="flex min-w-0 flex-col gap-6">
+      <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-medium text-blue-600">VoiceCraft</p>
@@ -213,18 +213,18 @@ export function VoiceConverter() {
               参照 tts.wangwangit.com 的双向语音处理：Microsoft Edge 在线 TTS 生成 MP3，硅基流动 SenseVoice 语音转文字。
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1 text-sm font-medium">
+          <div className="grid w-full grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1 text-sm font-medium max-[379px]:grid-cols-1 lg:w-auto">
             <button
               type="button"
               onClick={() => setMode("tts")}
-              className={`rounded-xl px-4 py-2 transition ${mode === "tts" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-white"}`}
+              className={`min-h-11 rounded-xl px-4 py-2 transition md:min-h-0 ${mode === "tts" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-white"}`}
             >
               🎙️ 文字转语音
             </button>
             <button
               type="button"
               onClick={() => setMode("stt")}
-              className={`rounded-xl px-4 py-2 transition ${mode === "stt" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-white"}`}
+              className={`min-h-11 rounded-xl px-4 py-2 transition md:min-h-0 ${mode === "stt" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-white"}`}
             >
               🎧 语音转文字
             </button>
@@ -238,25 +238,25 @@ export function VoiceConverter() {
           message.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-700" :
           "border-blue-200 bg-blue-50 text-blue-700"
         }`}>
-          {message.text}
+          <span className="break-words">{message.text}</span>
         </div>
       )}
 
       {mode === "tts" ? (
         <form onSubmit={handleTtsSubmit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="mb-4 flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-sm">
               <button
                 type="button"
                 onClick={() => setTtsInputMode("text")}
-                className={`flex-1 rounded-md px-3 py-2 ${ttsInputMode === "text" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}
+                className={`min-h-11 flex-1 rounded-md px-3 py-2 md:min-h-0 ${ttsInputMode === "text" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}
               >
                 手动输入
               </button>
               <button
                 type="button"
                 onClick={() => setTtsInputMode("file")}
-                className={`flex-1 rounded-md px-3 py-2 ${ttsInputMode === "file" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}
+                className={`min-h-11 flex-1 rounded-md px-3 py-2 md:min-h-0 ${ttsInputMode === "file" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"}`}
               >
                 上传 txt
               </button>
@@ -268,7 +268,7 @@ export function VoiceConverter() {
                 <span className="mt-2 text-sm font-medium text-slate-700">点击选择 txt 文件</span>
                 <span className="mt-1 text-xs text-slate-400">最大 500KB，读取后会填入下方文本框</span>
                 <input className="hidden" type="file" accept=".txt,text/plain" onChange={handleTxtFileChange} />
-                {txtFile && <span className="mt-2 text-xs text-blue-600">{txtFile.name} · {formatSize(txtFile.size)}</span>}
+                {txtFile && <span className="mt-2 max-w-full break-all text-xs text-blue-600">{txtFile.name} · {formatSize(txtFile.size)}</span>}
               </label>
             )}
 
@@ -285,13 +285,13 @@ export function VoiceConverter() {
             </div>
           </section>
 
-          <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <aside className="space-y-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">语音选择</label>
               <select
                 value={voice}
                 onChange={(event) => setVoice(event.target.value)}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="min-h-11 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:min-h-0"
               >
                 {VOICES.map((group) => (
                   <optgroup key={group.group} label={group.group}>
@@ -303,15 +303,21 @@ export function VoiceConverter() {
 
             <div>
               <label className="mb-2 flex justify-between text-sm font-medium text-slate-700"><span>语速</span><span>{speed.toFixed(1)}x</span></label>
-              <input type="range" min="0.5" max="2" step="0.1" value={speed} onChange={(event) => setSpeed(Number(event.target.value))} className="w-full accent-blue-600" />
+              <div className="flex min-h-11 items-center md:min-h-0">
+                <input type="range" min="0.5" max="2" step="0.1" value={speed} onChange={(event) => setSpeed(Number(event.target.value))} className="w-full accent-blue-600" />
+              </div>
             </div>
             <div>
               <label className="mb-2 flex justify-between text-sm font-medium text-slate-700"><span>音调</span><span>{pitch}Hz</span></label>
-              <input type="range" min="-50" max="50" step="1" value={pitch} onChange={(event) => setPitch(Number(event.target.value))} className="w-full accent-blue-600" />
+              <div className="flex min-h-11 items-center md:min-h-0">
+                <input type="range" min="-50" max="50" step="1" value={pitch} onChange={(event) => setPitch(Number(event.target.value))} className="w-full accent-blue-600" />
+              </div>
             </div>
             <div>
               <label className="mb-2 flex justify-between text-sm font-medium text-slate-700"><span>音量</span><span>{volume}%</span></label>
-              <input type="range" min="-100" max="100" step="1" value={volume} onChange={(event) => setVolume(Number(event.target.value))} className="w-full accent-blue-600" />
+              <div className="flex min-h-11 items-center md:min-h-0">
+                <input type="range" min="-100" max="100" step="1" value={volume} onChange={(event) => setVolume(Number(event.target.value))} className="w-full accent-blue-600" />
+              </div>
             </div>
 
             <button
@@ -325,7 +331,7 @@ export function VoiceConverter() {
             {audioUrl && (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <audio ref={audioRef} src={audioUrl} controls className="w-full" />
-                <a href={audioUrl} download={downloadName} className="mt-3 flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <a href={audioUrl} download={downloadName} className="mt-3 flex min-h-11 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 md:min-h-0">
                   📥 下载 MP3
                 </a>
               </div>
@@ -334,22 +340,22 @@ export function VoiceConverter() {
         </form>
       ) : (
         <form onSubmit={handleTranscriptionSubmit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <label className="flex min-h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center hover:border-blue-300 hover:bg-blue-50/40">
+          <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <label className="flex min-h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center hover:border-blue-300 hover:bg-blue-50/40 sm:px-6">
               <span className="text-4xl">🎧</span>
               <span className="mt-3 text-base font-semibold text-slate-800">拖拽/点击选择音频文件</span>
               <span className="mt-2 text-sm text-slate-500">支持 mp3、wav、m4a、flac、aac、ogg、webm、amr、3gp，最大 10MB</span>
               <input className="hidden" type="file" accept={AUDIO_TYPES} onChange={handleAudioFileChange} />
-              {audioFile && <span className="mt-4 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700">{audioFile.name} · {formatSize(audioFile.size)}</span>}
+              {audioFile && <span className="mt-4 max-w-full break-all rounded-xl bg-blue-100 px-3 py-2 text-sm text-blue-700">{audioFile.name} · {formatSize(audioFile.size)}</span>}
             </label>
 
             {transcription && (
               <div className="mt-6">
-                <div className="mb-2 flex items-center justify-between">
+                <div className="mb-2 flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <label className="text-sm font-medium text-slate-700">转录结果</label>
                   <div className="flex gap-2">
-                    <button type="button" onClick={copyTranscription} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50">复制</button>
-                    <button type="button" onClick={useTranscriptionForTts} className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50">转为语音</button>
+                    <button type="button" onClick={copyTranscription} className="min-h-11 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 md:min-h-0">复制</button>
+                    <button type="button" onClick={useTranscriptionForTts} className="min-h-11 rounded-lg border border-blue-200 px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 md:min-h-0">转为语音</button>
                   </div>
                 </div>
                 <textarea
@@ -361,15 +367,15 @@ export function VoiceConverter() {
             )}
           </section>
 
-          <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <aside className="space-y-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">API Token 配置</label>
               <div className="grid gap-2 text-sm">
-                <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 ${tokenMode === "default" ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"}`}>
+                <label className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 md:min-h-0 ${tokenMode === "default" ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"}`}>
                   <input type="radio" checked={tokenMode === "default"} onChange={() => setTokenMode("default")} />
                   使用服务器默认 Token
                 </label>
-                <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 ${tokenMode === "custom" ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"}`}>
+                <label className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 md:min-h-0 ${tokenMode === "custom" ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"}`}>
                   <input type="radio" checked={tokenMode === "custom"} onChange={() => setTokenMode("custom")} />
                   使用自定义硅基流动 Token
                 </label>
@@ -380,7 +386,7 @@ export function VoiceConverter() {
                   value={customToken}
                   onChange={(event) => setCustomToken(event.target.value)}
                   placeholder="sk-..."
-                  className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="mt-3 min-h-11 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:min-h-0"
                 />
               )}
             </div>

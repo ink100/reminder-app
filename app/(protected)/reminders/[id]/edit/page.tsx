@@ -24,10 +24,10 @@ export default async function EditReminderPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
       <div>
         <p className="text-sm text-slate-500">编辑提醒</p>
-        <h1 className="text-2xl font-semibold text-slate-950">更新提醒事项</h1>
+        <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">更新提醒事项</h1>
       </div>
       <ReminderForm
         mode="edit"

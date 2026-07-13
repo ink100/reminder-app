@@ -37,19 +37,19 @@ export function NotificationCenterDashboard({ stats, apiKeys, groups, channels, 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-medium text-blue-600">Notification Center</p>
           <h1 className="text-2xl font-semibold text-slate-950">通知管理</h1>
           <p className="mt-1 text-sm text-slate-500">接收 Worker 事件、持久化通知、队列派发、多渠道发送。</p>
         </div>
-        <button disabled={busy} onClick={() => run(() => postJson("/api/notification-center/dispatch"), "已触发一次队列派发")} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">手动派发队列</button>
+        <button disabled={busy} onClick={() => run(() => postJson("/api/notification-center/dispatch"), "已触发一次队列派发")} className="min-h-11 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:w-auto">手动派发队列</button>
       </div>
 
       {message ? <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">{message}</div> : null}
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ["通知总数", stats.notifications],
           ["待派发任务", stats.pendingJobs],
@@ -63,7 +63,7 @@ export function NotificationCenterDashboard({ stats, apiKeys, groups, channels, 
         ))}
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 className="font-semibold text-slate-950">快速创建</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <button disabled={busy} onClick={() => run(() => postJson("/api/notification-center/api-keys", { name: "Worker Key" }), "已创建 API Key，请在列表复制保存" )} className="rounded-lg border border-slate-200 px-4 py-3 text-left text-sm hover:bg-slate-50">生成 Worker API Key</button>
@@ -74,31 +74,31 @@ export function NotificationCenterDashboard({ stats, apiKeys, groups, channels, 
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <h2 className="font-semibold text-slate-950">API Keys</h2>
           <div className="mt-3 space-y-2 text-sm">
-            {apiKeys.map((item) => <div key={item.id} className="rounded-lg bg-slate-50 p-3"><div className="font-medium">{item.name}</div><code className="text-xs text-slate-500">{item.apiKey}</code></div>)}
+            {apiKeys.map((item) => <div key={item.id} className="min-w-0 rounded-lg bg-slate-50 p-3"><div className="break-words font-medium">{item.name}</div><code className="block break-all text-xs text-slate-500">{item.apiKey}</code></div>)}
             {apiKeys.length === 0 ? <p className="text-slate-500">暂无 Key</p> : null}
           </div>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <h2 className="font-semibold text-slate-950">分组 / 渠道 / 模板</h2>
           <div className="mt-3 space-y-3 text-sm text-slate-600">
-            <p>分组：{groups.map((g) => g.name).join("、") || "无"}</p>
-            <p>渠道：{channels.map((c) => `${c.name}(${c.type})`).join("、") || "无"}</p>
-            <p>模板：{templates.map((t) => `${t.name}(${t.channelType})`).join("、") || "无"}</p>
+            <p className="break-words">分组：{groups.map((g) => g.name).join("、") || "无"}</p>
+            <p className="break-words">渠道：{channels.map((c) => `${c.name}(${c.type})`).join("、") || "无"}</p>
+            <p className="break-words">模板：{templates.map((t) => `${t.name}(${t.channelType})`).join("、") || "无"}</p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 className="font-semibold text-slate-950">最近通知</h2>
         <div className="mt-3 divide-y divide-slate-100 text-sm">
           {notifications.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 py-3">
-              <div>
-                <div className="font-medium text-slate-900">{item.title}</div>
-                <div className="text-xs text-slate-500">{item.group} · {new Date(item.createdAt).toLocaleString("zh-CN")}</div>
+            <div key={item.id} className="flex items-start justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <div className="break-words font-medium text-slate-900">{item.title}</div>
+                <div className="break-words text-xs text-slate-500">{item.group} · {new Date(item.createdAt).toLocaleString("zh-CN")}</div>
               </div>
               <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{item.status}</span>
             </div>

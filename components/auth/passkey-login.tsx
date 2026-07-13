@@ -101,9 +101,10 @@ export function PasskeyLogin({ redirectTo = "/reminders" }: PasskeyLoginProps) {
     <div className="space-y-4">
       <div className="grid gap-2 sm:grid-cols-2">
         <button
+          type="button"
           onClick={() => handleLogin("platform")}
           disabled={loadingMode !== null}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
         >
           {loadingMode === "platform" ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
@@ -116,9 +117,10 @@ export function PasskeyLogin({ redirectTo = "/reminders" }: PasskeyLoginProps) {
         </button>
 
         <button
+          type="button"
           onClick={() => handleLogin("hybrid")}
           disabled={loadingMode !== null}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-50"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-blue-700 disabled:opacity-50"
         >
           {loadingMode === "hybrid" ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

@@ -92,11 +92,11 @@ export default function ImagesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5 sm:gap-6">
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">文件管理</h1>
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">文件管理</h1>
           <p className="mt-1 text-sm text-slate-500">
             共 {total} 个文件 · 上传到 Cloudflare R2
           </p>
@@ -104,10 +104,10 @@ export default function ImagesPage() {
       </div>
 
       {/* Tab 切换 */}
-      <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+      <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-slate-200">
         <button
           onClick={() => handleTabChange("images")}
-          className={`px-6 py-2.5 text-sm font-medium transition-colors ${
+          className={`min-h-11 px-3 py-2.5 text-sm font-medium transition-colors sm:px-6 ${
             activeTab === "images"
               ? "bg-blue-500 text-white"
               : "bg-white text-slate-600 hover:bg-slate-50"
@@ -117,7 +117,7 @@ export default function ImagesPage() {
         </button>
         <button
           onClick={() => handleTabChange("attachments")}
-          className={`px-6 py-2.5 text-sm font-medium border-l border-slate-200 transition-colors ${
+          className={`min-h-11 border-l border-slate-200 px-3 py-2.5 text-sm font-medium transition-colors sm:px-6 ${
             activeTab === "attachments"
               ? "bg-blue-500 text-white"
               : "bg-white text-slate-600 hover:bg-slate-50"
@@ -133,7 +133,7 @@ export default function ImagesPage() {
       )}
 
       {/* 搜索和筛选 */}
-      <div className="flex items-center gap-4">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
         <div className="relative flex-1">
           <svg
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -156,25 +156,25 @@ export default function ImagesPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="min-h-11 w-full rounded-lg border border-slate-200 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 md:min-h-0"
           />
         </div>
-        <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+        <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-slate-200">
           <button
             onClick={() => { setTypeFilter("all"); setPage(1); }}
-            className={`px-4 py-2 text-sm ${typeFilter === "all" ? "bg-blue-500 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+            className={`min-h-11 px-3 py-2 text-sm sm:px-4 ${typeFilter === "all" ? "bg-blue-500 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
           >
             全部
           </button>
           <button
             onClick={() => { setTypeFilter("image"); setPage(1); }}
-            className={`px-4 py-2 text-sm border-l border-slate-200 ${typeFilter === "image" ? "bg-blue-500 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+            className={`min-h-11 border-l border-slate-200 px-3 py-2 text-sm sm:px-4 ${typeFilter === "image" ? "bg-blue-500 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
           >
             图片
           </button>
           <button
             onClick={() => { setTypeFilter("file"); setPage(1); }}
-            className={`px-4 py-2 text-sm border-l border-slate-200 ${typeFilter === "file" ? "bg-blue-500 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+            className={`min-h-11 border-l border-slate-200 px-3 py-2 text-sm sm:px-4 ${typeFilter === "file" ? "bg-blue-500 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
           >
             文件
           </button>
@@ -200,7 +200,7 @@ export default function ImagesPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50"
+            className="min-h-11 rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50 md:min-h-0"
           >
             上一页
           </button>
@@ -210,7 +210,7 @@ export default function ImagesPage() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50"
+            className="min-h-11 rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50 md:min-h-0"
           >
             下一页
           </button>

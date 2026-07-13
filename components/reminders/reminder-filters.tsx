@@ -22,15 +22,15 @@ export function ReminderFilters({
   onPriorityChange,
 }: ReminderFiltersProps) {
   return (
-    <section className="flex flex-wrap items-center gap-3">
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-[minmax(12rem,1fr)_auto_auto_auto] sm:items-center">
       <input
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 sm:w-auto"
+        className="col-span-2 min-h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 sm:col-span-1"
         placeholder="搜索标题或标签..."
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
       />
       <select
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+        className="min-h-11 min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 sm:px-3"
         value={status}
         onChange={(event) => onStatusChange(event.target.value as ReminderStatusFilter)}
       >
@@ -41,7 +41,7 @@ export function ReminderFilters({
         <option value="completed">已完成</option>
       </select>
       <select
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+        className="min-h-11 min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 sm:px-3"
         value={priority}
         onChange={(event) => onPriorityChange(event.target.value as ReminderPriorityFilter)}
       >
@@ -51,7 +51,7 @@ export function ReminderFilters({
         <option value="low">低</option>
       </select>
       <Link
-        className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        className="col-span-2 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:col-span-1 sm:ml-auto"
         href="/reminders/new"
       >
         <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

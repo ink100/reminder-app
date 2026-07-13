@@ -120,7 +120,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
   }
 
   return (
-    <form className="space-y-4 rounded-xl border border-slate-200 bg-white p-6" onSubmit={handleSubmit}>
+    <form className="min-w-0 space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-6" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">标题</label>
         <Input name="title" placeholder="例如：合同到期前续签" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -133,7 +133,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">优先级</label>
-          <select className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" value={priority} onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high") }>
+          <select className="min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm md:min-h-0" value={priority} onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high") }>
             <option value="high">高</option>
             <option value="medium">中</option>
             <option value="low">低</option>
@@ -156,7 +156,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">周期顺延</label>
           <select
-            className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+            className="min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm md:min-h-0"
             value={recurrenceType}
             onChange={(e) => setRecurrenceType(e.target.value as RecurrenceSelectValue)}
           >
@@ -194,7 +194,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">记录类型</label>
         <select
-          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm md:min-h-0"
           value={reminderKind}
           onChange={(e) => {
             const nextKind = e.target.value as "normal" | "activation";
@@ -228,7 +228,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
         </div>
       ) : null}
 
-      <label className="flex items-center gap-2 text-sm text-slate-700">
+      <label className="flex min-h-11 items-center gap-2 text-sm text-slate-700 md:min-h-0">
         <input type="checkbox" checked={overdueRemindEnabled} onChange={(e) => setOverdueRemindEnabled(e.target.checked)} />
         超期后继续提醒
       </label>
@@ -238,9 +238,9 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
         <FileUpload reminderId={defaultValues?.id} attachments={attachments} />
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-slate-500">{message ?? ""}</p>
-        <Button type="submit" disabled={submitting}>{submitting ? "保存中..." : mode === "create" ? "创建提醒" : "保存修改"}</Button>
+      <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <p className="break-words text-sm text-slate-500">{message ?? ""}</p>
+        <Button className="min-h-11 w-full sm:w-auto" type="submit" disabled={submitting}>{submitting ? "保存中..." : mode === "create" ? "创建提醒" : "保存修改"}</Button>
       </div>
     </form>
   );

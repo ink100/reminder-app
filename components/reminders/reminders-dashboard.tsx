@@ -34,10 +34,10 @@ export function RemindersDashboard({ reminders }: RemindersDashboardProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
       <div>
         <p className="text-sm text-slate-500">提醒中心</p>
-        <h1 className="text-2xl font-semibold text-slate-950">别超期 · 首页概览</h1>
+        <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">别超期 · 首页概览</h1>
       </div>
       <ReminderStats activeKey={status === "all" ? "total" : status} onSelect={handleStatSelect} {...stats} />
       <ReminderFilters

@@ -138,7 +138,7 @@ export default function SSLPage() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
         <div className="flex items-center gap-2 text-red-600">
           <XCircle className="w-5 h-5" />
           <span className="font-medium">错误</span>
@@ -146,7 +146,7 @@ export default function SSLPage() {
         <p className="mt-2 text-red-600">{error}</p>
         <button
           onClick={fetchSSLStatus}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          className="mt-4 min-h-11 w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 sm:w-auto"
         >
           重试
         </button>
@@ -155,9 +155,9 @@ export default function SSLPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             SSL 证书管理
@@ -166,11 +166,11 @@ export default function SSLPage() {
             管理和监控 SSL 证书状态
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto">
           <button
             onClick={fetchSSLStatus}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex min-h-11 items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             刷新
@@ -178,7 +178,7 @@ export default function SSLPage() {
           <button
             onClick={handleRenew}
             disabled={renewing}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex min-h-11 items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {renewing ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -210,7 +210,7 @@ export default function SSLPage() {
               <XCircle className="w-5 h-5 text-red-600" />
             )}
             <span
-              className={`font-medium ${
+              className={`min-w-0 break-words font-medium ${
                 renewResult.skipped
                   ? 'text-amber-700'
                   : renewResult.success
@@ -222,7 +222,7 @@ export default function SSLPage() {
             </span>
           </div>
           {renewResult.output && (
-            <pre className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-auto max-h-40">
+            <pre className="mt-2 max-h-40 overflow-x-hidden whitespace-pre-wrap break-all rounded bg-gray-100 p-2 text-xs dark:bg-gray-800 md:overflow-auto md:whitespace-pre md:break-normal">
               {renewResult.output}
             </pre>
           )}
@@ -232,7 +232,7 @@ export default function SSLPage() {
       {/* 证书状态卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 状态卡片 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">证书状态</p>
@@ -249,7 +249,7 @@ export default function SSLPage() {
         </div>
 
         {/* 剩余天数 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">剩余天数</p>
@@ -266,7 +266,7 @@ export default function SSLPage() {
         </div>
 
         {/* 到期时间 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">到期时间</p>
             <p className="text-lg font-medium mt-1">
@@ -278,7 +278,7 @@ export default function SSLPage() {
         </div>
 
         {/* 上次检查 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">上次检查</p>
             <p className="text-lg font-medium mt-1">
@@ -297,26 +297,26 @@ export default function SSLPage() {
 
       {/* 证书详细信息 */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 sm:px-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             证书详细信息
           </h2>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="space-y-4 p-4 sm:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-gray-500 dark:text-gray-400">
                 域名 (Subject)
               </label>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">
+              <div className="mt-1 flex min-w-0 items-start gap-2">
+                <code className="min-w-0 break-all rounded bg-gray-100 px-2 py-1 text-sm dark:bg-gray-700">
                   {data?.status.subject || '-'}
                 </code>
                 <button
                   onClick={() =>
                     copyToClipboard(data?.status.subject || '')
                   }
-                  className="text-gray-400 hover:text-gray-600"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center text-gray-400 hover:text-gray-600"
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -326,13 +326,13 @@ export default function SSLPage() {
               <label className="text-sm text-gray-500 dark:text-gray-400">
                 颁发机构 (Issuer)
               </label>
-              <p className="mt-1 text-sm">{data?.status.issuer || '-'}</p>
+              <p className="mt-1 break-words text-sm">{data?.status.issuer || '-'}</p>
             </div>
             <div>
               <label className="text-sm text-gray-500 dark:text-gray-400">
                 序列号
               </label>
-              <p className="mt-1 text-sm font-mono">
+              <p className="mt-1 break-all text-sm font-mono">
                 {data?.status.serialNumber || '-'}
               </p>
             </div>
@@ -340,7 +340,7 @@ export default function SSLPage() {
               <label className="text-sm text-gray-500 dark:text-gray-400">
                 证书路径
               </label>
-              <p className="mt-1 text-sm font-mono">{data?.certPath || '-'}</p>
+              <p className="mt-1 break-all text-sm font-mono">{data?.certPath || '-'}</p>
             </div>
           </div>
         </div>
@@ -348,12 +348,12 @@ export default function SSLPage() {
 
       {/* 定时任务配置 */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 sm:px-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             定时任务配置
           </h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -363,12 +363,13 @@ export default function SSLPage() {
                 onClick={() =>
                   copyToClipboard('0 3 1,15 * * /home/ubuntu/apps/reminder-app/scripts/ssl-renew.sh')
                 }
-                className="text-gray-400 hover:text-gray-600"
+                className="flex size-11 shrink-0 items-center justify-center text-gray-400 hover:text-gray-600 md:size-auto"
+                aria-label="复制 Crontab 配置"
               >
                 <Copy className="w-4 h-4" />
               </button>
             </div>
-            <code className="text-sm text-blue-600 dark:text-blue-400">
+            <code className="block break-all text-sm text-blue-600 dark:text-blue-400">
               0 3 1,15 * * /home/ubuntu/apps/reminder-app/scripts/ssl-renew.sh
             </code>
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -380,7 +381,7 @@ export default function SSLPage() {
 
       {/* 更新日志 */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 sm:px-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               更新日志
@@ -388,8 +389,8 @@ export default function SSLPage() {
             <FileText className="w-5 h-5 text-gray-400" />
           </div>
         </div>
-        <div className="p-6">
-          <pre className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm overflow-auto max-h-60 font-mono">
+        <div className="p-4 sm:p-6">
+          <pre className="max-h-60 overflow-x-hidden whitespace-pre-wrap break-all rounded-lg bg-gray-50 p-4 text-sm font-mono dark:bg-gray-900 md:overflow-auto md:whitespace-pre md:break-normal">
             {data?.logs || '暂无日志'}
           </pre>
         </div>
@@ -397,20 +398,20 @@ export default function SSLPage() {
 
       {/* acme.sh 列表 */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-700 sm:px-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             ACME 证书列表
           </h2>
         </div>
-        <div className="p-6">
-          <pre className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm overflow-auto font-mono">
+        <div className="p-4 sm:p-6">
+          <pre className="overflow-x-hidden whitespace-pre-wrap break-all rounded-lg bg-gray-50 p-4 text-sm font-mono dark:bg-gray-900 md:overflow-auto md:whitespace-pre md:break-normal">
             {data?.acmeList || '无数据'}
           </pre>
         </div>
       </div>
 
       {/* 帮助信息 */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 sm:p-6">
         <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
           关于 SSL 证书管理
         </h3>

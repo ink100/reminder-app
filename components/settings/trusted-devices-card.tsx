@@ -92,7 +92,7 @@ export function TrustedDevicesCard() {
   }, [loadDevices]);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-medium text-blue-600">Trusted Devices</p>
@@ -128,14 +128,14 @@ export function TrustedDevicesCard() {
                     有效
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">{shortUserAgent(device.userAgent)}</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 break-words text-sm text-slate-500">{shortUserAgent(device.userAgent)}</p>
+                <p className="mt-1 break-words text-xs text-slate-400">
                   最近使用：{formatDate(device.lastUsedAt)} · 到期：{formatDate(device.expiresAt)}
                 </p>
               </div>
               <Button
                 type="button"
-                className="border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                className="min-h-11 w-full border border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 sm:w-auto"
                 disabled={revokingId === device.id}
                 onClick={() => revokeDevice(device.id)}
               >

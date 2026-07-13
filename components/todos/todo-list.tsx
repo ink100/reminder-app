@@ -100,7 +100,7 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold text-balance text-slate-900">
+      <h1 className="mb-5 text-xl font-bold text-balance text-slate-900 sm:mb-6 sm:text-2xl">
         📋 待办事项
       </h1>
 
@@ -113,13 +113,13 @@ export function TodoList({ initialTodos }: { initialTodos: TodoItem[] }) {
           onChange={(e) => setNewTitle(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="添加新的待办事项…"
-          className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:px-4"
           autoFocus
         />
         <button
           onClick={addTodo}
           disabled={!newTitle.trim()}
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-11 shrink-0 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40 sm:px-5"
         >
           新增
         </button>
@@ -213,7 +213,7 @@ function TodoRow({
   return (
     <li
       className={cn(
-        "group flex items-center gap-3 rounded-lg border px-4 py-2.5 transition-colors",
+        "group flex min-w-0 items-center gap-2 rounded-lg border px-2 py-2 transition-colors sm:gap-3 sm:px-4 sm:py-2.5",
         isDone
           ? "border-slate-100 bg-slate-50/50"
           : "border-slate-200 bg-white hover:border-slate-300"
@@ -224,17 +224,19 @@ function TodoRow({
         onClick={onToggle}
         aria-label={isDone ? "标记待办" : "标记完成"}
         className={cn(
-          "flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+          "flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors",
           isDone
-            ? "border-blue-500 bg-blue-500 text-white"
-            : "border-slate-300 hover:border-blue-400"
+            ? "text-blue-500"
+            : "text-slate-300 hover:text-blue-400"
         )}
       >
-        {isDone && (
-          <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
-        )}
+        <span className={cn("flex size-5 items-center justify-center rounded-full border-2", isDone ? "border-blue-500 bg-blue-500 text-white" : "border-current")}>
+          {isDone && (
+            <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </span>
       </button>
 
       {/* Title / Edit */}
@@ -244,14 +246,14 @@ function TodoRow({
           value={editTitle}
           onChange={(e) => onEditTitleChange(e.target.value)}
           onKeyDown={onKeyDown}
-          className="flex-1 rounded border border-blue-400 bg-white px-2 py-0.5 text-sm text-slate-900 outline-none ring-2 ring-blue-500/20"
+          className="min-w-0 flex-1 rounded border border-blue-400 bg-white px-2 py-2 text-sm text-slate-900 outline-none ring-2 ring-blue-500/20"
           autoFocus
           onBlur={onSaveEdit}
         />
       ) : (
         <span
           className={cn(
-            "flex-1 cursor-pointer text-sm",
+            "min-w-0 flex-1 cursor-pointer break-words text-sm",
             isDone ? "text-slate-400 line-through" : "text-slate-700"
           )}
           onClick={onStartEdit}
@@ -262,13 +264,13 @@ function TodoRow({
 
       {/* Actions — show on hover */}
       {!isEditing && (
-        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
           {/* Undo button (only for done items) */}
           {isDone && (
             <button
               onClick={onToggle}
               aria-label="取消完成"
-              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-amber-500"
+              className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-amber-500 md:size-9"
             >
               <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -280,7 +282,7 @@ function TodoRow({
             trigger={
               <button
                 aria-label="删除"
-                className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-500 md:size-9"
               >
                 <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -85,9 +85,10 @@ export function PasskeyRegister({ onSuccess, onError }: PasskeyRegisterProps) {
         </p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <button
+            type="button"
             onClick={() => handleRegister("platform")}
             disabled={status === "loading"}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {status === "loading" ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -99,9 +100,10 @@ export function PasskeyRegister({ onSuccess, onError }: PasskeyRegisterProps) {
             本机验证
           </button>
           <button
+            type="button"
             onClick={() => handleRegister("cross-platform")}
             disabled={status === "loading"}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             {status === "loading" ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
