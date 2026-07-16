@@ -13,6 +13,7 @@ import {
   type ReminderStatKey,
   type ReminderStatusFilter,
 } from "@/lib/reminder-view";
+import type { ReminderGroupFilter } from "@/lib/reminder-groups";
 
 type RemindersDashboardProps = {
   reminders: ReminderListItem[];
@@ -22,11 +23,12 @@ export function RemindersDashboard({ reminders }: RemindersDashboardProps) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ReminderStatusFilter>("all");
   const [priority, setPriority] = useState<ReminderPriorityFilter>("all");
+  const [group, setGroup] = useState<ReminderGroupFilter>("all");
 
   const stats = useMemo(() => buildReminderStats(reminders), [reminders]);
   const filteredReminders = useMemo(
-    () => filterReminders(reminders, { search, status, priority }),
-    [priority, reminders, search, status],
+    () => filterReminders(reminders, { search, status, priority, group }),
+    [group, priority, reminders, search, status],
   );
 
   function handleStatSelect(key: ReminderStatKey) {
@@ -41,9 +43,11 @@ export function RemindersDashboard({ reminders }: RemindersDashboardProps) {
       </div>
       <ReminderStats activeKey={status === "all" ? "total" : status} onSelect={handleStatSelect} {...stats} />
       <ReminderFilters
+        group={group}
         priority={priority}
         search={search}
         status={status}
+        onGroupChange={setGroup}
         onPriorityChange={setPriority}
         onSearchChange={setSearch}
         onStatusChange={setStatus}

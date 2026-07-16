@@ -19,6 +19,7 @@
     "inventory:sync:owner": "tsx scripts/sync-bmoplus-inventory.ts",
     "inventory:check": "tsx scripts/check-inventory.ts",
     "supabase:notice-manager:apply": "tsx scripts/apply-supabase-notice-manager.ts",
+    "supabase:reminders:apply": "tsx scripts/apply-supabase-reminders.ts",
     "supabase:reminders:migrate": "tsx scripts/migrate-reminders-to-supabase.ts",
     "supabase:todos-images-task-logs:migrate": "tsx scripts/migrate-todos-images-task-logs-to-supabase.ts",
     "supabase:app-settings:migrate": "tsx scripts/migrate-app-settings-to-supabase.ts"
@@ -41,6 +42,7 @@
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sharp": "^0.35.3",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },

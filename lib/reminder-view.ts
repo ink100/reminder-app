@@ -1,4 +1,5 @@
 import { getReminderRiskLevel, type ReminderRiskLevel } from "@/lib/risk-level";
+import { getReminderGroup, type ReminderGroupFilter } from "@/lib/reminder-groups";
 
 export type ReminderListItem = {
   id: string;
@@ -69,11 +70,13 @@ export function filterReminders(
     search,
     status,
     priority,
+    group = "all",
     now = new Date(),
   }: {
     search: string;
     status: ReminderStatusFilter;
     priority: ReminderPriorityFilter;
+    group?: ReminderGroupFilter;
     now?: Date;
   },
 ): ReminderViewItem[] {
@@ -95,7 +98,8 @@ export function filterReminders(
 
     const matchesStatus = status === "all" || reminder.riskLevel === status;
     const matchesPriority = priority === "all" || reminder.priority === priority;
+    const matchesGroup = group === "all" || getReminderGroup(reminder.category) === group;
 
-    return matchesSearch && matchesStatus && matchesPriority;
+    return matchesSearch && matchesStatus && matchesPriority && matchesGroup;
   });
 }

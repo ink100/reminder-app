@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { LicenseKeyForm } from "@/components/license-key/license-key-form";
 import { LicenseStoreAccountTable } from "@/components/license-key/license-store-account-table";
+import { PaymentQrManager } from "@/components/license-key/payment-qr-manager";
 
 export default function LicenseKeyPage() {
   return (
@@ -16,6 +17,7 @@ export default function LicenseKeyPage() {
       <Suspense fallback={<div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500 sm:p-6">加载中...</div>}>
         <LicenseKeyForm />
       </Suspense>
+      <PaymentQrManager />
       <LicenseStoreAccountTable />
     </div>
   );

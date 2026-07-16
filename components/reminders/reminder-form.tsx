@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { FileUpload } from "@/components/ui/file-upload";
 import { isActivationReminder } from "@/lib/reminder-kind";
 import type { ReminderRecurrenceType } from "@/lib/reminder-recurrence";
+import { REMINDER_GROUPS, getReminderGroup, type ReminderGroup } from "@/lib/reminder-groups";
 
 type RecurrenceSelectValue = ReminderRecurrenceType | "none";
 
@@ -46,7 +47,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
   const router = useRouter();
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [dueAt, setDueAt] = useState(defaultValues?.dueAt ?? "");
-  const [category, setCategory] = useState(defaultValues?.category ?? "");
+  const [category, setCategory] = useState<ReminderGroup>(defaultValues?.category ? getReminderGroup(defaultValues.category) : "其他");
   const [description, setDescription] = useState(defaultValues?.description ?? "");
   const [reminderKind, setReminderKind] = useState<"normal" | "activation">(
     isActivationReminder(defaultValues?.activationCode) ? "activation" : "normal",
@@ -182,8 +183,15 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">分类</label>
-        <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="工作 / 账单 / 证件" />
+        <label className="text-sm font-medium text-slate-700">提醒分组</label>
+        <select
+          className="min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm md:min-h-0"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as ReminderGroup)}
+        >
+          {REMINDER_GROUPS.map((group) => <option key={group} value={group}>{group}</option>)}
+        </select>
+        <p className="text-xs text-slate-500">用于提醒列表分区和筛选；旧分类会自动归入对应业务分组。</p>
       </div>
 
       <div className="space-y-2">

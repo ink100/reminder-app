@@ -11,6 +11,7 @@ type Select = Record<string, boolean>;
 type Include = { reminder?: boolean | { select?: Select } };
 type Args = { where?: Where; orderBy?: Record<string, "asc" | "desc"> | Record<string, "asc" | "desc">[]; take?: number; skip?: number; select?: Select; include?: Include; data?: Row };
 type RelatedReminder<T> = T & { reminder?: Reminder | null };
+type BusinessAttachment = Attachment & { attachmentType: string | null };
 
 type Store<T> = {
   findMany(args?: Args): Promise<T[]>;
@@ -179,7 +180,7 @@ function model<T>(table: string, timestamps = true): Store<T> {
 }
 
 export const reminderStore = model<Reminder>("reminders");
-export const attachmentStore = model<RelatedReminder<Attachment>>("attachments", false);
+export const attachmentStore = model<RelatedReminder<BusinessAttachment>>("attachments", false);
 export const licenseStoreAccountStore = model<RelatedReminder<LicenseStoreAccount>>("license_store_accounts");
 export const todoStore = model<Todo>("todos");
 export const imageStore = model<Image>("images", false);

@@ -12,6 +12,8 @@ interface FileData {
   createdAt: string;
   reminderId?: string | null;
   reminderTitle?: string | null;
+  attachmentType?: string | null;
+  sourceLabel?: string | null;
 }
 
 interface FileGalleryProps {
@@ -147,9 +149,9 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
               {formatSize(file.size)} · {formatDate(file.createdAt)}
             </p>
             {/* 来源标签 */}
-            {showSource && file.reminderTitle && (
-              <p className="mt-1 truncate text-xs text-blue-500" title={file.reminderTitle}>
-                📋 {file.reminderTitle}
+            {showSource && file.sourceLabel && (
+              <p className="mt-1 truncate text-xs text-blue-500" title={file.sourceLabel}>
+                📋 {file.sourceLabel}
               </p>
             )}
           </div>

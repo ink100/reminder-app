@@ -75,6 +75,18 @@ describe("reminder view helpers", () => {
     expect(result.map((item) => item.id)).toEqual(["1"]);
   });
 
+  it("filters reminders by canonical group while supporting legacy categories", () => {
+    const result = filterReminders(reminders, {
+      search: "",
+      status: "all",
+      priority: "all",
+      group: "账单与续费",
+      now: new Date("2026-04-19T12:00:00.000Z"),
+    });
+
+    expect(result.map((item) => item.id)).toEqual(["2"]);
+  });
+
   it("supports activation-code reminders in search and label", () => {
     const result = filterReminders(
       [

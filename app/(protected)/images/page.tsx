@@ -14,6 +14,8 @@ interface FileData {
   createdAt: string;
   reminderId?: string | null;
   reminderTitle?: string | null;
+  attachmentType?: string | null;
+  sourceLabel?: string | null;
 }
 
 type TabType = "images" | "attachments";

@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { supabaseModels } from "@/lib/reminders/store";
 import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
+import { getPaymentQrLabel } from "@/lib/payment-qr";
 
 export async function GET(request: NextRequest) {
   const session = await requireApiSession();
@@ -59,6 +60,8 @@ export async function GET(request: NextRequest) {
     createdAt: item.createdAt.toISOString(),
     reminderId: item.reminderId,
     reminderTitle: item.reminder?.title || null,
+    attachmentType: item.attachmentType,
+    sourceLabel: getPaymentQrLabel(item.attachmentType) ?? item.reminder?.title ?? "通用附件",
   }));
 
   return Response.json({

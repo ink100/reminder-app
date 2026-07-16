@@ -28,9 +28,26 @@ create table if not exists public.attachments (
   r2_key text not null,
   url text not null,
   reminder_id text references public.reminders(id) on delete set null on update cascade,
+  attachment_type text,
   created_at timestamptz not null default now(),
   deleted_at timestamptz
 );
+alter table public.attachments add column if not exists attachment_type text;
+
+-- Normalize legacy free-form categories into the reminder groups used by the UI.
+update public.reminders set category = case
+  when category in ('激活码', '授权', '店铺') then '授权与店铺'
+  when category in ('SSL证书', '证书', '域名', '服务器') then '服务器与证书'
+  when category in ('账单', '续费') then '账单与续费'
+  when category = '宠物' then '宠物健康'
+  when category = '生活' then '日常生活'
+  when category in ('工作', '项目') then '工作与项目'
+  when category is null or btrim(category) = '' then '其他'
+  else category
+end
+where category is null
+   or btrim(category) = ''
+   or category in ('激活码', '授权', '店铺', 'SSL证书', '证书', '域名', '服务器', '账单', '续费', '宠物', '生活', '工作', '项目');
 create table if not exists public.license_store_accounts (
   id text primary key,
   shop_name text not null,
@@ -51,6 +68,7 @@ create index if not exists reminders_deleted_at_idx on public.reminders(deleted_
 create index if not exists attachments_reminder_id_idx on public.attachments(reminder_id);
 create index if not exists attachments_created_at_idx on public.attachments(created_at);
 create index if not exists attachments_deleted_at_idx on public.attachments(deleted_at);
+create index if not exists attachments_attachment_type_idx on public.attachments(attachment_type);
 create index if not exists license_store_accounts_expires_at_idx on public.license_store_accounts(expires_at);
 create index if not exists license_store_accounts_activation_code_idx on public.license_store_accounts(activation_code);
 create index if not exists license_store_accounts_reminder_id_idx on public.license_store_accounts(reminder_id);
@@ -71,6 +89,7 @@ comment on column public.reminders.created_at is 'Creation instant'; comment on 
 comment on column public.attachments.id is 'Stable application-generated text identifier'; comment on column public.attachments.filename is 'Stored filename';
 comment on column public.attachments.original_name is 'Original uploaded filename'; comment on column public.attachments.mimetype is 'Media type'; comment on column public.attachments.size is 'Size in bytes';
 comment on column public.attachments.r2_key is 'Cloudflare R2 object key'; comment on column public.attachments.url is 'Public object URL'; comment on column public.attachments.reminder_id is 'Optional owning reminder';
+comment on column public.attachments.attachment_type is 'Optional business usage, including WeChat or Alipay payment QR images';
 comment on column public.attachments.created_at is 'Creation instant'; comment on column public.attachments.deleted_at is 'Soft deletion instant';
 comment on column public.license_store_accounts.id is 'Stable application-generated text identifier'; comment on column public.license_store_accounts.shop_name is 'Shop name';
 comment on column public.license_store_accounts.phone is 'Contact phone'; comment on column public.license_store_accounts.remote_code is 'Remote support code';
