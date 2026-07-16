@@ -4,7 +4,6 @@ import { parseJsonObject, stringifyJson } from "@/lib/notification-center/types"
 import { createPushLedgerForJob, updatePushLedgerForJob } from "@/lib/notification-center/ledger";
 import { renderTemplate } from "@/lib/notification-center/renderer";
 import {
-  channelConfigString,
   eq,
   ilikeContains,
   inList,
@@ -13,6 +12,7 @@ import {
   NotificationApiKeyRow,
   NotificationChannelRow,
   NotificationEventRow,
+  NotificationGroupRouteRow,
   NotificationGroupRow,
   NotificationRow,
   NotificationTemplateRow,
@@ -20,8 +20,8 @@ import {
   selectOne,
   selectRows,
   updateRows,
-  upsertRow,
 } from "@/lib/notification-center/store";
+import { resolveEffectiveGroupRoutes } from "@/lib/notification-center/routing";
 
 export type NotificationWithContext = NotificationRow & {
   group?: NotificationGroupRow | null;
@@ -34,42 +34,40 @@ export function generateNotificationApiKey() {
 
 export async function ensureNotificationDefaults() {
   const existingGroup = await selectOne<NotificationGroupRow>("notification_groups", { filters: { name: eq("server") } });
-  const group = existingGroup
-    ? (await updateRows<NotificationGroupRow>("notification_groups", { id: eq(existingGroup.id) }, { description: existingGroup.description ?? "默认服务器通知分组", enabled: true }))[0] ?? existingGroup
-    : await insertRow<NotificationGroupRow>("notification_groups", {
-        id: "default-server-group",
-        name: "server",
-        description: "默认服务器通知分组",
-        enabled: true,
+  const group = existingGroup ?? await insertRow<NotificationGroupRow>("notification_groups", {
+    id: "default-server-group",
+    name: "server",
+    description: "默认服务器通知分组",
+    enabled: true,
+  });
+
+  const defaultTemplates = [
+    {
+      id: "default-telegram-template",
+      name: "默认 Telegram 模板",
+      channel_type: "Telegram",
+      content: "**{{title}}**\n\n{{summary}}\n\n事件：{{event_type}}\n来源：{{source}}\nPayload：{{payload}}",
+    },
+    {
+      id: "default-webhook-template",
+      name: "默认 Webhook 模板",
+      channel_type: "Webhook",
+      content: "{{json}}",
+    },
+  ];
+  for (const template of defaultTemplates) {
+    const existing = await selectOne<NotificationTemplateRow>("notification_templates", { filters: { id: eq(template.id) } });
+    if (!existing) {
+      const configuredDefault = await selectOne<NotificationTemplateRow>("notification_templates", {
+        filters: { channel_type: eq(template.channel_type), group_id: "is.null", is_default: eq(true) },
       });
-
-  await upsertRow<NotificationTemplateRow>("notification_templates", {
-    id: "default-telegram-template",
-    name: "默认 Telegram 模板",
-    channel_type: "Telegram",
-    content: "**{{title}}**\n\n{{summary}}\n\n事件：{{event_type}}\n来源：{{source}}\nPayload：{{payload}}",
-    enabled: true,
-  });
-
-  await upsertRow<NotificationTemplateRow>("notification_templates", {
-    id: "default-webhook-template",
-    name: "默认 Webhook 模板",
-    channel_type: "Webhook",
-    content: "{{json}}",
-    enabled: true,
-  });
-
-  const existingKey = await selectOne<NotificationApiKeyRow>("notification_api_keys", {
-    filters: { enabled: eq(true) },
-    order: "id.desc",
-  });
-  if (!existingKey) {
-    await insertRow<NotificationApiKeyRow>("notification_api_keys", {
-      id: newId("nak"),
-      name: "Default Worker Key",
-      api_key: generateNotificationApiKey(),
-      enabled: true,
-    });
+      await insertRow<NotificationTemplateRow>("notification_templates", {
+        ...template,
+        enabled: true,
+        group_id: null,
+        is_default: !configuredDefault,
+      });
+    }
   }
 
   return group;
@@ -138,29 +136,17 @@ export async function createNotificationFromEvent(input: {
     status: "Created",
   });
 
-  const channels = await selectRows<NotificationChannelRow>("notification_channels", {
-    filters: { enabled: eq(true) },
-    order: "created_at.asc",
-  });
+  const [channels, templates, groupRoutes] = await Promise.all([
+    selectRows<NotificationChannelRow>("notification_channels", { order: "created_at.asc" }),
+    selectRows<NotificationTemplateRow>("notification_templates", { order: "name.asc" }),
+    selectRows<NotificationGroupRouteRow>("notification_group_routes", { filters: { group_id: eq(group.id) } }),
+  ]);
+  const effectiveRoutes = resolveEffectiveGroupRoutes({ groupId: group.id, channels, templates, routes: groupRoutes });
 
   const createdJobs: QueueJobRow[] = [];
-  for (const channel of channels) {
-    const template = await selectOne<NotificationTemplateRow>("notification_templates", {
-      filters: { channel_type: eq(channel.type), enabled: eq(true) },
-      order: "name.asc",
-    });
-    if (!template) continue;
-    const job = await insertRow<QueueJobRow>("queue_jobs", {
-      id: newId("qj"),
-      notification_id: notification.id,
-      channel_id: channel.id,
-      template_id: template.id,
-      priority: input.priority ?? 2,
-      status: "Pending",
-      next_execute_at: new Date().toISOString(),
-    });
-    createdJobs.push(job);
-
+  for (const route of effectiveRoutes.filter((item) => item.enabled && item.template)) {
+    const channel = route.channel;
+    const template = route.template!;
     const content = renderTemplate(template.content, {
       title: notification.title,
       summary: notification.summary ?? "",
@@ -168,13 +154,26 @@ export async function createNotificationFromEvent(input: {
       event_type: event.event_type,
       payload: event.payload,
     });
+    const job = await insertRow<QueueJobRow>("queue_jobs", {
+      id: newId("qj"),
+      notification_id: notification.id,
+      channel_id: channel.id,
+      template_id: template.id,
+      channel_config: route.config,
+      rendered_content: content,
+      priority: input.priority ?? 2,
+      status: "Pending",
+      next_execute_at: new Date().toISOString(),
+    });
+    createdJobs.push(job);
+
     await createPushLedgerForJob({
       queueJobId: job.id,
       notificationId: notification.id,
       channelId: channel.id,
       channelType: channel.type,
       channelName: channel.name,
-      channelConfig: channelConfigString(channel),
+      channelConfig: stringifyJson(route.config),
       title: notification.title,
       content,
       rawPayload: event.payload,

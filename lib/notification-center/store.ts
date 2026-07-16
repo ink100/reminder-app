@@ -205,6 +205,7 @@ export type NotificationChannelRow = {
   name: string;
   config: JsonObject;
   enabled: boolean;
+  is_default: boolean;
   created_at: string;
 };
 
@@ -214,6 +215,20 @@ export type NotificationTemplateRow = {
   channel_type: string;
   content: string;
   enabled: boolean;
+  group_id: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NotificationGroupRouteRow = {
+  group_id: string;
+  channel_id: string;
+  mode: "custom" | "disabled";
+  config_override: JsonObject;
+  template_id: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type NotificationApiKeyRow = {
@@ -229,6 +244,8 @@ export type QueueJobRow = {
   notification_id: string;
   channel_id: string;
   template_id: string;
+  channel_config: JsonObject | null;
+  rendered_content: string | null;
   priority: number;
   retry_count: number;
   max_retry: number;

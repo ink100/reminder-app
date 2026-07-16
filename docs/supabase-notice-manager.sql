@@ -63,15 +63,19 @@ create table if not exists public.notification_channels (
   name text not null,
   config jsonb not null default '{}'::jsonb,
   enabled boolean not null default true,
+  is_default boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+alter table public.notification_channels add column if not exists is_default boolean not null default false;
 
 comment on table public.notification_channels is 'NoticeManager 渠道表：保存 Telegram、Email、Webhook 等发送渠道定义和非敏感配置。';
 comment on column public.notification_channels.id is '渠道 ID，对应本地 NotificationChannel.id。';
 comment on column public.notification_channels.type is '渠道类型，例如 Telegram、Email、Webhook、Bark、Discord、Slack、WeCom。';
 comment on column public.notification_channels.name is '渠道显示名称。';
 comment on column public.notification_channels.config is '渠道配置 JSON；敏感值建议只存引用或加密值，不要明文暴露。';
-comment on column public.notification_channels.enabled is '渠道是否启用。';
+comment on column public.notification_channels.enabled is '渠道是否启用；停用时所有分组均停止使用该渠道。';
+comment on column public.notification_channels.is_default is '是否属于默认配置；分组未配置该渠道时仅继承默认渠道。';
 comment on column public.notification_channels.created_at is '渠道创建时间。';
 
 create table if not exists public.notification_templates (
@@ -79,8 +83,17 @@ create table if not exists public.notification_templates (
   name text not null,
   channel_type text not null,
   content text not null,
-  enabled boolean not null default true
+  enabled boolean not null default true,
+  group_id text references public.notification_groups(id) on delete set null,
+  is_default boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
+
+alter table public.notification_templates add column if not exists group_id text references public.notification_groups(id) on delete set null;
+alter table public.notification_templates add column if not exists is_default boolean not null default false;
+alter table public.notification_templates add column if not exists created_at timestamptz not null default now();
+alter table public.notification_templates add column if not exists updated_at timestamptz not null default now();
 
 comment on table public.notification_templates is 'NoticeManager 模板表：保存不同渠道的消息模板，派发时按模板进行即时渲染。';
 comment on column public.notification_templates.id is '模板 ID，对应本地 NotificationTemplate.id。';
@@ -88,6 +101,30 @@ comment on column public.notification_templates.name is '模板名称。';
 comment on column public.notification_templates.channel_type is '模板适用渠道类型。';
 comment on column public.notification_templates.content is '模板内容，支持 {{title}}、{{summary}}、{{payload.xxx}}、{{json}} 等占位符。';
 comment on column public.notification_templates.enabled is '模板是否启用。';
+comment on column public.notification_templates.group_id is '模板所属分组；空表示默认/共享模板，非空表示该组的自定义模板。';
+comment on column public.notification_templates.is_default is '是否为该渠道类型的默认模板；仅全局模板可以设为默认。';
+comment on column public.notification_templates.created_at is '模板创建时间。';
+comment on column public.notification_templates.updated_at is '模板最后更新时间。';
+
+create table if not exists public.notification_group_routes (
+  group_id text not null references public.notification_groups(id) on delete cascade,
+  channel_id text not null references public.notification_channels(id) on delete cascade,
+  mode text not null check (mode in ('custom', 'disabled')),
+  config_override jsonb not null default '{}'::jsonb,
+  template_id text references public.notification_templates(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (group_id, channel_id)
+);
+
+comment on table public.notification_group_routes is '通知分组渠道覆盖表：无记录表示继承默认配置，custom 表示分组自定义，disabled 表示明确禁用且不回退。';
+comment on column public.notification_group_routes.group_id is '通知分组 ID。';
+comment on column public.notification_group_routes.channel_id is '被覆盖的渠道 ID。';
+comment on column public.notification_group_routes.mode is 'custom 使用分组覆盖；disabled 明确禁用。恢复继承时删除该行。';
+comment on column public.notification_group_routes.config_override is '组级渠道配置覆盖，按字段合并到默认渠道配置；敏感值不得返回浏览器。';
+comment on column public.notification_group_routes.template_id is '组级自定义模板；空表示继续使用该渠道类型的默认模板。';
+comment on column public.notification_group_routes.created_at is '覆盖配置创建时间。';
+comment on column public.notification_group_routes.updated_at is '覆盖配置最后更新时间。';
 
 create table if not exists public.notification_api_keys (
   id text primary key,
@@ -109,6 +146,8 @@ create table if not exists public.queue_jobs (
   notification_id text not null references public.notifications(id) on delete cascade,
   channel_id text not null references public.notification_channels(id) on delete restrict,
   template_id text not null references public.notification_templates(id) on delete restrict,
+  channel_config jsonb,
+  rendered_content text,
   priority integer not null default 2,
   retry_count integer not null default 0,
   max_retry integer not null default 5,
@@ -120,11 +159,16 @@ create table if not exists public.queue_jobs (
   updated_at timestamptz not null default now()
 );
 
+alter table public.queue_jobs add column if not exists channel_config jsonb;
+alter table public.queue_jobs add column if not exists rendered_content text;
+
 comment on table public.queue_jobs is 'NoticeManager 队列表：每条通知在每个渠道上的发送任务，QueueJob.status 是发送状态权威来源。';
 comment on column public.queue_jobs.id is '队列任务 ID，对应本地 QueueJob.id。';
 comment on column public.queue_jobs.notification_id is '所属通知 ID。';
 comment on column public.queue_jobs.channel_id is '发送渠道 ID。';
 comment on column public.queue_jobs.template_id is '发送模板 ID。';
+comment on column public.queue_jobs.channel_config is '任务创建时解析出的最终渠道配置快照；历史任务为空时回退渠道当前配置。';
+comment on column public.queue_jobs.rendered_content is '任务创建时渲染的消息内容快照，确保后续模板修改不改变已入队消息。';
 comment on column public.queue_jobs.priority is '任务优先级，数值越小越优先。';
 comment on column public.queue_jobs.retry_count is '已重试次数。';
 comment on column public.queue_jobs.max_retry is '最大重试次数。';
@@ -211,6 +255,105 @@ comment on column public.push_ledgers.last_retry_at is '最后一次进入重试
 comment on column public.push_ledgers.created_at is '台账创建时间。';
 comment on column public.push_ledgers.updated_at is '台账最后更新时间。';
 
+create table if not exists public.notification_schema_migrations (
+  version text primary key,
+  applied_at timestamptz not null default now()
+);
+
+comment on table public.notification_schema_migrations is '通知模块一次性数据迁移标记，避免重复执行兼容性回填。';
+
+do $$
+begin
+  if not exists (
+    select 1 from public.notification_schema_migrations
+    where version = 'group-routing-v1'
+  ) then
+    with ranked_channels as (
+      select c.id,
+             row_number() over (partition by c.type order by c.created_at asc, c.id asc) as position
+      from public.notification_channels c
+      where c.enabled
+        and not exists (
+          select 1 from public.notification_channels configured
+          where configured.type = c.type and configured.is_default
+        )
+    )
+    update public.notification_channels channel
+    set is_default = true
+    from ranked_channels ranked
+    where channel.id = ranked.id and ranked.position = 1;
+
+    -- 旧版会向全部启用渠道投递。非默认旧渠道为每个现存分组补建 custom 路由，避免升级后静默漏发。
+    insert into public.notification_group_routes (
+      group_id,
+      channel_id,
+      mode,
+      config_override,
+      template_id
+    )
+    select groups.id, channels.id, 'custom', '{}'::jsonb, null
+    from public.notification_groups groups
+    cross join public.notification_channels channels
+    where channels.enabled and not channels.is_default
+    on conflict (group_id, channel_id) do nothing;
+
+    with ranked_templates as (
+      select t.id,
+             row_number() over (partition by t.channel_type order by t.name asc, t.id asc) as position
+      from public.notification_templates t
+      where t.enabled and t.group_id is null
+        and not exists (
+          select 1 from public.notification_templates configured
+          where configured.channel_type = t.channel_type
+            and configured.group_id is null
+            and configured.is_default
+        )
+    )
+    update public.notification_templates template
+    set is_default = true
+    from ranked_templates ranked
+    where template.id = ranked.id and ranked.position = 1;
+
+    insert into public.notification_schema_migrations(version)
+    values ('group-routing-v1');
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'notification_templates_default_scope_check'
+      and conrelid = 'public.notification_templates'::regclass
+  ) then
+    alter table public.notification_templates
+      add constraint notification_templates_default_scope_check
+      check (not is_default or group_id is null);
+  end if;
+end $$;
+
+create or replace function public.prevent_notification_template_scope_change()
+returns trigger
+language plpgsql
+as $$
+begin
+  if old.group_id is distinct from new.group_id
+     or old.channel_type is distinct from new.channel_type then
+    raise exception 'notification template scope and channel type are immutable'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function public.prevent_notification_template_scope_change() is '禁止修改模板所属分组和渠道类型，避免并发更新破坏分组路由引用。';
+
+drop trigger if exists notification_templates_scope_immutable_trigger on public.notification_templates;
+create trigger notification_templates_scope_immutable_trigger
+before update of group_id, channel_type on public.notification_templates
+for each row
+execute function public.prevent_notification_template_scope_change();
+
 create index if not exists notification_events_created_at_idx on public.notification_events(created_at desc);
 create index if not exists notification_events_source_idx on public.notification_events(source);
 create index if not exists notification_events_event_type_idx on public.notification_events(event_type);
@@ -222,9 +365,15 @@ create index if not exists notifications_event_id_idx on public.notifications(ev
 
 create index if not exists notification_channels_type_idx on public.notification_channels(type);
 create index if not exists notification_channels_enabled_idx on public.notification_channels(enabled);
+create unique index if not exists notification_channels_one_default_per_type_idx on public.notification_channels(type) where is_default;
 
 create index if not exists notification_templates_channel_type_idx on public.notification_templates(channel_type);
 create index if not exists notification_templates_enabled_idx on public.notification_templates(enabled);
+create index if not exists notification_templates_group_id_idx on public.notification_templates(group_id);
+create unique index if not exists notification_templates_one_default_per_type_idx on public.notification_templates(channel_type) where is_default and group_id is null;
+
+create index if not exists notification_group_routes_channel_id_idx on public.notification_group_routes(channel_id);
+create index if not exists notification_group_routes_template_id_idx on public.notification_group_routes(template_id);
 
 create index if not exists notification_groups_enabled_idx on public.notification_groups(enabled);
 
@@ -251,10 +400,14 @@ alter table public.notification_groups enable row level security;
 alter table public.notifications enable row level security;
 alter table public.notification_channels enable row level security;
 alter table public.notification_templates enable row level security;
+alter table public.notification_group_routes enable row level security;
+alter table public.notification_schema_migrations enable row level security;
 alter table public.notification_api_keys enable row level security;
 alter table public.queue_jobs enable row level security;
 alter table public.send_logs enable row level security;
 alter table public.push_ledgers enable row level security;
+
+notify pgrst, 'reload schema';
 
 commit;
 

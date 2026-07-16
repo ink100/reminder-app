@@ -1,9 +1,13 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireApiSession } from "@/lib/auth";
-import { eq, insertRow, newId, NotificationGroupRow, selectOne, selectRows, updateRows } from "@/lib/notification-center/store";
+import { eq, insertRow, newId, NotificationGroupRow, selectOne, selectRows } from "@/lib/notification-center/store";
 
-const schema = z.object({ name: z.string().min(1), description: z.string().optional(), enabled: z.boolean().optional() });
+const schema = z.object({
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(300).optional(),
+  enabled: z.boolean().optional(),
+});
 
 export async function GET() {
   const session = await requireApiSession();
@@ -15,10 +19,16 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const session = await requireApiSession();
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
-  const input = schema.parse(await request.json());
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return Response.json({ error: true, code: "INVALID_GROUP", message: "分组参数不合法" }, { status: 400 });
+  const input = parsed.data;
   const existing = await selectOne<NotificationGroupRow>("notification_groups", { filters: { name: eq(input.name) } });
-  const item = existing
-    ? (await updateRows<NotificationGroupRow>("notification_groups", { id: eq(existing.id) }, { description: input.description ?? null, enabled: input.enabled ?? true }))[0] ?? existing
-    : await insertRow<NotificationGroupRow>("notification_groups", { id: newId("ng"), name: input.name, description: input.description ?? null, enabled: input.enabled ?? true });
+  if (existing) return Response.json({ error: true, code: "GROUP_NAME_EXISTS", message: "分组名称已存在" }, { status: 409 });
+  const item = await insertRow<NotificationGroupRow>("notification_groups", {
+    id: newId("ng"),
+    name: input.name,
+    description: input.description ?? null,
+    enabled: input.enabled ?? true,
+  });
   return Response.json({ item }, { status: 201 });
 }

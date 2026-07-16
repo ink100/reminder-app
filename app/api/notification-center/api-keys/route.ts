@@ -10,7 +10,7 @@ export async function GET() {
   const session = await requireApiSession();
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const items = await selectRows<NotificationApiKeyRow>("notification_api_keys", { order: "id.desc" });
-  return Response.json({ items: items.map((item) => ({ id: item.id, name: item.name, enabled: item.enabled, expiresAt: item.expires_at, apiKey: `${item.api_key.slice(0, 8)}...${item.api_key.slice(-4)}` })) });
+  return Response.json({ items: items.map((item) => ({ id: item.id, name: item.name, enabled: item.enabled, expiresAt: item.expires_at, apiKey: item.api_key })) });
 }
 
 export async function POST(request: NextRequest) {

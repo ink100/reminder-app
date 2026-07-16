@@ -6,7 +6,6 @@ import { createPushLedgerForJob, updatePushLedgerForJob } from "@/lib/notificati
 import { renderTemplate } from "@/lib/notification-center/renderer";
 import { parseJsonObject, RETRY_DELAYS_MS } from "@/lib/notification-center/types";
 import {
-  channelConfigString,
   deleteRows,
   eq,
   insertRow,
@@ -29,6 +28,7 @@ async function sendWebhook(url: string, body: unknown) {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: typeof body === "string" ? body : JSON.stringify(body),
+    signal: AbortSignal.timeout(10_000),
   });
   const text = await response.text();
   if (!response.ok) throw new Error(`Webhook HTTP ${response.status}: ${text.slice(0, 300)}`);
@@ -74,14 +74,14 @@ async function dispatchOne(jobId: string) {
 
   const started = Date.now();
   const payload = job.notification.event?.payload ?? {};
-  const message = renderTemplate(job.template.content, {
+  const message = job.rendered_content ?? renderTemplate(job.template.content, {
     title: job.notification.title,
     summary: job.notification.summary ?? "",
     source: job.notification.event?.source ?? "retained-event-deleted",
     event_type: job.notification.event?.event_type ?? "unknown",
     payload,
   });
-  const config = job.channel.config ?? {};
+  const config = job.channel_config ?? job.channel.config ?? {};
 
   await createPushLedgerForJob({
     queueJobId: job.id,
@@ -89,7 +89,7 @@ async function dispatchOne(jobId: string) {
     channelId: job.channel_id,
     channelType: job.channel.type,
     channelName: job.channel.name,
-    channelConfig: channelConfigString(job.channel),
+    channelConfig: JSON.stringify(config),
     title: job.notification.title,
     content: message,
     rawPayload: payload,
@@ -110,9 +110,11 @@ async function dispatchOne(jobId: string) {
       responsePayload = await sendTelegramMessage({ token, chatId, text: message });
     } else if (job.channel.type === "Email") {
       const settings = await appSettingStore.findUnique({ where: { id: 1 } });
-      if (!settings || !settings.notificationEmail || !canSendMail(settings)) throw new Error("Email channel is not configured");
+      if (!settings || !canSendMail(settings)) throw new Error("Email channel is not configured");
+      const recipient = typeof config.to === "string" && config.to.trim() ? config.to.trim() : settings.notificationEmail;
+      if (!recipient) throw new Error("Email channel is missing recipient");
       const transport = createMailTransport(settings);
-      responsePayload = await transport.sendMail({ from: getMailFrom(settings), to: settings.notificationEmail, subject: job.notification.title, text: message });
+      responsePayload = await transport.sendMail({ from: getMailFrom(settings), to: recipient, subject: job.notification.title, text: message });
     } else if (job.channel.type === "Webhook") {
       const url = typeof config.url === "string" ? config.url : "";
       if (!url) throw new Error("Webhook channel missing url");
