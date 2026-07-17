@@ -4,6 +4,7 @@ import { supabaseModels } from "@/lib/reminders/store";
 import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { getPaymentQrLabel } from "@/lib/payment-qr";
+import { getMedicineAttachmentLabel } from "@/lib/medicines";
 
 export async function GET(request: NextRequest) {
   const session = await requireApiSession();
@@ -49,20 +50,31 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
+  const medicineIds = Array.from(new Set(items.map((item: any) => item.medicineId).filter((id: unknown): id is string => typeof id === "string")));
+  const medicines = medicineIds.length
+    ? await supabaseModels.medicine.findMany({ where: { deletedAt: null, OR: medicineIds.map((id) => ({ id })) } })
+    : [];
+  const medicineById = new Map(medicines.map((medicine) => [medicine.id, medicine.name]));
+
   // 转换为前端需要的格式
-  const formattedItems = items.map((item: any) => ({
-    id: item.id,
-    filename: item.filename,
-    originalName: item.originalName,
-    mimetype: item.mimetype,
-    size: item.size,
-    url: item.url,
-    createdAt: item.createdAt.toISOString(),
-    reminderId: item.reminderId,
-    reminderTitle: item.reminder?.title || null,
-    attachmentType: item.attachmentType,
-    sourceLabel: getPaymentQrLabel(item.attachmentType) ?? item.reminder?.title ?? "通用附件",
-  }));
+  const formattedItems = items.map((item: any) => {
+    const medicineLabel = getMedicineAttachmentLabel(item.attachmentType);
+    const medicineName = typeof item.medicineId === "string" ? medicineById.get(item.medicineId) : null;
+    return {
+      id: item.id,
+      filename: item.filename,
+      originalName: item.originalName,
+      mimetype: item.mimetype,
+      size: item.size,
+      url: item.url,
+      createdAt: item.createdAt.toISOString(),
+      reminderId: item.reminderId,
+      reminderTitle: item.reminder?.title || null,
+      medicineId: item.medicineId,
+      attachmentType: item.attachmentType,
+      sourceLabel: getPaymentQrLabel(item.attachmentType) ?? (medicineLabel ? `${medicineLabel}${medicineName ? ` · ${medicineName}` : ""}` : null) ?? item.reminder?.title ?? "通用附件",
+    };
+  });
 
   return Response.json({
     items: formattedItems,

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 
 import type { Attachment, Image, LicenseStoreAccount, Reminder, TaskRunLog, Todo } from "@prisma/client";
+import type { MedicineRecord } from "@/lib/medicines";
 import { countRows, eq, insertRow, selectOne, selectRows, updateRows } from "@/lib/notification-center/store";
 
 type Scalar = string | number | boolean | null | Date;
@@ -11,7 +12,7 @@ type Select = Record<string, boolean>;
 type Include = { reminder?: boolean | { select?: Select } };
 type Args = { where?: Where; orderBy?: Record<string, "asc" | "desc"> | Record<string, "asc" | "desc">[]; take?: number; skip?: number; select?: Select; include?: Include; data?: Row };
 type RelatedReminder<T> = T & { reminder?: Reminder | null };
-type BusinessAttachment = Attachment & { attachmentType: string | null };
+type BusinessAttachment = Attachment & { attachmentType: string | null; medicineId: string | null };
 
 type Store<T> = {
   findMany(args?: Args): Promise<T[]>;
@@ -23,7 +24,7 @@ type Store<T> = {
   updateMany(args: Args): Promise<{ count: number }>;
 };
 
-const dateFields = new Set(["dueAt", "upcomingNotifiedAt", "overdueNotifiedAt", "completedAt", "createdAt", "updatedAt", "deletedAt", "expiresAt", "startedAt", "finishedAt"]);
+const dateFields = new Set(["dueAt", "upcomingNotifiedAt", "overdueNotifiedAt", "completedAt", "createdAt", "updatedAt", "deletedAt", "expiresAt", "openedAt", "startedAt", "finishedAt"]);
 const snake = (value: string) => value.replace(/[A-Z]/g, (character) => `_${character.toLowerCase()}`);
 
 export function mapRow<T = Row>(row: Row): T {
@@ -181,8 +182,9 @@ function model<T>(table: string, timestamps = true): Store<T> {
 
 export const reminderStore = model<Reminder>("reminders");
 export const attachmentStore = model<RelatedReminder<BusinessAttachment>>("attachments", false);
+export const medicineStore = model<MedicineRecord>("medicines");
 export const licenseStoreAccountStore = model<RelatedReminder<LicenseStoreAccount>>("license_store_accounts");
 export const todoStore = model<Todo>("todos");
 export const imageStore = model<Image>("images", false);
 export const taskRunLogStore = model<TaskRunLog>("task_run_logs", false);
-export const supabaseModels = { reminder: reminderStore, attachment: attachmentStore, licenseStoreAccount: licenseStoreAccountStore, todo: todoStore, image: imageStore, taskRunLog: taskRunLogStore };
+export const supabaseModels = { reminder: reminderStore, attachment: attachmentStore, medicine: medicineStore, licenseStoreAccount: licenseStoreAccountStore, todo: todoStore, image: imageStore, taskRunLog: taskRunLogStore };

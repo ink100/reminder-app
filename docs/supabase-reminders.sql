@@ -33,6 +33,30 @@ create table if not exists public.attachments (
   deleted_at timestamptz
 );
 alter table public.attachments add column if not exists attachment_type text;
+alter table public.attachments add column if not exists medicine_id text;
+
+create table if not exists public.medicines (
+  id text primary key,
+  name text not null,
+  category text not null default '其他',
+  tags text,
+  quantity_total numeric,
+  quantity_remaining numeric,
+  unit text not null default '盒',
+  low_stock_threshold numeric,
+  location_text text,
+  content_text text,
+  opened_at timestamptz,
+  expires_at timestamptz,
+  expiration_reminder_days integer not null default 30,
+  expiration_reminder_id text references public.reminders(id) on delete set null on update cascade,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+alter table public.attachments drop constraint if exists attachments_medicine_id_fkey;
+alter table public.attachments add constraint attachments_medicine_id_fkey foreign key (medicine_id) references public.medicines(id) on delete set null on update cascade;
 
 -- Normalize legacy free-form categories into the reminder groups used by the UI.
 update public.reminders set category = case
@@ -66,16 +90,22 @@ create index if not exists reminders_due_at_idx on public.reminders(due_at);
 create index if not exists reminders_completed_at_idx on public.reminders(completed_at);
 create index if not exists reminders_deleted_at_idx on public.reminders(deleted_at);
 create index if not exists attachments_reminder_id_idx on public.attachments(reminder_id);
+create index if not exists attachments_medicine_id_idx on public.attachments(medicine_id);
 create index if not exists attachments_created_at_idx on public.attachments(created_at);
 create index if not exists attachments_deleted_at_idx on public.attachments(deleted_at);
 create index if not exists attachments_attachment_type_idx on public.attachments(attachment_type);
+create index if not exists medicines_category_idx on public.medicines(category);
+create index if not exists medicines_expires_at_idx on public.medicines(expires_at);
+create index if not exists medicines_deleted_at_idx on public.medicines(deleted_at);
+create index if not exists medicines_expiration_reminder_id_idx on public.medicines(expiration_reminder_id);
 create index if not exists license_store_accounts_expires_at_idx on public.license_store_accounts(expires_at);
 create index if not exists license_store_accounts_activation_code_idx on public.license_store_accounts(activation_code);
 create index if not exists license_store_accounts_reminder_id_idx on public.license_store_accounts(reminder_id);
 create index if not exists license_store_accounts_deleted_at_idx on public.license_store_accounts(deleted_at);
 
 comment on table public.reminders is 'Reminder records migrated from the rollback-preserved SQLite database';
-comment on table public.attachments is 'R2 file metadata optionally associated with a reminder';
+comment on table public.attachments is 'R2 file metadata optionally associated with a reminder or medicine';
+comment on table public.medicines is 'Single-user household human medicine inventory records';
 comment on table public.license_store_accounts is 'License store account and expiration records';
 comment on column public.reminders.id is 'Stable application-generated text identifier';
 comment on column public.reminders.title is 'Reminder title'; comment on column public.reminders.description is 'Optional description';
@@ -89,8 +119,17 @@ comment on column public.reminders.created_at is 'Creation instant'; comment on 
 comment on column public.attachments.id is 'Stable application-generated text identifier'; comment on column public.attachments.filename is 'Stored filename';
 comment on column public.attachments.original_name is 'Original uploaded filename'; comment on column public.attachments.mimetype is 'Media type'; comment on column public.attachments.size is 'Size in bytes';
 comment on column public.attachments.r2_key is 'Cloudflare R2 object key'; comment on column public.attachments.url is 'Public object URL'; comment on column public.attachments.reminder_id is 'Optional owning reminder';
-comment on column public.attachments.attachment_type is 'Optional business usage, including WeChat or Alipay payment QR images';
+comment on column public.attachments.medicine_id is 'Optional owning medicine record'; comment on column public.attachments.attachment_type is 'Optional business usage, including payment QR images and medicine photo categories';
 comment on column public.attachments.created_at is 'Creation instant'; comment on column public.attachments.deleted_at is 'Soft deletion instant';
+comment on column public.medicines.id is 'Stable application-generated text identifier'; comment on column public.medicines.name is 'Medicine name for human-use household inventory';
+comment on column public.medicines.category is 'Medicine category label'; comment on column public.medicines.tags is 'Free-form comma-separated search tags';
+comment on column public.medicines.quantity_total is 'Original or total quantity'; comment on column public.medicines.quantity_remaining is 'Current remaining quantity';
+comment on column public.medicines.unit is 'Quantity unit'; comment on column public.medicines.low_stock_threshold is 'Optional low-stock threshold';
+comment on column public.medicines.location_text is 'Text storage location'; comment on column public.medicines.content_text is 'Text usage/instruction content';
+comment on column public.medicines.opened_at is 'Opening date/time'; comment on column public.medicines.expires_at is 'Expiration date/time';
+comment on column public.medicines.expiration_reminder_days is 'Days before expiration to create/update the linked reminder';
+comment on column public.medicines.expiration_reminder_id is 'Optional linked reminder generated for medicine expiration'; comment on column public.medicines.notes is 'Owner notes';
+comment on column public.medicines.created_at is 'Creation instant'; comment on column public.medicines.updated_at is 'Last update instant'; comment on column public.medicines.deleted_at is 'Soft deletion instant';
 comment on column public.license_store_accounts.id is 'Stable application-generated text identifier'; comment on column public.license_store_accounts.shop_name is 'Shop name';
 comment on column public.license_store_accounts.phone is 'Contact phone'; comment on column public.license_store_accounts.remote_code is 'Remote support code';
 comment on column public.license_store_accounts.remote_password is 'Remote support password'; comment on column public.license_store_accounts.is_other_account is 'Whether this is another account';
@@ -110,7 +149,7 @@ begin
 end $$;
 revoke all on function public.soft_delete_reminder_with_attachments(text,timestamptz) from public, anon, authenticated;
 grant execute on function public.soft_delete_reminder_with_attachments(text,timestamptz) to service_role;
-alter table public.reminders enable row level security; alter table public.attachments enable row level security; alter table public.license_store_accounts enable row level security;
-revoke all on public.reminders, public.attachments, public.license_store_accounts from anon, authenticated;
-grant select, insert, update, delete on public.reminders, public.attachments, public.license_store_accounts to service_role;
+alter table public.reminders enable row level security; alter table public.attachments enable row level security; alter table public.medicines enable row level security; alter table public.license_store_accounts enable row level security;
+revoke all on public.reminders, public.attachments, public.medicines, public.license_store_accounts from anon, authenticated;
+grant select, insert, update, delete on public.reminders, public.attachments, public.medicines, public.license_store_accounts to service_role;
 

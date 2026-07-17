@@ -42,6 +42,15 @@ const navItems = [
     ),
   },
   {
+    href: "/medicines",
+    label: "药品管理",
+    icon: (
+      <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m7-8.5V19a2 2 0 01-2 2H7a2 2 0 01-2-2V6.5A2.5 2.5 0 017.5 4h9A2.5 2.5 0 0119 6.5z" />
+      </svg>
+    ),
+  },
+  {
     href: "/images",
     label: "文件管理",
     icon: (
