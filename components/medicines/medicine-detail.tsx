@@ -59,7 +59,8 @@ function AttachmentUploadCard({
   items: MedicineAttachment[];
   onUploaded: (item: MedicineAttachment) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const section = attachmentSections.find((entry) => entry.type === type)!;
@@ -81,7 +82,8 @@ function AttachmentUploadCard({
       setMessage(error instanceof Error ? error.message : "上传失败");
     } finally {
       setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
   }
 
@@ -91,9 +93,13 @@ function AttachmentUploadCard({
         <div><h3 className="font-semibold text-slate-950">{section.title}</h3><p className="mt-1 text-xs text-slate-500">{section.description}</p></div>
         <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500">{items.length} 张</span>
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(event) => void upload(event.target.files?.[0])} />
-      <button type="button" disabled={uploading} className="mt-3 min-h-11 w-full rounded-lg bg-slate-900 px-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => inputRef.current?.click()}>{uploading ? "上传中..." : "上传照片"}</button>
-      <p className="mt-2 min-h-5 text-xs text-slate-500">{message ?? "支持拍照或选择相册图片，最大 20MB。"}</p>
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => void upload(event.target.files?.[0])} />
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(event) => void upload(event.target.files?.[0])} />
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <button type="button" disabled={uploading} className="min-h-11 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => fileInputRef.current?.click()}>{uploading ? "上传中..." : "上传已有图片"}</button>
+        <button type="button" disabled={uploading} className="min-h-11 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => cameraInputRef.current?.click()}>{uploading ? "上传中..." : "拍照上传"}</button>
+      </div>
+      <p className="mt-2 min-h-5 text-xs text-slate-500">{message ?? "可从相册/文件选择已有图片，也可直接调用手机相机拍照，最大 20MB。"}</p>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {items.map((item) => (
           <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
