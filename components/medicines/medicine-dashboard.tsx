@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { MEDICINE_CATEGORIES, MEDICINE_UNITS, getMedicineStatusLabel, type MedicineStatus } from "@/lib/medicines";
+import { MEDICINE_ATTACHMENT_TYPES, MEDICINE_CATEGORIES, MEDICINE_UNITS, getMedicineAttachmentLabel, getMedicineStatusLabel, type MedicineAttachmentType, type MedicineStatus } from "@/lib/medicines";
 
 type MedicineItem = {
   id: string;
@@ -64,6 +64,85 @@ const statusOptions: Array<{ value: "all" | MedicineStatus; label: string }> = [
   { value: "low_stock", label: "库存偏低" },
   { value: "empty", label: "已用完" },
 ];
+
+const medicineAttachmentTypes = [
+  MEDICINE_ATTACHMENT_TYPES.photo,
+  MEDICINE_ATTACHMENT_TYPES.location,
+  MEDICINE_ATTACHMENT_TYPES.content,
+] as const;
+
+type PendingAttachmentFiles = Record<MedicineAttachmentType, File[]>;
+
+function createEmptyAttachmentFiles(): PendingAttachmentFiles {
+  return {
+    [MEDICINE_ATTACHMENT_TYPES.photo]: [],
+    [MEDICINE_ATTACHMENT_TYPES.location]: [],
+    [MEDICINE_ATTACHMENT_TYPES.content]: [],
+  };
+}
+
+const attachmentDescriptions: Record<MedicineAttachmentType, string> = {
+  [MEDICINE_ATTACHMENT_TYPES.photo]: "药盒、药瓶、药袋外观",
+  [MEDICINE_ATTACHMENT_TYPES.location]: "药箱、抽屉、冰箱格子等位置",
+  [MEDICINE_ATTACHMENT_TYPES.content]: "说明书、用法用量、注意事项或医嘱",
+};
+
+function toFileList(files: FileList | null | undefined) {
+  return files ? Array.from(files) : [];
+}
+
+function PendingAttachmentPicker({
+  type,
+  files,
+  disabled,
+  onAdd,
+  onRemove,
+}: {
+  type: MedicineAttachmentType;
+  files: File[];
+  disabled: boolean;
+  onAdd: (type: MedicineAttachmentType, files: File[]) => void;
+  onRemove: (type: MedicineAttachmentType, index: number) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const label = getMedicineAttachmentLabel(type) ?? "药品附件";
+
+  function addFiles(selected: FileList | null) {
+    const selectedFiles = toFileList(selected);
+    if (selectedFiles.length) onAdd(type, selectedFiles);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-slate-800">{label}</p>
+          <p className="mt-1 text-xs text-slate-500">{attachmentDescriptions[type]}</p>
+        </div>
+        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-500">{files.length} 张</span>
+      </div>
+      <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(event) => addFiles(event.target.files)} />
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(event) => addFiles(event.target.files)} />
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <button type="button" disabled={disabled} className="min-h-10 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => fileInputRef.current?.click()}>上传已有图片</button>
+        <button type="button" disabled={disabled} className="min-h-10 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white disabled:opacity-50" onClick={() => cameraInputRef.current?.click()}>拍照上传</button>
+      </div>
+      {files.length ? (
+        <div className="mt-3 space-y-2">
+          {files.map((file, index) => (
+            <div key={`${file.name}-${file.lastModified}-${index}`} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-2 py-1 text-xs text-slate-600">
+              <span className="min-w-0 truncate">{file.name}</span>
+              <button type="button" disabled={disabled} className="shrink-0 text-red-600 disabled:opacity-50" onClick={() => onRemove(type, index)}>移除</button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function toDateInput(value: string | null) {
   return value ? new Date(value).toISOString().slice(0, 10) : "";
@@ -131,6 +210,7 @@ export function MedicineDashboard() {
   const [editing, setEditing] = useState<MedicineItem | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<MedicineFormState>(emptyForm);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachmentFiles>(() => createEmptyAttachmentFiles());
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState<"all" | MedicineStatus>("all");
@@ -176,9 +256,35 @@ export function MedicineDashboard() {
     low: items.filter((item) => item.status === "low_stock" || item.status === "empty").length,
   }), [items]);
 
+  function resetPendingAttachments() {
+    setPendingAttachments(createEmptyAttachmentFiles());
+  }
+
+  function addPendingAttachments(type: MedicineAttachmentType, files: File[]) {
+    setPendingAttachments((current) => ({ ...current, [type]: [...current[type], ...files] }));
+  }
+
+  function removePendingAttachment(type: MedicineAttachmentType, index: number) {
+    setPendingAttachments((current) => ({ ...current, [type]: current[type].filter((_, itemIndex) => itemIndex !== index) }));
+  }
+
+  async function uploadPendingAttachments(medicineId: string) {
+    const entries = medicineAttachmentTypes.flatMap((type) => pendingAttachments[type].map((file) => ({ type, file })));
+    for (const entry of entries) {
+      const formData = new FormData();
+      formData.append("file", entry.file);
+      formData.append("attachmentType", entry.type);
+      const response = await fetch(`/api/medicines/${medicineId}/attachments`, { method: "POST", body: formData });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? `附件「${entry.file.name}」上传失败`);
+    }
+    return entries.length;
+  }
+
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
+    resetPendingAttachments();
     setFormOpen(true);
     setMessage(null);
   }
@@ -186,6 +292,7 @@ export function MedicineDashboard() {
   function openEdit(item: MedicineItem) {
     setEditing(item);
     setForm(formFromMedicine(item));
+    resetPendingAttachments();
     setFormOpen(true);
     setMessage(null);
   }
@@ -203,8 +310,10 @@ export function MedicineDashboard() {
       if (!response.ok || !data.item) throw new Error(data.error ?? "保存失败");
       const saved = data.item;
       setItems((current) => editing ? current.map((item) => item.id === saved.id ? saved : item) : [saved, ...current]);
+      const uploadedCount = await uploadPendingAttachments(saved.id);
+      resetPendingAttachments();
       setFormOpen(false);
-      setMessage("药品已保存");
+      setMessage(uploadedCount ? `药品已保存，并上传了 ${uploadedCount} 张附件` : "药品已保存");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "保存失败");
     } finally {
@@ -267,6 +376,24 @@ export function MedicineDashboard() {
             <Field label="备注"><input className="min-h-11 w-full rounded-lg border border-slate-200 px-3" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
           </div>
           <Field label="药品内容（文字）"><textarea className="min-h-28 w-full rounded-lg border border-slate-200 p-3" placeholder="用法、注意事项、医嘱等；也可以在详情中上传内容照片" value={form.contentText} onChange={(e) => setForm({ ...form, contentText: e.target.value })} /></Field>
+          <section className="space-y-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
+            <div>
+              <h3 className="font-semibold text-slate-950">{editing ? "编辑时补充附件" : "新建时上传附件"}</h3>
+              <p className="mt-1 text-xs text-slate-500">可先选择已有图片，也可手机拍照；保存药品成功后会自动上传并关联到该药品。</p>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              {medicineAttachmentTypes.map((type) => (
+                <PendingAttachmentPicker
+                  key={type}
+                  type={type}
+                  files={pendingAttachments[type]}
+                  disabled={saving}
+                  onAdd={addPendingAttachments}
+                  onRemove={removePendingAttachment}
+                />
+              ))}
+            </div>
+          </section>
           <div className="flex justify-end gap-2"><Button type="button" className="bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={() => setFormOpen(false)}>取消</Button><Button type="submit" disabled={saving}>{saving ? "保存中..." : "保存"}</Button></div>
         </form>
       ) : null}
