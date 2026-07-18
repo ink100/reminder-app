@@ -190,19 +190,25 @@ model WebAuthnCredential {
 }
 
 model Attachment {
-  id           String    @id @default(cuid())
-  filename     String
-  originalName String
-  mimetype     String
-  size         Int
-  r2Key        String
-  url          String
-  reminderId   String?
-  reminder     Reminder? @relation(fields: [reminderId], references: [id])
-  createdAt    DateTime  @default(now())
-  deletedAt    DateTime?
+  id                    String               @id @default(cuid())
+  filename              String
+  originalName          String
+  mimetype              String
+  size                  Int
+  r2Key                 String
+  url                   String
+  reminderId            String?
+  reminder              Reminder?            @relation(fields: [reminderId], references: [id])
+  attachmentType        String?
+  medicineId            String?
+  licenseStoreAccountId String?
+  createdAt             DateTime             @default(now())
+  deletedAt             DateTime?
 
   @@index([reminderId])
+  @@index([attachmentType])
+  @@index([medicineId])
+  @@index([licenseStoreAccountId])
   @@index([createdAt])
   @@index([deletedAt])
 }

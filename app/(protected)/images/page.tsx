@@ -15,6 +15,7 @@ interface FileData {
   reminderId?: string | null;
   reminderTitle?: string | null;
   attachmentType?: string | null;
+  licenseStoreAccountId?: string | null;
   sourceLabel?: string | null;
 }
 

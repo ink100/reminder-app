@@ -13,6 +13,7 @@ interface FileData {
   reminderId?: string | null;
   reminderTitle?: string | null;
   attachmentType?: string | null;
+  licenseStoreAccountId?: string | null;
   sourceLabel?: string | null;
 }
 
@@ -176,15 +177,21 @@ export function FileGallery({ files, onDelete, showSource = false }: FileGallery
             >
               下载
             </a>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(file.id);
-              }}
-              className="inline-flex min-h-11 items-center justify-center rounded-md bg-red-50 px-2 py-1.5 font-medium text-red-500 hover:bg-red-100 sm:min-h-9"
-            >
-              删除
-            </button>
+            {file.licenseStoreAccountId ? (
+              <span className="inline-flex min-h-11 items-center justify-center rounded-md bg-sky-50 px-2 py-1.5 font-medium text-sky-600 sm:min-h-9">
+                店铺管理
+              </span>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(file.id);
+                }}
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-red-50 px-2 py-1.5 font-medium text-red-500 hover:bg-red-100 sm:min-h-9"
+              >
+                删除
+              </button>
+            )}
           </div>
         </div>
       ))}

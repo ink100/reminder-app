@@ -12,7 +12,7 @@ type Select = Record<string, boolean>;
 type Include = { reminder?: boolean | { select?: Select } };
 type Args = { where?: Where; orderBy?: Record<string, "asc" | "desc"> | Record<string, "asc" | "desc">[]; take?: number; skip?: number; select?: Select; include?: Include; data?: Row };
 type RelatedReminder<T> = T & { reminder?: Reminder | null };
-type BusinessAttachment = Attachment & { attachmentType: string | null; medicineId: string | null };
+type BusinessAttachment = Attachment & { attachmentType: string | null; medicineId: string | null; licenseStoreAccountId: string | null };
 
 type Store<T> = {
   findMany(args?: Args): Promise<T[]>;

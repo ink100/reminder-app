@@ -18,6 +18,20 @@ export function getPaymentQrLabel(value: string | null | undefined): string | nu
   return isPaymentQrAttachmentType(value) ? labels[value] : null;
 }
 
+export function getPaymentQrSourceLabel(value: string | null | undefined, shopName: string | null | undefined): string | null {
+  const label = getPaymentQrLabel(value);
+  if (!label) return null;
+  return `${label} · ${shopName?.trim() || "旧版未分配"}`;
+}
+
+export function getPaymentQrSlots<T extends { attachmentType: string | null; createdAt: string | Date }>(items: T[]) {
+  const sorted = [...items].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+  return {
+    wechat: sorted.find((item) => item.attachmentType === PAYMENT_QR_ATTACHMENT_TYPES.wechat) ?? null,
+    alipay: sorted.find((item) => item.attachmentType === PAYMENT_QR_ATTACHMENT_TYPES.alipay) ?? null,
+  };
+}
+
 export function validatePaymentQrUpload(input: { attachmentType: string | null | undefined; mimetype: string; size: number }): string | null {
   if (!isPaymentQrAttachmentType(input.attachmentType)) return "不支持的收款码类型";
   if (!input.mimetype.startsWith("image/")) return "只能上传图片文件";

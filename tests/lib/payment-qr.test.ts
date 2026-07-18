@@ -4,6 +4,8 @@ import sharp from "sharp";
 import {
   PAYMENT_QR_ATTACHMENT_TYPES,
   getPaymentQrLabel,
+  getPaymentQrSlots,
+  getPaymentQrSourceLabel,
   validatePaymentQrUpload,
 } from "@/lib/payment-qr";
 import { normalizePaymentQrImage } from "@/lib/payment-qr-image";
@@ -21,10 +23,23 @@ describe("payment QR uploads", () => {
     expect(validatePaymentQrUpload({ attachmentType: PAYMENT_QR_ATTACHMENT_TYPES.wechat, mimetype: "image/png", size: 10 * 1024 * 1024 + 1 })).toBe("图片不能超过 10MB");
   });
 
-  it("provides source labels shown in the attachment gallery", () => {
+  it("provides account-qualified labels shown in the attachment gallery", () => {
     expect(getPaymentQrLabel(PAYMENT_QR_ATTACHMENT_TYPES.wechat)).toBe("微信收款二维码");
     expect(getPaymentQrLabel(PAYMENT_QR_ATTACHMENT_TYPES.alipay)).toBe("支付宝收款二维码");
     expect(getPaymentQrLabel(null)).toBeNull();
+    expect(getPaymentQrSourceLabel(PAYMENT_QR_ATTACHMENT_TYPES.wechat, "一号店")).toBe("微信收款二维码 · 一号店");
+    expect(getPaymentQrSourceLabel(PAYMENT_QR_ATTACHMENT_TYPES.alipay, null)).toBe("支付宝收款二维码 · 旧版未分配");
+    expect(getPaymentQrSourceLabel(null, "一号店")).toBeNull();
+  });
+
+  it("keeps one independent current QR slot per provider", () => {
+    const slots = getPaymentQrSlots([
+      { id: "w-old", attachmentType: PAYMENT_QR_ATTACHMENT_TYPES.wechat, createdAt: "2026-07-01T00:00:00Z" },
+      { id: "a-current", attachmentType: PAYMENT_QR_ATTACHMENT_TYPES.alipay, createdAt: "2026-07-02T00:00:00Z" },
+      { id: "w-current", attachmentType: PAYMENT_QR_ATTACHMENT_TYPES.wechat, createdAt: "2026-07-03T00:00:00Z" },
+    ]);
+    expect(slots.wechat?.id).toBe("w-current");
+    expect(slots.alipay?.id).toBe("a-current");
   });
 
   it("fully decodes and normalizes accepted images to safe PNG content", async () => {

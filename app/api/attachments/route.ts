@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { supabaseModels } from "@/lib/reminders/store";
 import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
-import { getPaymentQrLabel } from "@/lib/payment-qr";
+import { getPaymentQrSourceLabel } from "@/lib/payment-qr";
 import { getMedicineAttachmentLabel } from "@/lib/medicines";
 
 export async function GET(request: NextRequest) {
@@ -55,11 +55,20 @@ export async function GET(request: NextRequest) {
     ? await supabaseModels.medicine.findMany({ where: { deletedAt: null, OR: medicineIds.map((id) => ({ id })) } })
     : [];
   const medicineById = new Map(medicines.map((medicine) => [medicine.id, medicine.name]));
+  const licenseStoreAccountIds = Array.from(new Set(items.map((item: any) => item.licenseStoreAccountId).filter((id: unknown): id is string => typeof id === "string")));
+  const licenseStoreAccounts = licenseStoreAccountIds.length
+    ? await supabaseModels.licenseStoreAccount.findMany({
+        where: { OR: licenseStoreAccountIds.map((id) => ({ id })) },
+        select: { id: true, shopName: true },
+      })
+    : [];
+  const licenseStoreAccountById = new Map(licenseStoreAccounts.map((account) => [account.id, account.shopName]));
 
   // 转换为前端需要的格式
   const formattedItems = items.map((item: any) => {
     const medicineLabel = getMedicineAttachmentLabel(item.attachmentType);
     const medicineName = typeof item.medicineId === "string" ? medicineById.get(item.medicineId) : null;
+    const licenseStoreAccountName = typeof item.licenseStoreAccountId === "string" ? licenseStoreAccountById.get(item.licenseStoreAccountId) : null;
     return {
       id: item.id,
       filename: item.filename,
@@ -71,8 +80,9 @@ export async function GET(request: NextRequest) {
       reminderId: item.reminderId,
       reminderTitle: item.reminder?.title || null,
       medicineId: item.medicineId,
+      licenseStoreAccountId: item.licenseStoreAccountId,
       attachmentType: item.attachmentType,
-      sourceLabel: getPaymentQrLabel(item.attachmentType) ?? (medicineLabel ? `${medicineLabel}${medicineName ? ` · ${medicineName}` : ""}` : null) ?? item.reminder?.title ?? "通用附件",
+      sourceLabel: getPaymentQrSourceLabel(item.attachmentType, licenseStoreAccountName) ?? (medicineLabel ? `${medicineLabel}${medicineName ? ` · ${medicineName}` : ""}` : null) ?? item.reminder?.title ?? "通用附件",
     };
   });
 

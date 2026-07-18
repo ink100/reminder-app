@@ -1,11 +1,11 @@
-# Nginx limit for the license payment QR upload endpoint
+# Nginx limit for record-specific payment QR upload endpoints
 
 The application accepts QR images up to 10MB. `request.formData()` parses multipart bodies before application validation, so production nginx must enforce the request limit before proxying to Next.js.
 
-Add this exact-match location before the general `location /` block for `ne.daydreams.cn`:
+Add this regex location before the general `location /` block for `ne.daydreams.cn`:
 
 ```nginx
-location = /api/license/payment-qr {
+location ~ ^/api/license/store-accounts/[^/]+/payment-qr$ {
     client_max_body_size 11m;
     proxy_pass http://127.0.0.1:63456;
     proxy_http_version 1.1;
@@ -18,4 +18,4 @@ location = /api/license/payment-qr {
 }
 ```
 
-The 1MB multipart overhead allowance lets a 10MB file pass while bounding oversized bodies before they reach Node.js. Verify with `sudo nginx -t` before reloading nginx.
+Each endpoint belongs to one `license_store_accounts` row. The 1MB multipart overhead allowance lets a 10MB file pass while bounding oversized bodies before they reach Node.js. Verify with `sudo nginx -t` before reloading nginx.

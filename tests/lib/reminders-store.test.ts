@@ -12,8 +12,13 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("Supabase reminder store", () => {
   it("maps snake_case fields and timestamp strings to camelCase Dates", () => {
-    const item = mapRow<{ reminderId: string; dueAt: Date; deletedAt: null }>({ reminder_id: "c123", due_at: "2026-07-12T00:00:00.000Z", deleted_at: null });
-    expect(item).toEqual({ reminderId: "c123", dueAt: new Date("2026-07-12T00:00:00.000Z"), deletedAt: null });
+    const item = mapRow<{ reminderId: string; licenseStoreAccountId: string; dueAt: Date; deletedAt: null }>({
+      reminder_id: "c123",
+      license_store_account_id: "account-1",
+      due_at: "2026-07-12T00:00:00.000Z",
+      deleted_at: null,
+    });
+    expect(item).toEqual({ reminderId: "c123", licenseStoreAccountId: "account-1", dueAt: new Date("2026-07-12T00:00:00.000Z"), deletedAt: null });
   });
 
   it("sends supported filters, OR, ordering, pagination and exact select", async () => {

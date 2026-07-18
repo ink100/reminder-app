@@ -1,4 +1,6 @@
 import type { NextRequest } from "next/server";
+import { callRpc } from "@/lib/notification-center/store";
+import { cleanupR2Keys } from "@/lib/r2-cleanup";
 import { supabaseModels } from "@/lib/reminders/store";
 
 import { requireApiSession } from "@/lib/auth";
@@ -87,12 +89,18 @@ export async function DELETE(_request: NextRequest, context: RouteContext<"/api/
       return Response.json({ error: "Not found" }, { status: 404 });
     }
 
-    await supabaseModels.licenseStoreAccount.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    const deletedAt = new Date();
+    const objectKeys = await callRpc<string[]>("soft_delete_license_store_account_with_attachments", {
+      p_account_id: id,
+      p_deleted_at: deletedAt.toISOString(),
     });
+    const failedCleanupKeys = await cleanupR2Keys(objectKeys);
 
-    return Response.json({ success: true });
+    return Response.json({
+      success: true,
+      deletedAttachments: objectKeys.length,
+      cleanupPending: failedCleanupKeys.length > 0,
+    });
   } catch (error) {
     return toApiErrorResponse(error, { notFoundMessage: "Not found" });
   }

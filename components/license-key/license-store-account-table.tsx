@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+
+import { PaymentQrManager } from "@/components/license-key/payment-qr-manager";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +94,7 @@ export function LicenseStoreAccountTable() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [qrAccountId, setQrAccountId] = useState<string | null>(null);
   const [revealedCredentialIds, setRevealedCredentialIds] = useState<Set<string>>(() => new Set());
   const [message, setMessage] = useState<string | null>(null);
 
@@ -111,6 +114,7 @@ export function LicenseStoreAccountTable() {
       }
       const data = (await response.json()) as { items: StoreAccount[]; activationReminders: ActivationReminder[] };
       setItems(data.items);
+      setQrAccountId((current) => current && data.items.some((item) => item.id === current) ? current : null);
       setActivationReminders(data.activationReminders.filter((reminder) => Boolean(reminder.activationCode?.trim())));
       setMessage(null);
     } catch (error) {
@@ -222,7 +226,7 @@ export function LicenseStoreAccountTable() {
           <p className="text-sm text-slate-500">店铺账号维护</p>
           <h2 className="text-xl font-semibold text-slate-950">激活码关联店铺表格</h2>
           <p className="mt-1 text-sm text-slate-500">
-            维护店铺名、手机号、远程码、明文远程密码、是否他人账号、到期时间，并关联对应激活码提醒。
+            维护店铺名、手机号、远程码、明文远程密码、是否他人账号、到期时间，并为每条店铺记录分别保存微信和支付宝二维码截图。
           </p>
         </div>
         <form
@@ -339,11 +343,20 @@ export function LicenseStoreAccountTable() {
                 {credentialsRevealed ? "隐藏凭据" : "显示凭据"}
               </button>
               <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                <Button
+                  type="button"
+                  className="col-span-2 min-h-11 bg-sky-100 text-sky-800 hover:bg-sky-200"
+                  aria-expanded={qrAccountId === item.id}
+                  onClick={() => setQrAccountId((current) => current === item.id ? null : item.id)}
+                >
+                  {qrAccountId === item.id ? "收起收款码" : "微信/支付宝收款码"}
+                </Button>
                 <Button type="button" className="min-h-11 bg-slate-100 text-slate-700 hover:bg-slate-200" onClick={() => startEditing(item)}>编辑</Button>
                 <Button type="button" className="min-h-11 bg-red-600 hover:bg-red-700" disabled={deletingId === item.id} onClick={() => void handleDelete(item)}>
                   {deletingId === item.id ? "删除中" : "删除"}
                 </Button>
               </div>
+              {qrAccountId === item.id ? <div className="mt-3"><PaymentQrManager accountId={item.id} shopName={item.shopName} /></div> : null}
             </article>
           );
         })}
@@ -372,7 +385,8 @@ export function LicenseStoreAccountTable() {
               const isExpired = remainingDays !== null && remainingDays < 0;
               const isExpiringSoon = remainingDays !== null && remainingDays >= 0 && remainingDays <= 7;
               return (
-                <tr key={item.id} className="align-top hover:bg-slate-50">
+                <Fragment key={item.id}>
+                <tr className="align-top hover:bg-slate-50">
                   <td className="px-3 py-3 font-medium text-slate-900">{item.shopName}</td>
                   <td className="px-3 py-3 text-slate-700">{item.phone}</td>
                   <td className="px-3 py-3 text-slate-700">{item.remoteCode}</td>
@@ -398,6 +412,14 @@ export function LicenseStoreAccountTable() {
                     <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
+                        className="bg-sky-100 px-3 py-1.5 text-sky-800 hover:bg-sky-200"
+                        aria-expanded={qrAccountId === item.id}
+                        onClick={() => setQrAccountId((current) => current === item.id ? null : item.id)}
+                      >
+                        {qrAccountId === item.id ? "收起收款码" : "收款码"}
+                      </Button>
+                      <Button
+                        type="button"
                         className="bg-slate-100 px-3 py-1.5 text-slate-700 hover:bg-slate-200"
                         onClick={() => startEditing(item)}
                       >
@@ -414,6 +436,14 @@ export function LicenseStoreAccountTable() {
                     </div>
                   </td>
                 </tr>
+                {qrAccountId === item.id ? (
+                  <tr className="bg-sky-50/30">
+                    <td colSpan={9} className="p-3 sm:p-4">
+                      <PaymentQrManager accountId={item.id} shopName={item.shopName} />
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
               );
             })}
             {!loading && items.length === 0 ? (
