@@ -96,6 +96,7 @@ export function LicenseStoreAccountTable() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [qrAccountId, setQrAccountId] = useState<string | null>(null);
   const [revealedCredentialIds, setRevealedCredentialIds] = useState<Set<string>>(() => new Set());
+  const [copiedPasswordId, setCopiedPasswordId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const selectedReminder = useMemo(
@@ -163,6 +164,19 @@ export function LicenseStoreAccountTable() {
       }
       return next;
     });
+  }
+
+  async function copyRemotePassword(item: StoreAccount) {
+    try {
+      await navigator.clipboard.writeText(item.remotePassword);
+      setCopiedPasswordId(item.id);
+      setMessage(`已复制“${item.shopName}”的远程密码`);
+      window.setTimeout(() => {
+        setCopiedPasswordId((current) => current === item.id ? null : current);
+      }, 2000);
+    } catch {
+      setMessage("复制远程密码失败，请检查浏览器剪贴板权限");
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -326,7 +340,20 @@ export function LicenseStoreAccountTable() {
               <dl className="mt-4 grid grid-cols-[5rem_minmax(0,1fr)] gap-x-2 gap-y-2 text-sm">
                 <dt className="text-slate-500">手机号</dt><dd className="break-all text-slate-800">{item.phone}</dd>
                 <dt className="text-slate-500">远程码</dt><dd className="break-all text-slate-800">{credentialsRevealed ? item.remoteCode : "••••••••"}</dd>
-                <dt className="text-slate-500">远程密码</dt><dd className="break-all font-mono text-slate-800">{credentialsRevealed ? item.remotePassword : "••••••••"}</dd>
+                <dt className="text-slate-500">远程密码</dt>
+                <dd className="flex min-w-0 items-start gap-2 font-mono text-slate-800">
+                  <span className="min-w-0 flex-1 break-all">{credentialsRevealed ? item.remotePassword : "••••••••"}</span>
+                  {credentialsRevealed ? (
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-sans text-xs font-medium text-slate-700 hover:bg-slate-100"
+                      aria-label={`复制${item.shopName}的远程密码`}
+                      onClick={() => void copyRemotePassword(item)}
+                    >
+                      {copiedPasswordId === item.id ? "已复制" : "复制"}
+                    </button>
+                  ) : null}
+                </dd>
                 <dt className="text-slate-500">激活码</dt><dd className="break-all text-sky-700">{credentialsRevealed ? item.activationCode : "••••••••"}</dd>
                 <dt className="text-slate-500">关联提醒</dt>
                 <dd className="min-w-0 break-words">
@@ -390,7 +417,19 @@ export function LicenseStoreAccountTable() {
                   <td className="px-3 py-3 font-medium text-slate-900">{item.shopName}</td>
                   <td className="px-3 py-3 text-slate-700">{item.phone}</td>
                   <td className="px-3 py-3 text-slate-700">{item.remoteCode}</td>
-                  <td className="px-3 py-3 font-mono text-slate-700">{item.remotePassword}</td>
+                  <td className="px-3 py-3 font-mono text-slate-700">
+                    <div className="flex min-w-[130px] items-start gap-2">
+                      <span className="min-w-0 flex-1 break-all">{item.remotePassword}</span>
+                      <button
+                        type="button"
+                        className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-sans text-xs font-medium text-slate-700 hover:bg-slate-100"
+                        aria-label={`复制${item.shopName}的远程密码`}
+                        onClick={() => void copyRemotePassword(item)}
+                      >
+                        {copiedPasswordId === item.id ? "已复制" : "复制"}
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-3 py-3 text-slate-700">{item.isOtherAccount ? "是" : "否"}</td>
                   <td className="px-3 py-3">
                     <p className={isExpired ? "text-red-600" : isExpiringSoon ? "text-amber-600" : "text-slate-700"}>{formatDateTime(item.expiresAt)}</p>
