@@ -96,7 +96,7 @@ export function LicenseStoreAccountTable() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [qrAccountId, setQrAccountId] = useState<string | null>(null);
   const [revealedCredentialIds, setRevealedCredentialIds] = useState<Set<string>>(() => new Set());
-  const [copiedPasswordId, setCopiedPasswordId] = useState<string | null>(null);
+  const [copiedCredentialKey, setCopiedCredentialKey] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const selectedReminder = useMemo(
@@ -166,16 +166,16 @@ export function LicenseStoreAccountTable() {
     });
   }
 
-  async function copyRemotePassword(item: StoreAccount) {
+  async function copyCredential(item: StoreAccount, value: string, label: string, credentialKey: string) {
     try {
-      await navigator.clipboard.writeText(item.remotePassword);
-      setCopiedPasswordId(item.id);
-      setMessage(`已复制“${item.shopName}”的远程密码`);
+      await navigator.clipboard.writeText(value);
+      setCopiedCredentialKey(credentialKey);
+      setMessage(`已复制“${item.shopName}”的${label}`);
       window.setTimeout(() => {
-        setCopiedPasswordId((current) => current === item.id ? null : current);
+        setCopiedCredentialKey((current) => current === credentialKey ? null : current);
       }, 2000);
     } catch {
-      setMessage("复制远程密码失败，请检查浏览器剪贴板权限");
+      setMessage(`复制${label}失败，请检查浏览器剪贴板权限`);
     }
   }
 
@@ -339,7 +339,20 @@ export function LicenseStoreAccountTable() {
               </div>
               <dl className="mt-4 grid grid-cols-[5rem_minmax(0,1fr)] gap-x-2 gap-y-2 text-sm">
                 <dt className="text-slate-500">手机号</dt><dd className="break-all text-slate-800">{item.phone}</dd>
-                <dt className="text-slate-500">远程码</dt><dd className="break-all text-slate-800">{credentialsRevealed ? item.remoteCode : "••••••••"}</dd>
+                <dt className="text-slate-500">远程码</dt>
+                <dd className="flex min-w-0 items-start gap-2 text-slate-800">
+                  <span className="min-w-0 flex-1 break-all">{credentialsRevealed ? item.remoteCode : "••••••••"}</span>
+                  {credentialsRevealed ? (
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                      aria-label={`复制${item.shopName}的远程码`}
+                      onClick={() => void copyCredential(item, item.remoteCode, "远程码", `remote-code:${item.id}`)}
+                    >
+                      {copiedCredentialKey === `remote-code:${item.id}` ? "已复制" : "复制"}
+                    </button>
+                  ) : null}
+                </dd>
                 <dt className="text-slate-500">远程密码</dt>
                 <dd className="flex min-w-0 items-start gap-2 font-mono text-slate-800">
                   <span className="min-w-0 flex-1 break-all">{credentialsRevealed ? item.remotePassword : "••••••••"}</span>
@@ -348,9 +361,9 @@ export function LicenseStoreAccountTable() {
                       type="button"
                       className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-sans text-xs font-medium text-slate-700 hover:bg-slate-100"
                       aria-label={`复制${item.shopName}的远程密码`}
-                      onClick={() => void copyRemotePassword(item)}
+                      onClick={() => void copyCredential(item, item.remotePassword, "远程密码", `remote-password:${item.id}`)}
                     >
-                      {copiedPasswordId === item.id ? "已复制" : "复制"}
+                      {copiedCredentialKey === `remote-password:${item.id}` ? "已复制" : "复制"}
                     </button>
                   ) : null}
                 </dd>
@@ -416,7 +429,19 @@ export function LicenseStoreAccountTable() {
                 <tr className="align-top hover:bg-slate-50">
                   <td className="px-3 py-3 font-medium text-slate-900">{item.shopName}</td>
                   <td className="px-3 py-3 text-slate-700">{item.phone}</td>
-                  <td className="px-3 py-3 text-slate-700">{item.remoteCode}</td>
+                  <td className="px-3 py-3 text-slate-700">
+                    <div className="flex min-w-[130px] items-start gap-2">
+                      <span className="min-w-0 flex-1 break-all">{item.remoteCode}</span>
+                      <button
+                        type="button"
+                        className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                        aria-label={`复制${item.shopName}的远程码`}
+                        onClick={() => void copyCredential(item, item.remoteCode, "远程码", `remote-code:${item.id}`)}
+                      >
+                        {copiedCredentialKey === `remote-code:${item.id}` ? "已复制" : "复制"}
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-3 py-3 font-mono text-slate-700">
                     <div className="flex min-w-[130px] items-start gap-2">
                       <span className="min-w-0 flex-1 break-all">{item.remotePassword}</span>
@@ -424,9 +449,9 @@ export function LicenseStoreAccountTable() {
                         type="button"
                         className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-sans text-xs font-medium text-slate-700 hover:bg-slate-100"
                         aria-label={`复制${item.shopName}的远程密码`}
-                        onClick={() => void copyRemotePassword(item)}
+                        onClick={() => void copyCredential(item, item.remotePassword, "远程密码", `remote-password:${item.id}`)}
                       >
-                        {copiedPasswordId === item.id ? "已复制" : "复制"}
+                        {copiedCredentialKey === `remote-password:${item.id}` ? "已复制" : "复制"}
                       </button>
                     </div>
                   </td>
