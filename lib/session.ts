@@ -13,13 +13,22 @@ function hashToken(token: string) {
     .digest("hex");
 }
 
-export async function createSession(ipAddress?: string | null, userAgent?: string | null) {
+export type AuthMethod = "totp" | "passkey" | "trusted_device";
+
+export async function createSession(
+  userId: string,
+  authMethod: AuthMethod,
+  ipAddress?: string | null,
+  userAgent?: string | null,
+) {
   const token = crypto.randomBytes(32).toString("hex");
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
 
   await prisma.authSession.create({
     data: {
+      userId,
+      authMethod,
       sessionTokenHash: tokenHash,
       expiresAt,
       ipAddress: ipAddress ?? undefined,
@@ -64,7 +73,11 @@ export async function getCurrentSession() {
       expiresAt: {
         gt: new Date(),
       },
+      user: {
+        status: "ACTIVE",
+      },
     },
+    include: { user: true },
   });
 
   return session;

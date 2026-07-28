@@ -123,7 +123,10 @@ model TelegramBindCode {
 
 model AuthSession {
   id               String   @id @default(cuid())
-  sessionTokenHash String
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  authMethod       String
+  sessionTokenHash String   @unique
   expiresAt        DateTime
   ipAddress        String?
   userAgent        String?
@@ -131,10 +134,13 @@ model AuthSession {
   lastSeenAt       DateTime @default(now())
 
   @@index([expiresAt])
+  @@index([userId])
 }
 
 model TrustedDevice {
   id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash   String    @unique
   deviceName  String?
   userAgent   String?
@@ -146,6 +152,33 @@ model TrustedDevice {
 
   @@index([expiresAt])
   @@index([revokedAt])
+  @@index([userId])
+}
+
+model User {
+  id                  String               @id @default(cuid())
+  username            String               @unique
+  displayName         String
+  role                String               @default("MEMBER")
+  status              String               @default("ACTIVE")
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  totpFactor          UserTotpFactor?
+  sessions            AuthSession[]
+  trustedDevices      TrustedDevice[]
+  webAuthnCredentials WebAuthnCredential[]
+}
+
+model UserTotpFactor {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secretEncrypted String
+  enabledAt       DateTime  @default(now())
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model TaskRunLog {
@@ -177,6 +210,8 @@ model Image {
 
 model WebAuthnCredential {
   id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   credentialId      String   @unique
   publicKey         String
   counter           BigInt   @default(0)
@@ -187,6 +222,7 @@ model WebAuthnCredential {
   lastUsedAt        DateTime?
 
   @@index([credentialId])
+  @@index([userId])
 }
 
 model Attachment {

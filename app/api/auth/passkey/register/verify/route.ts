@@ -1,10 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifyRegResponse } from "@/lib/webauthn";
+import { requireApiSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const actor = await requireApiSession();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const body = await request.json();
-    const result = await verifyRegResponse(body);
+    const result = await verifyRegResponse(actor.userId, body);
     return NextResponse.json(result);
   } catch (error) {
     console.error("注册验证失败:", error);

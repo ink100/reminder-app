@@ -5,8 +5,12 @@ import { OTP_SETUP_COOKIE_NAME, OTP_SETUP_MAX_AGE_SECONDS } from "@/lib/constant
 import { encryptText } from "@/lib/crypto";
 import { env } from "@/lib/env";
 import { generateOtpSecret, generateOtpSetupPayload } from "@/lib/otp";
+import { requireAdminApiSession } from "@/lib/auth";
 
 export async function POST() {
+  const actor = await requireAdminApiSession();
+  if (!actor) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const settings = await ensureAppSettings();
 
   if (settings.otpSecretEncrypted) {

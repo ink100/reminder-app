@@ -34,9 +34,11 @@ const ORIGIN = process.env.WEBAUTHN_ORIGIN || process.env.APP_BASE_URL || "http:
 /**
  * 生成注册选项
  */
-export async function generateRegOptions(authenticatorAttachment?: "platform" | "cross-platform") {
-  // 获取已注册的凭证
+export async function generateRegOptions(userId: string, authenticatorAttachment?: "platform" | "cross-platform") {
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  // 获取当前用户已注册的凭证
   const existingCredentials = await prisma.webAuthnCredential.findMany({
+    where: { userId },
     select: {
       credentialId: true,
     },
@@ -45,8 +47,8 @@ export async function generateRegOptions(authenticatorAttachment?: "platform" | 
   const options = await generateRegistrationOptions({
     rpName: RP_NAME,
     rpID: RP_ID,
-    userName: "admin",
-    userDisplayName: "管理员",
+    userName: user.username,
+    userDisplayName: user.displayName,
     attestationType: "none",
     excludeCredentials: existingCredentials.map((cred) => ({
       id: cred.credentialId,
@@ -78,7 +80,7 @@ export async function generateRegOptions(authenticatorAttachment?: "platform" | 
 /**
  * 验证注册响应
  */
-export async function verifyRegResponse(response: RegistrationResponseJSON) {
+export async function verifyRegResponse(userId: string, response: RegistrationResponseJSON) {
   // 获取存储的 challenge
   const challengeRow = await prisma.webAuthnChallenge.findUnique({
     where: { id: "current" },
@@ -104,6 +106,7 @@ export async function verifyRegResponse(response: RegistrationResponseJSON) {
   // 保存凭证
   await prisma.webAuthnCredential.create({
     data: {
+      userId,
       credentialId: credential.id,
       publicKey: Buffer.from(credential.publicKey).toString("base64"),
       counter: BigInt(credential.counter),
@@ -204,14 +207,15 @@ export async function verifyAuthResponse(response: AuthenticationResponseJSON) {
   // 清除 challenge
   await prisma.webAuthnChallenge.delete({ where: { id: "auth" } }).catch(() => {});
 
-  return { verified: true };
+  return { verified: true, userId: credential.userId };
 }
 
 /**
  * 获取已注册的凭证列表
  */
-export async function getRegisteredCredentials() {
+export async function getRegisteredCredentials(userId: string) {
   return prisma.webAuthnCredential.findMany({
+    where: { userId },
     select: {
       id: true,
       credentialId: true,
@@ -227,6 +231,6 @@ export async function getRegisteredCredentials() {
 /**
  * 删除凭证
  */
-export async function deleteCredential(id: string) {
-  return prisma.webAuthnCredential.delete({ where: { id } });
+export async function deleteCredential(userId: string, id: string) {
+  return prisma.webAuthnCredential.delete({ where: { id, userId } });
 }

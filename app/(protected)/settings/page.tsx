@@ -1,7 +1,6 @@
 import { ensureAppSettings } from "@/lib/bootstrap-settings";
 import { getEditableMailSettings } from "@/lib/mail-settings";
 import { getTaskRunLogs } from "@/lib/task-runner";
-import { OtpResetCard } from "@/components/settings/otp-reset-card";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { PasskeyManager } from "@/components/settings/passkey-manager";
 import { R2SettingsCard } from "@/components/settings/r2-settings-card";
@@ -38,7 +37,6 @@ export default async function SettingsPage() {
         }}
         initialTaskLogs={logs}
       />
-      <OtpResetCard />
     </div>
   );
 }

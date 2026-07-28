@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
       const userAgent = request.headers.get("user-agent") || "unknown";
 
       // 创建会话
-      await createSession(ipAddress, userAgent);
+      await createSession(result.userId, "passkey", ipAddress, userAgent);
 
       if (rememberDevice) {
-        await createTrustedDevice(ipAddress, userAgent);
+        await createTrustedDevice(result.userId, ipAddress, userAgent);
       }
     }
 

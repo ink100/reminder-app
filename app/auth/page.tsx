@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AuthEntry } from "@/components/auth/auth-entry";
-import { ensureAppSettings } from "@/lib/bootstrap-settings";
+
 import { getCurrentSession } from "@/lib/session";
 import { hasTrustedDeviceCookie } from "@/lib/trusted-device";
 import { prisma } from "@/lib/prisma";
@@ -9,8 +9,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function AuthPage() {
-  const [settings, session, passkeyCount] = await Promise.all([
-    ensureAppSettings(),
+  const [session, passkeyCount] = await Promise.all([
     getCurrentSession(),
     prisma.webAuthnCredential.count(),
   ]);
@@ -25,7 +24,7 @@ export default async function AuthPage() {
 
   return (
     <AuthEntry
-      otpConfigured={Boolean(settings.otpSecretEncrypted)}
+      otpConfigured={Boolean(await prisma.userTotpFactor.findFirst({ where: { revokedAt: null } }))}
       hasPasskeyCredentials={passkeyCount > 0}
       redirectTo="/reminders"
       eyebrow="系统安全验证"

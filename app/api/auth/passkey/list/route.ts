@@ -10,7 +10,7 @@ export async function GET() {
   }
 
   try {
-    const credentials = await getRegisteredCredentials();
+    const credentials = await getRegisteredCredentials(session.userId);
     return NextResponse.json({ items: credentials });
   } catch (error) {
     console.error("获取凭证列表失败:", error);

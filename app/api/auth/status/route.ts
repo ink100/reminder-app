@@ -1,11 +1,17 @@
 import { getCurrentSession } from "@/lib/session";
 import { ensureAppSettings } from "@/lib/bootstrap-settings";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const [settings, session] = await Promise.all([ensureAppSettings(), getCurrentSession()]);
+  await ensureAppSettings();
+  const [factor, session] = await Promise.all([
+    prisma.userTotpFactor.findFirst({ where: { revokedAt: null } }),
+    getCurrentSession(),
+  ]);
 
   return Response.json({
-    otpConfigured: Boolean(settings.otpSecretEncrypted),
+    otpConfigured: Boolean(factor),
     authenticated: Boolean(session),
+    actor: session ? { userId: session.userId, role: session.user.role, displayName: session.user.displayName } : null,
   });
 }

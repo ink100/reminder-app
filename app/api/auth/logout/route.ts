@@ -7,7 +7,7 @@ export async function POST() {
   await deleteCurrentSession();
 
   if (trustedDevice) {
-    await revokeTrustedDevice(trustedDevice.id);
+    await revokeTrustedDevice(trustedDevice.userId, trustedDevice.id);
   } else {
     await deleteTrustedDeviceCookie();
   }

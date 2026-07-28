@@ -22,7 +22,8 @@
     "supabase:reminders:apply": "tsx scripts/apply-supabase-reminders.ts",
     "supabase:reminders:migrate": "tsx scripts/migrate-reminders-to-supabase.ts",
     "supabase:todos-images-task-logs:migrate": "tsx scripts/migrate-todos-images-task-logs-to-supabase.ts",
-    "supabase:app-settings:migrate": "tsx scripts/migrate-app-settings-to-supabase.ts"
+    "supabase:app-settings:migrate": "tsx scripts/migrate-app-settings-to-supabase.ts",
+    "db:family-auth-v1": "tsx scripts/apply-family-auth-v1.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1055.0",

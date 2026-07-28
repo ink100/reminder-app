@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   const ipAddress = forwardedFor?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip");
   const userAgent = request.headers.get("user-agent");
 
-  await createSession(ipAddress, userAgent);
+  await createSession(device.userId, "trusted_device", ipAddress, userAgent);
 
   return NextResponse.redirect(getRedirectUrl(request, nextPath));
 }

@@ -45,6 +45,7 @@ yarn-error.log*
 /data/*.log
 /uploads/
 /tmp/
+/backups/
 /logs/
 
 # vercel

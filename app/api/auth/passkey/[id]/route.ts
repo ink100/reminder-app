@@ -14,7 +14,7 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    await deleteCredential(id);
+    await deleteCredential(session.userId, id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("删除凭证失败:", error);

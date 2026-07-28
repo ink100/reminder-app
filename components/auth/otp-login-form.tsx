@@ -15,6 +15,7 @@ export function OtpLoginForm({ redirectTo = "/reminders" }: OtpLoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [code, setCode] = useState("");
+  const [username, setUsername] = useState("admin");
   const [message, setMessage] = useState<string | null>(null);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -38,7 +39,7 @@ export function OtpLoginForm({ redirectTo = "/reminders" }: OtpLoginFormProps) {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ code, rememberDevice }),
+        body: JSON.stringify({ username, code, rememberDevice }),
       });
 
       const data = (await response.json()) as { error?: string; success?: boolean };
@@ -66,6 +67,17 @@ export function OtpLoginForm({ redirectTo = "/reminders" }: OtpLoginFormProps) {
         <p className="mt-1 text-sm text-slate-500">
           请输入 Google Authenticator / GitHub Mobile 中当前显示的 6 位动态验证码。
         </p>
+      </div>
+      <div className="space-y-2">
+        <label htmlFor="otp-login-username" className="text-sm font-medium text-slate-700">用户名</label>
+        <Input
+          id="otp-login-username"
+          name="username"
+          autoComplete="username"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
         <label htmlFor="otp-login-code" className="text-sm font-medium text-slate-700">6 位动态验证码</label>

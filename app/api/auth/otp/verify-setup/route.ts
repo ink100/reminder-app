@@ -8,8 +8,13 @@ import { appSettingStore } from "@/lib/app-settings/store";
 import { createSession } from "@/lib/session";
 import { verifyOtpToken } from "@/lib/otp";
 import { otpCodeSchema } from "@/lib/validators/auth";
+import { prisma } from "@/lib/prisma";
+import { requireAdminApiSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const actor = await requireAdminApiSession();
+  if (!actor) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
   const settings = await ensureAppSettings();
 
   if (settings.otpSecretEncrypted) {
@@ -32,12 +37,19 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "验证码错误" }, { status: 400 });
   }
 
+  const encryptedForStorage = encryptText(secret);
   await appSettingStore.update({
     where: { id: 1 },
     data: {
-      otpSecretEncrypted: encryptText(secret),
+      otpSecretEncrypted: encryptedForStorage,
       otpConfiguredAt: new Date(),
     },
+  });
+  const user = actor.user;
+  await prisma.userTotpFactor.upsert({
+    where: { userId: user.id },
+    update: { secretEncrypted: encryptedForStorage, revokedAt: null, enabledAt: new Date() },
+    create: { userId: user.id, secretEncrypted: encryptedForStorage },
   });
 
   cookieStore.delete(OTP_SETUP_COOKIE_NAME);
@@ -45,7 +57,7 @@ export async function POST(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
   const ipAddress = forwardedFor?.split(",")[0]?.trim() ?? null;
 
-  await createSession(ipAddress, request.headers.get("user-agent"));
+  await createSession(user.id, "totp", ipAddress, request.headers.get("user-agent"));
 
   return Response.json({ success: true });
 }

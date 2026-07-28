@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const devices = await listTrustedDevices();
+  const devices = await listTrustedDevices(session.userId);
   return NextResponse.json({ devices });
 }
 
@@ -24,6 +24,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "缺少设备 ID" }, { status: 400 });
   }
 
-  await revokeTrustedDevice(id);
+  await revokeTrustedDevice(session.userId, id);
   return NextResponse.json({ success: true });
 }

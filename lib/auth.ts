@@ -26,3 +26,8 @@ export async function requireApiSession() {
 
   return session;
 }
+
+export async function requireAdminApiSession() {
+  const session = await getCurrentSession();
+  return session?.user.role === "ADMIN" ? session : null;
+}
