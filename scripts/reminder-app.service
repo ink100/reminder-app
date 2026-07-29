@@ -13,6 +13,8 @@ Environment=NODE_ENV=production
 Environment="NODE_OPTIONS=--dns-result-order=ipv4first --no-network-family-autoselection"
 Environment=PORT=63456
 ExecStart=/home/ubuntu/apps/reminder-app/node_modules/.bin/next start --hostname 127.0.0.1 --port 63456
+# Next.js exits with status 143 when systemd intentionally sends SIGTERM during stop/restart.
+SuccessExitStatus=143 SIGTERM
 Restart=always
 RestartSec=5
 
