@@ -198,6 +198,7 @@ describe("unified family migration runner", () => {
       expect(stat.isFile()).toBe(true);
       expect(stat.isSymbolicLink()).toBe(false);
       expect(stat.size).toBeGreaterThan(0);
+      expect(stat.mode & 0o777).toBe(0o600);
     } finally { client.close(); rmSync(path, { force: true }); if (backupPath) rmSync(backupPath, { force: true }); }
   });
 

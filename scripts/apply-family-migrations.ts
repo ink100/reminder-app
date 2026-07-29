@@ -1,7 +1,7 @@
 import { createClient, type Client, type Transaction } from "@libsql/client";
 import { loadEnvConfig } from "@next/env";
 import { createHash, randomUUID } from "node:crypto";
-import { lstat, open, unlink } from "node:fs/promises";
+import { chmod, lstat, open, unlink } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -137,6 +137,7 @@ function timestamp() { return new Date().toISOString().replace(/[:.]/g, "-"); }
 async function createLocalBackup(client: Client, localPath: string) {
   const backupPath = `${localPath}.family-migration-${timestamp()}-${randomUUID()}.bak`;
   await client.execute(`VACUUM INTO '${backupPath.replaceAll("'", "''")}'`);
+  await chmod(backupPath, 0o600);
   const stat = await lstat(backupPath);
   if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0) throw new Error("Family migration backup validation failed");
   const backup = createClient({ url: pathToFileURL(backupPath).href });

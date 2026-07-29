@@ -22,7 +22,7 @@ It validates prerequisite legacy structures before writing, records applied phas
 
 ## Snapshot requirements
 
-- For `file:` SQLite URLs, the runner creates a consistent timestamped `VACUUM INTO` backup next to the database before creating the journal or changing schema. Retain that `.bak` file until application verification is complete.
+- For `file:` SQLite URLs, the runner creates a consistent timestamped `VACUUM INTO` backup next to the database before creating the journal or changing schema, then forces the backup mode to owner-only `0600`. Retain that `.bak` file until application verification is complete.
 - For remote libSQL/HTTP URLs, the runner cannot make a local database backup and fails closed. Create and verify an external provider snapshot first, then explicitly set:
 
 ```bash

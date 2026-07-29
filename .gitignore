@@ -37,6 +37,7 @@ yarn-error.log*
 # local databases / runtime state
 *.db
 *.db-*
+*.db.family-migration-*.bak
 *.sqlite
 *.sqlite-*
 /prisma/*.db
