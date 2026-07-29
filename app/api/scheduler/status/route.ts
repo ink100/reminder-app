@@ -1,9 +1,11 @@
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { getSchedulerStatus } from "@/lib/scheduler";
 import { getTaskRunLogs } from "@/lib/task-runner";
 
 export async function GET() {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

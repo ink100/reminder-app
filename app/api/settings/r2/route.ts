@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { appSettingStore } from "@/lib/app-settings/store";
 import { getR2Config, testR2Connection } from "@/lib/r2-config";
 
 // 测试 R2 连接
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -29,7 +31,9 @@ export async function POST(request: NextRequest) {
 
 // 保存 R2 配置
 export async function PUT(request: NextRequest) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -58,7 +62,9 @@ export async function PUT(request: NextRequest) {
 
 // 获取当前 R2 配置
 export async function GET() {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

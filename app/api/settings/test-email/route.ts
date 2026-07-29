@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { createMailTransport, getMailFrom } from "@/lib/mailer";
 import { appSettingStore } from "@/lib/app-settings/store";
 import { buildTestMail } from "@/lib/test-mail";
@@ -11,7 +11,9 @@ const inputSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,11 +1,13 @@
 import type { NextRequest } from "next/server";
 
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { getActiveBindings, createBindCode, unbindChatId } from "@/lib/telegram-binding";
 
 export async function GET() {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -15,7 +17,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

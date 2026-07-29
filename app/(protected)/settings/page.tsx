@@ -2,9 +2,7 @@ import { ensureAppSettings } from "@/lib/bootstrap-settings";
 import { getEditableMailSettings } from "@/lib/mail-settings";
 import { getTaskRunLogs } from "@/lib/task-runner";
 import { SettingsForm } from "@/components/settings/settings-form";
-import { PasskeyManager } from "@/components/settings/passkey-manager";
 import { R2SettingsCard } from "@/components/settings/r2-settings-card";
-import { TrustedDevicesCard } from "@/components/settings/trusted-devices-card";
 
 export default async function SettingsPage() {
   const [settings, logs] = await Promise.all([ensureAppSettings(), getTaskRunLogs()]);
@@ -15,8 +13,6 @@ export default async function SettingsPage() {
         <p className="text-sm text-slate-500">配置页面</p>
         <h1 className="text-2xl font-semibold text-slate-950">提醒规则与安全设置</h1>
       </div>
-      <PasskeyManager />
-      <TrustedDevicesCard />
       <R2SettingsCard
         initialValues={{
           r2Endpoint: settings.r2Endpoint || "",

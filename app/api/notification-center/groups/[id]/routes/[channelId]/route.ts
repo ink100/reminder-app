@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import {
   deleteRows,
   eq,
@@ -19,7 +19,9 @@ const schema = z.object({
 });
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string; channelId: string }> }) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
 
   const { id: groupId, channelId } = await context.params;
@@ -70,7 +72,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 }
 
 export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string; channelId: string }> }) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
   const { id: groupId, channelId } = await context.params;
   await deleteRows("notification_group_routes", { group_id: eq(groupId), channel_id: eq(channelId) });

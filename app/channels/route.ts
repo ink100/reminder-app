@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { eq, insertRow, newId, NotificationChannelRow, selectOne, selectRows } from "@/lib/notification-center/store";
 
 const schema = z.object({
@@ -26,14 +26,18 @@ function serializeChannel(item: NotificationChannelRow) {
 }
 
 export async function GET() {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
   const items = await selectRows<NotificationChannelRow>("notification_channels", { order: "created_at.desc" });
   return Response.json({ items: items.map(serializeChannel) });
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: true, code: "INVALID_CHANNEL", message: "渠道参数不合法" }, { status: 400 });

@@ -126,58 +126,111 @@ model AuthSession {
   userId           String
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   authMethod       String
+  securityVersion  Int      @default(0)
   sessionTokenHash String   @unique
   expiresAt        DateTime
   ipAddress        String?
   userAgent        String?
+  trustedDeviceId  String?
+  trustedDevice    TrustedDevice? @relation(fields: [trustedDeviceId], references: [id], onDelete: Cascade)
   createdAt        DateTime @default(now())
   lastSeenAt       DateTime @default(now())
 
   @@index([expiresAt])
   @@index([userId])
+  @@index([trustedDeviceId])
 }
 
 model TrustedDevice {
   id          String    @id @default(cuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash   String    @unique
-  deviceName  String?
+  tokenHash       String    @unique
+  securityVersion Int       @default(0)
+  deviceName      String?
   userAgent   String?
   ipAddress   String?
   expiresAt   DateTime
   lastUsedAt  DateTime?
   revokedAt   DateTime?
   createdAt   DateTime  @default(now())
+  sessions    AuthSession[]
 
   @@index([expiresAt])
   @@index([revokedAt])
   @@index([userId])
 }
 
+model LoginThrottle {
+  key             String   @id
+  scope           String
+  failureCount    Int      @default(0)
+  windowStartedAt DateTime
+  updatedAt       DateTime @updatedAt
+
+  @@index([updatedAt])
+}
+
 model User {
   id                  String               @id @default(cuid())
   username            String               @unique
   displayName         String
-  role                String               @default("MEMBER")
-  status              String               @default("ACTIVE")
+  role                  String                 @default("MEMBER")
+  status                String                 @default("ACTIVE")
+  securityVersion       Int                    @default(0)
+  activatedAt           DateTime?
+  disabledAt            DateTime?
 
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  totpFactor          UserTotpFactor?
-  sessions            AuthSession[]
-  trustedDevices      TrustedDevice[]
-  webAuthnCredentials WebAuthnCredential[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  totpFactor            UserTotpFactor?
+  sessions              AuthSession[]
+  trustedDevices        TrustedDevice[]
+  webAuthnCredentials   WebAuthnCredential[]
+  invitationsSent       MemberInvitation[]     @relation("InvitationInviter")
+  invitation            MemberInvitation?      @relation("InvitationTarget")
+  pendingTotpEnrollment PendingTotpEnrollment?
+  webAuthnChallenges    WebAuthnChallenge[]
+}
+
+model MemberInvitation {
+  id           String   @id @default(cuid())
+  tokenHash    String   @unique
+  targetUserId String   @unique
+  targetUser   User     @relation("InvitationTarget", fields: [targetUserId], references: [id], onDelete: Restrict)
+  invitedById  String
+  invitedBy    User     @relation("InvitationInviter", fields: [invitedById], references: [id], onDelete: Restrict)
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([invitedById])
+  @@index([targetUserId])
+}
+
+model PendingTotpEnrollment {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secretEncrypted String
+  expiresAt       DateTime
+  consumedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model UserTotpFactor {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  secretEncrypted String
-  enabledAt       DateTime  @default(now())
-  revokedAt       DateTime?
-  createdAt       DateTime  @default(now())
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  secretEncrypted  String
+  enabledAt        DateTime  @default(now())
+  revokedAt        DateTime?
+  lastAcceptedStep Int?
+  createdAt        DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
 
@@ -414,7 +467,17 @@ model PushLedger {
 }
 
 model WebAuthnChallenge {
-  id        String   @id
-  challenge String
-  expiresAt DateTime
+  id               String   @id @default(cuid())
+  challenge        String
+  flow             String
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  browserTokenHash String
+  expiresAt        DateTime
+  consumedAt       DateTime?
+  createdAt        DateTime @default(now())
+
+  @@index([browserTokenHash, flow, consumedAt])
+  @@index([expiresAt])
+  @@index([userId])
 }

@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { supabaseModels } from "@/lib/reminders/store";
 
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { licenseStoreAccountInputSchema } from "@/lib/validators/license-store-account";
 
@@ -23,11 +23,8 @@ function buildSearchWhere(search: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requireApiSession();
-
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   const search = request.nextUrl.searchParams.get("q") ?? "";
 
@@ -66,11 +63,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
-
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   try {
     const input = licenseStoreAccountInputSchema.parse(await request.json());

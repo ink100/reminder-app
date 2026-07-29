@@ -4,7 +4,7 @@ import { promisify } from 'util'
 import fs from 'fs/promises'
 import path from 'path'
 
-import { requireApiSession } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/admin-api'
 import { syncSslCertificateReminder, type SyncSslCertificateReminderResult } from '@/lib/ssl-reminder'
 
 const execAsync = promisify(exec)
@@ -31,11 +31,8 @@ interface SSLStatus {
 
 // 获取 SSL 证书状态
 export async function GET() {
-  const session = await requireApiSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdminApi()
+  if (auth.response) return auth.response
 
   try {
     // 读取证书信息
@@ -126,11 +123,8 @@ export async function GET() {
 
 // 手动触发证书更新
 export async function POST() {
-  const session = await requireApiSession()
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAdminApi()
+  if (auth.response) return auth.response
 
   try {
     // 执行更新脚本

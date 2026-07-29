@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import {
   eq,
   NotificationGroupRow,
@@ -19,7 +19,9 @@ const schema = z.object({
 });
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;

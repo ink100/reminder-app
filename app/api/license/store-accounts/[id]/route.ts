@@ -3,7 +3,7 @@ import { callRpc } from "@/lib/notification-center/store";
 import { cleanupR2Keys } from "@/lib/r2-cleanup";
 import { supabaseModels } from "@/lib/reminders/store";
 
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { licenseStoreAccountInputSchema } from "@/lib/validators/license-store-account";
 
@@ -16,11 +16,8 @@ const reminderSelect = {
 } as const;
 
 export async function PUT(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]">) {
-  const session = await requireApiSession();
-
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   try {
     const { id } = await context.params;
@@ -72,11 +69,8 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/lice
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]">) {
-  const session = await requireApiSession();
-
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   try {
     const { id } = await context.params;

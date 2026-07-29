@@ -20,6 +20,7 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   LEGACY_ADMIN_USERNAME: z.string().trim().min(1).default("admin"),
   LEGACY_ADMIN_DISPLAY_NAME: z.string().trim().min(1).default("管理员"),
+  TRUST_PROXY_HEADERS: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
@@ -41,6 +42,7 @@ const parsed = envSchema.safeParse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   LEGACY_ADMIN_USERNAME: process.env.LEGACY_ADMIN_USERNAME ?? "admin",
   LEGACY_ADMIN_DISPLAY_NAME: process.env.LEGACY_ADMIN_DISPLAY_NAME ?? "管理员",
+  TRUST_PROXY_HEADERS: process.env.TRUST_PROXY_HEADERS ?? "false",
   NODE_ENV: process.env.NODE_ENV ?? "development",
 });
 

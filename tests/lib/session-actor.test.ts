@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const cookieStore = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), delete: vi.fn() }));
-const prismaMock = vi.hoisted(() => ({ authSession: { create: vi.fn(), findFirst: vi.fn() } }));
+const prismaMock = vi.hoisted(() => ({
+  user: { findUnique: vi.fn(), updateMany: vi.fn() },
+  authSession: { create: vi.fn(), findFirst: vi.fn() },
+  $transaction: vi.fn(),
+}));
 vi.mock("next/headers", () => ({ cookies: vi.fn(async () => cookieStore) }));
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 vi.mock("@/lib/env", () => ({ env: { SESSION_SECRET: "test-session-secret-long", APP_BASE_URL: "https://example.test" } }));
@@ -9,23 +13,47 @@ vi.mock("@/lib/env", () => ({ env: { SESSION_SECRET: "test-session-secret-long",
 import { createSession, getCurrentSession } from "@/lib/session";
 
 describe("user-owned sessions", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.$transaction.mockImplementation((fn: (tx: typeof prismaMock) => unknown) => fn(prismaMock));
+    prismaMock.user.findUnique.mockResolvedValue({ status: "ACTIVE", role: "ADMIN", securityVersion: 7 });
+    prismaMock.user.updateMany.mockResolvedValue({ count: 1 });
+  });
 
-  it("persists userId and authMethod with the new creation signature", async () => {
+  it("persists userId, auth method and security snapshot", async () => {
     await createSession("user-1", "totp", "127.0.0.1", "vitest");
     expect(prismaMock.authSession.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ userId: "user-1", authMethod: "totp", ipAddress: "127.0.0.1", userAgent: "vitest" }),
+      data: expect.objectContaining({ userId: "user-1", authMethod: "totp", securityVersion: 7, ipAddress: "127.0.0.1", userAgent: "vitest" }),
     });
   });
 
   it("returns a session Actor including its current user", async () => {
     cookieStore.get.mockReturnValue({ value: "token" });
-    prismaMock.authSession.findFirst.mockResolvedValue({ id: "session-1", userId: "user-1", user: { id: "user-1", role: "ADMIN", status: "ACTIVE" } });
+    prismaMock.authSession.findFirst.mockResolvedValue({ id: "session-1", userId: "user-1", securityVersion: 7, user: { id: "user-1", role: "ADMIN", status: "ACTIVE", securityVersion: 7 } });
     const actor = await getCurrentSession();
     expect(prismaMock.authSession.findFirst).toHaveBeenCalledWith(expect.objectContaining({
       include: { user: true },
-      where: expect.objectContaining({ user: { status: "ACTIVE" } }),
+      where: expect.objectContaining({ user: { status: "ACTIVE", role: { in: ["ADMIN", "MEMBER"] } } }),
     }));
     expect(actor?.user.role).toBe("ADMIN");
+  });
+
+  it("rejects a stale session snapshot even after the user is active again", async () => {
+    cookieStore.get.mockReturnValue({ value: "token" });
+    prismaMock.authSession.findFirst.mockResolvedValue({ securityVersion: 6, user: { status: "ACTIVE", role: "MEMBER", securityVersion: 7 } });
+    await expect(getCurrentSession()).resolves.toBeNull();
+  });
+
+  it("does not create a late session when the version changed during revocation", async () => {
+    prismaMock.user.updateMany.mockResolvedValue({ count: 0 });
+    await expect(createSession("user-1", "totp")).rejects.toThrow(/changed|inactive/i);
+    expect(prismaMock.authSession.create).not.toHaveBeenCalled();
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  it("refuses to create a session for an active user with an unknown role", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({ status: "ACTIVE", role: "UNKNOWN", securityVersion: 7 });
+    await expect(createSession("user-1", "totp")).rejects.toThrow(/unauthorized/i);
+    expect(prismaMock.authSession.create).not.toHaveBeenCalled();
   });
 });

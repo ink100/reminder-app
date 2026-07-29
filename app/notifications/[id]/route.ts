@@ -1,12 +1,12 @@
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { getNotificationWithContext, serializeNotification } from "@/lib/notification-center/manager";
 import { eq, NotificationChannelRow, NotificationTemplateRow, QueueJobRow, selectOne, selectRows, SendLogRow } from "@/lib/notification-center/store";
 
 export const runtime = "nodejs";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await requireApiSession();
-  if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   const { id } = await context.params;
   const item = await getNotificationWithContext(id);

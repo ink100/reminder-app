@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseModels } from "@/lib/reminders/store";
 import { z } from "zod";
 
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { normalizeClientKey } from "@/lib/license-key";
 
 const generateLicenseSchema = z.object({
@@ -20,10 +20,8 @@ function buildDueAtFromValidDays(validDays: number) {
 }
 
 export async function POST(request: Request) {
-  const session = await requireApiSession();
-  if (!session) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   const parsed = generateLicenseSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {

@@ -1,16 +1,6 @@
-import { deleteCurrentSession } from "@/lib/session";
-import { deleteTrustedDeviceCookie, getValidTrustedDevice, revokeTrustedDevice } from "@/lib/trusted-device";
+import { logoutCurrentDevice } from "@/lib/trusted-device";
 
 export async function POST() {
-  const trustedDevice = await getValidTrustedDevice();
-
-  await deleteCurrentSession();
-
-  if (trustedDevice) {
-    await revokeTrustedDevice(trustedDevice.userId, trustedDevice.id);
-  } else {
-    await deleteTrustedDeviceCookie();
-  }
-
+  await logoutCurrentDevice();
   return Response.json({ success: true });
 }

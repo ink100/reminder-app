@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import {
   eq,
   insertRow,
@@ -35,14 +35,18 @@ function serializeTemplate(item: NotificationTemplateRow) {
 }
 
 export async function GET() {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
   const items = await selectRows<NotificationTemplateRow>("notification_templates", { order: "name.asc" });
   return Response.json({ items: items.map(serializeTemplate) });
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
+  const session = auth.actor;
   if (!session) return Response.json({ error: true, code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
 
   const parsed = schema.safeParse(await request.json().catch(() => null));

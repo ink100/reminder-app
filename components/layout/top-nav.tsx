@@ -1,36 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export function TopNav() {
-  const router = useRouter();
+export type ShellActor = { username: string; displayName: string; role: string };
 
+export function TopNav({ actor }: { actor: ShellActor }) {
+  const router = useRouter();
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/auth");
     router.refresh();
   }
-
   return (
     <header className="flex min-w-0 items-center justify-between gap-2 px-1 py-2">
-      <div className="min-w-0">
-        <h2 className="text-sm font-medium text-slate-400">第一版项目骨架</h2>
-        <p className="text-xs text-slate-300">轻量部署 · SQLite · OTP 保护</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="hidden rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-medium text-emerald-600 md:inline">
-          MVP
-        </span>
-        <button
-          onClick={handleLogout}
-          aria-label="退出登录"
-          className="flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 md:hidden"
-        >
-          <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-        </button>
-      </div>
+      <div className="min-w-0"><p className="truncate text-sm font-medium text-slate-600">{actor.displayName || actor.username}</p><p className="text-xs text-slate-400">{actor.role === "ADMIN" ? "管理员" : "成员"}</p></div>
+      <div className="flex items-center gap-2"><Link href="/account" className="min-h-11 rounded-lg px-3 py-3 text-sm text-slate-600 hover:bg-slate-100">账户</Link><button onClick={handleLogout} aria-label="退出登录（撤销全部登录设备）" title="退出会撤销全部登录设备" className="min-h-11 rounded-lg px-3 text-sm text-red-600 hover:bg-red-50">退出全部设备</button></div>
     </header>
   );
 }

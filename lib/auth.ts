@@ -31,3 +31,9 @@ export async function requireAdminApiSession() {
   const session = await getCurrentSession();
   return session?.user.role === "ADMIN" ? session : null;
 }
+
+export async function requireAdminPage() {
+  const session = await requirePageSession();
+  if (session.user.role !== "ADMIN") redirect("/reminders");
+  return session;
+}

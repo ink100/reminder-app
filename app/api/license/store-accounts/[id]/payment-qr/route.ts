@@ -3,7 +3,7 @@ import path from "node:path";
 import type { NextRequest } from "next/server";
 
 import { toApiErrorResponse } from "@/lib/api-error";
-import { requireApiSession } from "@/lib/auth";
+import { requireAdminApi } from "@/lib/admin-api";
 import { callRpc } from "@/lib/notification-center/store";
 import {
   PAYMENT_QR_ATTACHMENT_TYPES,
@@ -61,8 +61,8 @@ async function findActiveAccount(id: string) {
 }
 
 export async function GET(_request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]/payment-qr">) {
-  const session = await requireApiSession();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   const { id } = await context.params;
   if (!(await findActiveAccount(id))) return Response.json({ error: "店铺记录不存在或已删除" }, { status: 404 });
@@ -89,8 +89,8 @@ export async function GET(_request: NextRequest, context: RouteContext<"/api/lic
 }
 
 export async function POST(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]/payment-qr">) {
-  const session = await requireApiSession();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   try {
     const { id } = await context.params;
@@ -172,8 +172,8 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/lic
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]/payment-qr">) {
-  const session = await requireApiSession();
-  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAdminApi();
+  if (auth.response) return auth.response;
 
   try {
     const { id } = await context.params;

@@ -12,6 +12,8 @@ type RegisteredTask = {
   fn: TaskFn;
   intervalKey: keyof IntervalSettingKey;
   enabledKey: keyof EnabledSettingKey;
+  fixedIntervalSeconds?: number;
+  alwaysEnabled?: boolean;
 };
 
 type IntervalSettingKey = {
@@ -246,10 +248,20 @@ async function notificationCenterDispatch() {
   }
 }
 
+async function authArtifactCleanupDispatch() {
+  const { cleanupAuthArtifacts } = await import("@/lib/webauthn-ceremonies");
+  const result = await cleanupAuthArtifacts();
+  if (result.challenges > 0 || result.throttles > 0 || result.pendingTotpEnrollments > 0) {
+    // Counts only: never emit challenge tokens, IP addresses, or usernames.
+    console.log(`[task] auth artifact cleanup challenges=${result.challenges}, throttles=${result.throttles}, pendingTotpEnrollments=${result.pendingTotpEnrollments}`);
+  }
+}
+
 const REGISTERED_TASKS: RegisteredTask[] = [
   { name: "reminder-email", label: "到期提醒通知", fn: reminderEmailDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
   { name: "bot-poll", label: "Bot 消息轮询", fn: botPollDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
   { name: "notification-center", label: "通知中心派发", fn: notificationCenterDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled" },
+  { name: "auth-artifact-cleanup", label: "认证临时数据清理", fn: authArtifactCleanupDispatch, intervalKey: "reminderEmailInterval", enabledKey: "reminderEmailEnabled", fixedIntervalSeconds: 6 * 60 * 60, alwaysEnabled: true },
 ];
 
 const timers: Map<string, ReturnType<typeof setInterval>> = new Map();
@@ -289,8 +301,8 @@ export async function refreshAllTimers() {
 
   for (const task of REGISTERED_TASKS) {
     const notificationCenterEnabled = task.name === "notification-center";
-    const enabled = task.name === "bot-poll" ? settings.telegramBotEnabled : task.name === "notification-center" ? notificationCenterEnabled : settings[task.enabledKey] !== false;
-    const sec = task.name === "bot-poll" ? 30 : task.name === "notification-center" ? 15 : settings[task.intervalKey] ?? 60;
+    const enabled = task.alwaysEnabled || (task.name === "bot-poll" ? settings.telegramBotEnabled : task.name === "notification-center" ? notificationCenterEnabled : settings[task.enabledKey] !== false);
+    const sec = task.fixedIntervalSeconds ?? (task.name === "bot-poll" ? 30 : task.name === "notification-center" ? 15 : settings[task.intervalKey] ?? 60);
 
     if (!enabled) {
       console.log(`[scheduler] ${task.label} 已禁用，跳过`);
@@ -305,7 +317,7 @@ export async function refreshAllTimers() {
     }, ms);
     timers.set(task.name, timer);
 
-    if (task.name === "bot-poll") {
+    if (task.name === "bot-poll" || task.name === "auth-artifact-cleanup") {
       runTask(task).catch((err) => console.error(`[scheduler] ${task.name} 首次执行异常:`, err));
     }
   }
