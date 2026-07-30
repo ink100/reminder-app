@@ -24,6 +24,26 @@ describe("reminderInputSchema", () => {
     expect(result.remindBeforeHours).toBe(0);
   });
 
+  it("accepts a 756-character activation code", () => {
+    const activationCode = "A".repeat(756);
+    const result = reminderInputSchema.parse({
+      title: "长激活码到期",
+      description: null,
+      dueAt: "2026-05-01T08:00:00.000Z",
+      priority: "medium",
+      category: "账号",
+      remindBeforeDays: 3,
+      remindBeforeHours: 0,
+      overdueRemindEnabled: true,
+      recurrenceType: null,
+      recurrenceInterval: null,
+      activationCode,
+      activationContact: null,
+    });
+
+    expect(result.activationCode).toHaveLength(756);
+  });
+
   it("allows normal reminders without activation code", () => {
     const result = reminderInputSchema.parse({
       title: "合同续签",

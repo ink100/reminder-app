@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { PaymentQrManager } from "@/components/license-key/payment-qr-manager";
@@ -38,7 +38,6 @@ type FormState = {
   isOtherAccount: boolean;
   expiresAt: string;
   activationCode: string;
-  reminderId: string;
 };
 
 const emptyForm: FormState = {
@@ -49,7 +48,6 @@ const emptyForm: FormState = {
   isOtherAccount: false,
   expiresAt: "",
   activationCode: "",
-  reminderId: "",
 };
 
 function toDateTimeLocal(value: string | Date | null | undefined) {
@@ -81,13 +79,11 @@ function buildFormFromItem(item: StoreAccount): FormState {
     isOtherAccount: item.isOtherAccount,
     expiresAt: toDateTimeLocal(item.expiresAt),
     activationCode: item.activationCode,
-    reminderId: item.reminderId ?? "",
   };
 }
 
 export function LicenseStoreAccountTable() {
   const [items, setItems] = useState<StoreAccount[]>([]);
-  const [activationReminders, setActivationReminders] = useState<ActivationReminder[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -99,11 +95,6 @@ export function LicenseStoreAccountTable() {
   const [copiedCredentialKey, setCopiedCredentialKey] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const selectedReminder = useMemo(
-    () => activationReminders.find((reminder) => reminder.id === form.reminderId) ?? null,
-    [activationReminders, form.reminderId],
-  );
-
   const loadItems = useCallback(async (keyword: string) => {
     setLoading(true);
     try {
@@ -113,10 +104,9 @@ export function LicenseStoreAccountTable() {
         const error = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(error?.error ?? "加载店铺账号失败");
       }
-      const data = (await response.json()) as { items: StoreAccount[]; activationReminders: ActivationReminder[] };
+      const data = (await response.json()) as { items: StoreAccount[] };
       setItems(data.items);
       setQrAccountId((current) => current && data.items.some((item) => item.id === current) ? current : null);
-      setActivationReminders(data.activationReminders.filter((reminder) => Boolean(reminder.activationCode?.trim())));
       setMessage(null);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "加载店铺账号失败");
@@ -131,16 +121,6 @@ export function LicenseStoreAccountTable() {
 
   function updateForm<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function handleReminderChange(reminderId: string) {
-    const reminder = activationReminders.find((item) => item.id === reminderId);
-    setForm((current) => ({
-      ...current,
-      reminderId,
-      activationCode: reminder?.activationCode?.trim() || current.activationCode,
-      expiresAt: reminder ? toDateTimeLocal(reminder.dueAt) : current.expiresAt,
-    }));
   }
 
   function resetForm() {
@@ -188,7 +168,6 @@ export function LicenseStoreAccountTable() {
       const payload = {
         ...form,
         isOtherAccount: form.isOtherAccount,
-        reminderId: form.reminderId || null,
         expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : "",
       };
       const response = await fetch(editingId ? `/api/license/store-accounts/${editingId}` : "/api/license/store-accounts", {
@@ -240,7 +219,7 @@ export function LicenseStoreAccountTable() {
           <p className="text-sm text-slate-500">店铺账号维护</p>
           <h2 className="text-xl font-semibold text-slate-950">激活码关联店铺表格</h2>
           <p className="mt-1 text-sm text-slate-500">
-            维护店铺名、手机号、远程码、明文远程密码、是否他人账号、到期时间，并为每条店铺记录分别保存微信和支付宝二维码截图。
+            每条店铺记录自动对应一条提醒；到期时间距当前不超过一年时每年循环，超过一年时仅提醒一次。店铺信息与提醒同步更新，删除店铺时会同时删除提醒。
           </p>
         </div>
         <form
@@ -277,23 +256,20 @@ export function LicenseStoreAccountTable() {
           <Input type="datetime-local" value={form.expiresAt} onChange={(event) => updateForm("expiresAt", event.target.value)} />
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-600">关联激活码提醒</label>
-          <select
-            className="min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 md:min-h-0"
-            value={form.reminderId}
-            onChange={(event) => handleReminderChange(event.target.value)}
-          >
-            <option value="">不关联提醒</option>
-            {activationReminders.map((reminder) => (
-              <option key={reminder.id} value={reminder.id}>
-                {reminder.title}｜{reminder.activationCode}｜{formatDateTime(reminder.dueAt)}
-              </option>
-            ))}
-          </select>
+          <label className="text-xs font-medium text-slate-600">关联提醒</label>
+          <p className="min-h-11 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 md:min-h-0">
+            保存后自动维护到期提醒，并根据到期时间判断是否每年循环
+          </p>
         </div>
         <div className="space-y-1 md:col-span-2">
           <label className="text-xs font-medium text-slate-600">对应激活码</label>
-          <Input value={form.activationCode} onChange={(event) => updateForm("activationCode", event.target.value)} placeholder="选择提醒后会自动填入，也可手动维护" />
+          <textarea
+            className="min-h-28 w-full resize-y break-all rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-slate-400"
+            value={form.activationCode}
+            onChange={(event) => updateForm("activationCode", event.target.value)}
+            maxLength={2048}
+            placeholder="输入店铺激活码（最多 2048 个字符）"
+          />
         </div>
         <label className="flex min-h-11 items-center gap-2 text-sm text-slate-700 md:min-h-0">
           <input
@@ -303,11 +279,6 @@ export function LicenseStoreAccountTable() {
           />
           是否他人账号
         </label>
-        {selectedReminder ? (
-          <p className="break-words text-xs text-slate-500 md:col-span-2 xl:col-span-3">
-            当前关联：{selectedReminder.title}，提醒到期 {formatDateTime(selectedReminder.dueAt)}。
-          </p>
-        ) : null}
         <div className="grid gap-2 border-t border-slate-200 pt-3 sm:flex sm:flex-wrap md:col-span-2 xl:col-span-4">
           <Button className="min-h-11 w-full sm:w-auto" type="submit" disabled={saving}>{saving ? "保存中..." : editingId ? "保存修改" : "新增店铺账号"}</Button>
           {editingId ? (

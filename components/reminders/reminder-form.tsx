@@ -222,7 +222,13 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">激活码</label>
-            <Input value={activationCode} onChange={(e) => setActivationCode(e.target.value)} placeholder="请输入激活码" />
+            <textarea
+              className="min-h-28 w-full resize-y break-all rounded-md border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-slate-400"
+              value={activationCode}
+              onChange={(e) => setActivationCode(e.target.value)}
+              maxLength={2048}
+              placeholder="请输入激活码（最多 2048 个字符）"
+            />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">联系方式</label>

@@ -7,8 +7,7 @@ export const licenseStoreAccountInputSchema = z.object({
   remotePassword: z.string().trim().min(1, "远程密码不能为空").max(200, "远程密码过长"),
   isOtherAccount: z.boolean().default(false),
   expiresAt: z.coerce.date({ message: "到期时间不能为空" }),
-  activationCode: z.string().trim().min(1, "对应激活码不能为空").max(500, "对应激活码过长"),
-  reminderId: z.string().trim().min(1).optional().nullable(),
+  activationCode: z.string().trim().min(1, "对应激活码不能为空").max(2048, "对应激活码过长"),
 });
 
 export type LicenseStoreAccountInput = z.infer<typeof licenseStoreAccountInputSchema>;

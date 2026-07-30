@@ -22,6 +22,14 @@ export async function POST(_request: NextRequest, context: RouteContext<"/api/re
       return Response.json({ error: "Not found" }, { status: 404 });
     }
 
+    const linkedStoreAccount = await supabaseModels.licenseStoreAccount.findFirst({
+      where: { reminderId: id, deletedAt: null },
+      select: { id: true },
+    });
+    if (linkedStoreAccount && session.user.role !== "ADMIN") {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (reminder.completedAt) {
       return Response.json({ item: reminder });
     }

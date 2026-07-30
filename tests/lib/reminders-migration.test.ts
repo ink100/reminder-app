@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { verifyTableRows } from "../../scripts/migrate-reminders-to-supabase";
+import { splitSupabaseMigrationSql, verifyTableRows } from "../../scripts/migrate-reminders-to-supabase";
 
 describe("Supabase migration verification", () => {
   const columns = ["id", "text", "nullable", "enabled", "count", "created_at"];
@@ -22,5 +24,32 @@ describe("Supabase migration verification", () => {
   it("does not put sensitive values in failures", () => {
     expect(() => verifyTableRows("items", columns, source, [{ ...target[0], text: "wrong" }])).toThrowError(/mismatch at id=c1, column=text$/);
     try { verifyTableRows("items", columns, source, [{ ...target[0], text: "wrong" }]); } catch (error) { expect(String(error)).not.toContain("secret text"); }
+  });
+
+  it("imports legacy rows before post-import ownership constraints and synchronization", () => {
+    const sql = readFileSync(resolve("docs/supabase-reminders.sql"), "utf8");
+    const { preImportSql, postImportSql } = splitSupabaseMigrationSql(sql);
+    expect(preImportSql).toContain("alter column expires_at drop not null");
+    expect(preImportSql).toContain("drop index if exists license_store_accounts_reminder_id_unique");
+    expect(preImportSql).not.toContain("alter column reminder_id set not null");
+    expect(postImportSql).toContain("alter column reminder_id set not null");
+    expect(postImportSql).toContain("synchronization left a schedule mismatch");
+    expect(preImportSql).not.toContain("Normalize imported legacy free-form categories");
+    expect(postImportSql).toContain("Normalize imported legacy free-form categories");
+  });
+
+  it("defines atomic store create/update RPCs and an explicit UTC clamped-year boundary", () => {
+    const sql = readFileSync(resolve("docs/supabase-reminders.sql"), "utf8");
+    expect(sql).toContain("create or replace function public.utc_clamped_calendar_year_later");
+    expect(sql).toContain("at time zone 'UTC'");
+    expect(sql).toContain("create_license_store_account_with_reminder");
+    expect(sql).toContain("update_license_store_account_with_reminder");
+    expect(sql).toContain("license_store_account_with_reminder_json");
+  });
+
+  it("preserves repaired legacy schedule fields when a rerun imports null links", () => {
+    const source = readFileSync(resolve("scripts/migrate-reminders-to-supabase.ts"), "utf8");
+    expect(source).toContain("expires_at=coalesce(excluded.expires_at,public.license_store_accounts.expires_at)");
+    expect(source).toContain("reminder_id=coalesce(excluded.reminder_id,public.license_store_accounts.reminder_id)");
   });
 });
