@@ -59,6 +59,103 @@ create table if not exists public.medicines (
 alter table public.attachments drop constraint if exists attachments_medicine_id_fkey;
 alter table public.attachments add constraint attachments_medicine_id_fkey foreign key (medicine_id) references public.medicines(id) on delete set null on update cascade;
 
+-- Medicine expiration reminders are owned by the medicine row and synchronized in the
+-- same PostgreSQL transaction as every create, edit, expiration removal, or soft-delete.
+create or replace function public.sync_medicine_expiration_reminder()
+returns trigger language plpgsql set search_path = public as $$
+declare
+  sync_at timestamptz := transaction_timestamp();
+  reminder_due_at timestamptz;
+  reminder_description text;
+begin
+  if new.expires_at is null or new.deleted_at is not null then
+    if new.expiration_reminder_id is not null then
+      update public.reminders
+      set deleted_at = coalesce(deleted_at, sync_at), updated_at = sync_at
+      where id = new.expiration_reminder_id;
+      new.expiration_reminder_id := null;
+    end if;
+    return new;
+  end if;
+
+  reminder_due_at := greatest(
+    new.expires_at - make_interval(days => coalesce(new.expiration_reminder_days, 30)),
+    sync_at
+  );
+  reminder_description := concat_ws(E'\n',
+    '药品「' || new.name || '」即将到期，请检查是否继续保留或及时处理。',
+    '过期日期：' || to_char(new.expires_at at time zone 'UTC', 'YYYY-MM-DD'),
+    case when new.quantity_remaining is not null then '剩余量：' || new.quantity_remaining || new.unit end,
+    case when nullif(btrim(new.location_text), '') is not null then '位置：' || btrim(new.location_text) end
+  );
+
+  if new.expiration_reminder_id is not null
+     and exists (
+       select 1 from public.reminders
+       where id = new.expiration_reminder_id and deleted_at is null
+     ) then
+    update public.reminders set
+      title = '药品过期提醒：' || new.name,
+      description = reminder_description,
+      due_at = reminder_due_at,
+      priority = 'medium',
+      category = '日常生活',
+      remind_before_days = 0,
+      remind_before_hours = 24,
+      overdue_remind_enabled = true,
+      recurrence_type = null,
+      recurrence_interval = null,
+      completed_at = null,
+      upcoming_notified_at = null,
+      overdue_notified_at = null,
+      updated_at = sync_at
+    where id = new.expiration_reminder_id;
+  else
+    new.expiration_reminder_id := 'medr_' || md5(new.id || clock_timestamp()::text || random()::text);
+    insert into public.reminders (
+      id, title, description, due_at, priority, category,
+      remind_before_days, remind_before_hours, overdue_remind_enabled,
+      recurrence_type, recurrence_interval, upcoming_notified_at,
+      overdue_notified_at, completed_at, created_at, updated_at, deleted_at
+    ) values (
+      new.expiration_reminder_id,
+      '药品过期提醒：' || new.name,
+      reminder_description,
+      reminder_due_at,
+      'medium', '日常生活', 0, 24, true,
+      null, null, null, null, null, sync_at, sync_at, null
+    );
+  end if;
+
+  return new;
+end $$;
+
+drop trigger if exists medicines_sync_expiration_reminder on public.medicines;
+create trigger medicines_sync_expiration_reminder
+before insert or update of name, expires_at, expiration_reminder_days, location_text, quantity_remaining, unit, deleted_at
+on public.medicines
+for each row execute function public.sync_medicine_expiration_reminder();
+
+-- Idempotent backfill repairs only missing/deleted links and stale links that must be cleared.
+-- Healthy linked reminders are deliberately untouched so schema reruns preserve completion and notification state.
+update public.medicines
+set expiration_reminder_days = expiration_reminder_days
+where (
+  expires_at is not null
+  and deleted_at is null
+  and (
+    expiration_reminder_id is null
+    or not exists (
+      select 1 from public.reminders
+      where reminders.id = medicines.expiration_reminder_id
+        and reminders.deleted_at is null
+    )
+  )
+) or (
+  (expires_at is null or deleted_at is not null)
+  and expiration_reminder_id is not null
+);
+
 create table if not exists public.license_store_accounts (
   id text primary key,
   shop_name text not null,

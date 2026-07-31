@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { getMedicineStatus, parseMedicineInput } from "@/lib/medicines";
-import { syncMedicineExpirationReminder } from "@/lib/medicine-expiration-reminder";
 import { medicineStore } from "@/lib/reminders/store";
 
 function serializeMedicine(item: Awaited<ReturnType<typeof medicineStore.findUnique>>) {
@@ -46,9 +45,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         notes: input.notes ?? null,
       },
     });
-    await syncMedicineExpirationReminder(item);
-    const refreshed = await medicineStore.findUnique({ where: { id } });
-    return Response.json({ item: serializeMedicine(refreshed ?? item) });
+    return Response.json({ item: serializeMedicine(item) });
   } catch (error) {
     return toApiErrorResponse(error, { defaultMessage: "药品保存失败" });
   }
@@ -63,7 +60,6 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     if (!item || item.deletedAt) return Response.json({ error: "药品不存在" }, { status: 404 });
     const deletedAt = new Date();
     await medicineStore.update({ where: { id }, data: { deletedAt } });
-    if (item.expirationReminderId) await syncMedicineExpirationReminder({ ...item, deletedAt });
     return Response.json({ success: true });
   } catch (error) {
     return toApiErrorResponse(error, { defaultMessage: "药品删除失败" });
