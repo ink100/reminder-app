@@ -18,9 +18,11 @@ type ReminderRowProps = {
   hasActivationCode: boolean;
   activationContact: string | null;
   dueAt: string;
+  completedAt: string | null;
   priority: string;
   category: string | null;
   riskLevel: ReminderRiskLevel;
+  variant?: "active" | "completed";
 };
 
 const riskBadgeClasses: Record<ReminderRiskLevel, string> = {
@@ -42,12 +44,14 @@ function getRemainingValidDays(dueAtDate: Date) {
   return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-export function ReminderRow({ id, title, hasActivationCode, activationContact, dueAt, priority, category, riskLevel }: ReminderRowProps) {
+export function ReminderRow({ id, title, hasActivationCode, activationContact, dueAt, completedAt, priority, category, riskLevel, variant = "active" }: ReminderRowProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const dueAtDate = new Date(dueAt);
+  const completedAtDate = completedAt ? new Date(completedAt) : null;
   const remainingValidDays = getRemainingValidDays(dueAtDate);
 
   async function handleComplete() {
@@ -96,6 +100,26 @@ export function ReminderRow({ id, title, hasActivationCode, activationContact, d
     }
   }
 
+  async function handleRestore() {
+    setRestoring(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/reminders/${id}/restore`, { method: "POST" });
+      const data = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "恢复提醒失败");
+      }
+
+      router.refresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "恢复提醒失败");
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   return (
     <div className="group rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
@@ -125,21 +149,30 @@ export function ReminderRow({ id, title, hasActivationCode, activationContact, d
 
         {/* Time — right aligned, merged format */}
         <div className="shrink-0 text-left sm:text-right">
-          <p className="text-xs text-slate-400">
-            {dueAtDate.toLocaleString("zh-CN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-300">{formatRemainingTime(dueAtDate)}</p>
+          {variant === "completed" && completedAtDate ? (
+            <>
+              <p className="text-xs text-emerald-600">完成于：{completedAtDate.toLocaleString("zh-CN")}</p>
+              <p className="mt-0.5 text-[11px] text-slate-300">原到期：{dueAtDate.toLocaleString("zh-CN")}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-slate-400">
+                {dueAtDate.toLocaleString("zh-CN", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+              <p className="mt-0.5 text-[11px] text-slate-300">{formatRemainingTime(dueAtDate)}</p>
+            </>
+          )}
         </div>
 
         {/* Actions — always visible on mobile, hover-reveal on desktop */}
         <div className="flex shrink-0 items-center justify-end gap-1 border-t border-slate-100 pt-2 sm:border-0 sm:pt-0 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-          {hasActivationCode ? (
+          {variant === "active" && hasActivationCode ? (
             <Link
               className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-sky-50 hover:text-sky-600 sm:size-9"
               href={`/license-key?reminderId=${encodeURIComponent(id)}&validDays=${remainingValidDays}`}
@@ -159,17 +192,31 @@ export function ReminderRow({ id, title, hasActivationCode, activationContact, d
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </Link>
-          <button
-            className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-30 sm:size-9"
-            type="button"
-            onClick={handleComplete}
-            disabled={submitting || riskLevel === "completed"}
-            aria-label="完成"
-          >
-            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </button>
+          {variant === "completed" ? (
+            <button
+              className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-blue-50 hover:text-blue-600 disabled:opacity-30 sm:size-9"
+              type="button"
+              onClick={handleRestore}
+              disabled={restoring}
+              aria-label="恢复为未完成"
+            >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h11a4 4 0 110 8H9m-6-8 4-4m-4 4 4 4" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-30 sm:size-9"
+              type="button"
+              onClick={handleComplete}
+              disabled={submitting}
+              aria-label="完成"
+            >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+          )}
           <AlertDialog
             trigger={
               <button
@@ -184,7 +231,7 @@ export function ReminderRow({ id, title, hasActivationCode, activationContact, d
               </button>
             }
             title="删除提醒"
-            description={`确定要删除「${title}」吗？此操作不可撤销。`}
+            description={`确定要删除「${title}」吗？删除后可在已删除记录中查看。`}
             confirmLabel="删除"
             onConfirm={handleDelete}
           />

@@ -7,13 +7,19 @@ import { groupReminderItems } from "@/lib/reminder-groups";
 import type { ReminderViewItem } from "@/lib/reminder-view";
 import { cn } from "@/lib/utils";
 
-export function ReminderList({ reminders }: { reminders: ReminderViewItem[] }) {
+type ReminderListProps = {
+  reminders: ReminderViewItem[];
+  variant?: "active" | "completed";
+  emptyMessage?: string;
+};
+
+export function ReminderList({ reminders, variant = "active", emptyMessage = "当前筛选条件下没有提醒事项。" }: ReminderListProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
 
   if (reminders.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 sm:p-8">
-        当前筛选条件下没有提醒事项。
+        {emptyMessage}
       </div>
     );
   }
@@ -67,9 +73,11 @@ export function ReminderList({ reminders }: { reminders: ReminderViewItem[] }) {
                   hasActivationCode={reminder.hasActivationCode}
                   activationContact={reminder.activationContact}
                   dueAt={reminder.dueAt}
+                  completedAt={reminder.completedAt}
                   priority={reminder.priority}
                   category={reminder.category}
                   riskLevel={reminder.riskLevel}
+                  variant={variant}
                 />
               ))}
             </div>

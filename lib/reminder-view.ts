@@ -35,9 +35,9 @@ export function serializeReminderForList(reminder: ReminderListSource): Reminder
   };
 }
 
-export type ReminderStatusFilter = "all" | ReminderRiskLevel;
+export type ReminderStatusFilter = "all" | Exclude<ReminderRiskLevel, "completed">;
 export type ReminderPriorityFilter = "all" | "high" | "medium" | "low";
-export type ReminderStatKey = "total" | ReminderRiskLevel;
+export type ReminderStatKey = "total" | Exclude<ReminderRiskLevel, "completed">;
 
 export type ReminderStats = {
   total: number;

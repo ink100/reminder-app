@@ -8,7 +8,6 @@ type ReminderStatsProps = {
   warning: number;
   urgent: number;
   overdue: number;
-  completed: number;
   activeKey: ReminderStatKey;
   onSelect: (key: ReminderStatKey) => void;
 };
@@ -38,12 +37,6 @@ const cards = [
     accentColor: "bg-rose-500",
     valueClass: "text-rose-600",
   },
-  {
-    key: "completed",
-    label: "已完成",
-    accentColor: "bg-emerald-400",
-    valueClass: "text-emerald-600",
-  },
 ] as const satisfies Array<{
   key: ReminderStatKey;
   label: string;
@@ -53,7 +46,7 @@ const cards = [
 
 export function ReminderStats(props: ReminderStatsProps) {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 md:gap-3">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:gap-3">
       {cards.map((card) => {
         const isActive = props.activeKey === card.key;
 

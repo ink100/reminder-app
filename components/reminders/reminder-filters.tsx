@@ -43,7 +43,6 @@ export function ReminderFilters({
         <option value="warning">即将到期</option>
         <option value="urgent">24 小时内</option>
         <option value="overdue">已超期</option>
-        <option value="completed">已完成</option>
       </select>
       <select
         className="min-h-11 min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm text-slate-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 sm:px-3"

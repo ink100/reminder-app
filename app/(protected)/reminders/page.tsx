@@ -4,12 +4,17 @@ import { RemindersDashboard } from "@/components/reminders/reminders-dashboard";
 import { serializeReminderForList } from "@/lib/reminder-view";
 
 export default async function RemindersPage() {
-  const [reminders, deletedReminders, deletedCount] = await Promise.all([
+  const [reminders, completedReminders, completedCount, deletedReminders, deletedCount] = await Promise.all([
     supabaseModels.reminder.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, completedAt: null },
       orderBy: { dueAt: "asc" },
       take: 100,
     }),
+    supabaseModels.reminder.findMany({
+      where: { deletedAt: null, completedAt: { not: null } },
+      orderBy: { completedAt: "desc" },
+    }),
+    supabaseModels.reminder.count({ where: { deletedAt: null, completedAt: { not: null } } }),
     supabaseModels.reminder.findMany({
       where: { deletedAt: { not: null } },
       orderBy: { deletedAt: "desc" },
@@ -21,6 +26,8 @@ export default async function RemindersPage() {
   return (
     <RemindersDashboard
       reminders={reminders.map(serializeReminderForList)}
+      completedReminders={completedReminders.map(serializeReminderForList)}
+      completedCount={completedCount}
       deletedCount={deletedCount}
       deletedReminders={deletedReminders.map((reminder: any) => ({
         ...serializeReminderForList(reminder),
