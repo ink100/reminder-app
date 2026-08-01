@@ -31,6 +31,7 @@ describe("Supabase migration verification", () => {
     const { preImportSql, postImportSql } = splitSupabaseMigrationSql(sql);
     expect(preImportSql).toContain("alter column expires_at drop not null");
     expect(preImportSql).toContain("drop index if exists license_store_accounts_reminder_id_unique");
+    expect(preImportSql).toContain("drop index if exists ssl_certificate_active_reminder_uidx");
     expect(preImportSql).not.toContain("alter column reminder_id set not null");
     expect(postImportSql).toContain("alter column reminder_id set not null");
     expect(postImportSql).toContain("synchronization left a schedule mismatch");
@@ -45,6 +46,20 @@ describe("Supabase migration verification", () => {
     expect(sql).toContain("create_license_store_account_with_reminder");
     expect(sql).toContain("update_license_store_account_with_reminder");
     expect(sql).toContain("license_store_account_with_reminder_json");
+  });
+
+  it("repairs duplicate SSL reminders and prevents another active duplicate", () => {
+    const sql = readFileSync(resolve("docs/supabase-reminders.sql"), "utf8");
+    expect(sql).toContain("SSL 证书到期：daydreams.cn");
+    expect(sql).toContain("row_number() over");
+    expect(sql).toContain("ssl_certificate_active_reminder_uidx");
+    expect(sql).toContain("where deleted_at is null and title = 'SSL 证书到期：daydreams.cn'");
+  });
+
+  it("does not B-tree index opaque activation-code payloads", () => {
+    const sql = readFileSync(resolve("docs/supabase-reminders.sql"), "utf8");
+    expect(sql).toContain("drop index if exists license_store_accounts_activation_code_idx");
+    expect(sql).not.toContain("create index if not exists license_store_accounts_activation_code_idx");
   });
 
   it("preserves repaired legacy schedule fields when a rerun imports null links", () => {

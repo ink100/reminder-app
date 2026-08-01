@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { formatRemainingTime } from "@/lib/date";
-import { getReminderKindLabel, isActivationReminder } from "@/lib/reminder-kind";
 import {
   reminderRiskLabels,
 } from "@/lib/reminder-view";
@@ -16,7 +15,7 @@ import type { ReminderRiskLevel } from "@/lib/risk-level";
 type ReminderRowProps = {
   id: string;
   title: string;
-  activationCode: string | null;
+  hasActivationCode: boolean;
   activationContact: string | null;
   dueAt: string;
   priority: string;
@@ -43,7 +42,7 @@ function getRemainingValidDays(dueAtDate: Date) {
   return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-export function ReminderRow({ id, title, activationCode, activationContact, dueAt, priority, category, riskLevel }: ReminderRowProps) {
+export function ReminderRow({ id, title, hasActivationCode, activationContact, dueAt, priority, category, riskLevel }: ReminderRowProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -107,17 +106,16 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
             <span
               className={cn(
                 "inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium",
-                isActivationReminder(activationCode) ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-500",
+                hasActivationCode ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-500",
               )}
             >
-              {getReminderKindLabel(activationCode)}
+              {hasActivationCode ? "激活码通知" : "普通提醒"}
             </span>
             {/* Status badge — capsule style */}
             <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium", riskBadgeClasses[riskLevel])}>
               {reminderRiskLabels[riskLevel]}
             </span>
           </div>
-          {activationCode ? <p className="mt-1 break-all text-xs text-sky-600">激活码：{activationCode}</p> : null}
           {activationContact ? <p className="mt-1 break-all text-xs text-sky-600">联系方式：{activationContact}</p> : null}
           <p className="mt-1 text-xs text-slate-400">
             {category ?? "未分类"} · {priorityLabels[priority] ?? priority}
@@ -141,10 +139,10 @@ export function ReminderRow({ id, title, activationCode, activationContact, dueA
 
         {/* Actions — always visible on mobile, hover-reveal on desktop */}
         <div className="flex shrink-0 items-center justify-end gap-1 border-t border-slate-100 pt-2 sm:border-0 sm:pt-0 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-          {activationCode ? (
+          {hasActivationCode ? (
             <Link
               className="inline-flex size-11 items-center justify-center rounded-md text-slate-400 hover:bg-sky-50 hover:text-sky-600 sm:size-9"
-              href={`/license-key?clientKey=${encodeURIComponent(activationCode)}&reminderId=${encodeURIComponent(id)}&validDays=${remainingValidDays}`}
+              href={`/license-key?reminderId=${encodeURIComponent(id)}&validDays=${remainingValidDays}`}
               aria-label="生成密匙"
             >
               <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

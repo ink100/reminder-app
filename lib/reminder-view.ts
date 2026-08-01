@@ -5,7 +5,7 @@ export type ReminderListItem = {
   id: string;
   title: string;
   description: string | null;
-  activationCode: string | null;
+  hasActivationCode: boolean;
   activationContact: string | null;
   dueAt: string;
   priority: string;
@@ -13,6 +13,27 @@ export type ReminderListItem = {
   completedAt: string | null;
   remindBeforeDays: number;
 };
+
+type ReminderListSource = Omit<ReminderListItem, "hasActivationCode" | "dueAt" | "completedAt"> & {
+  activationCode: string | null;
+  dueAt: Date;
+  completedAt: Date | null;
+};
+
+export function serializeReminderForList(reminder: ReminderListSource): ReminderListItem {
+  return {
+    id: reminder.id,
+    title: reminder.title,
+    description: reminder.description,
+    hasActivationCode: Boolean(reminder.activationCode?.trim()),
+    activationContact: reminder.activationContact,
+    dueAt: reminder.dueAt.toISOString(),
+    priority: reminder.priority,
+    category: reminder.category,
+    completedAt: reminder.completedAt?.toISOString() ?? null,
+    remindBeforeDays: reminder.remindBeforeDays,
+  };
+}
 
 export type ReminderStatusFilter = "all" | ReminderRiskLevel;
 export type ReminderPriorityFilter = "all" | "high" | "medium" | "low";
@@ -89,7 +110,6 @@ export function filterReminders(
         reminder.title,
         reminder.description ?? "",
         reminder.category ?? "",
-        reminder.activationCode ?? "",
         reminder.activationContact ?? "",
       ]
         .join(" ")

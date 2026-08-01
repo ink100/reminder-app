@@ -1,7 +1,7 @@
 import { supabaseModels } from "@/lib/reminders/store";
 
 export const SSL_CERT_REMINDER_TITLE = "SSL 证书到期：daydreams.cn";
-export const SSL_CERT_REMINDER_CATEGORY = "SSL证书";
+export const SSL_CERT_REMINDER_CATEGORY = "服务器与证书";
 export const SSL_CERT_DOMAIN = "*.daydreams.cn / daydreams.cn";
 
 function buildDescription(expiry: Date, daysRemaining: number | null) {
@@ -47,7 +47,6 @@ export async function syncSslCertificateReminder(expiryInput: string | Date) {
   const existing = await supabaseModels.reminder.findFirst({
     where: {
       deletedAt: null,
-      category: SSL_CERT_REMINDER_CATEGORY,
       title: SSL_CERT_REMINDER_TITLE,
     },
     orderBy: { createdAt: "asc" },
@@ -83,6 +82,7 @@ export async function syncSslCertificateReminder(expiryInput: string | Date) {
     dueChanged ||
     existing.description !== description ||
     existing.priority !== priority ||
+    existing.category !== SSL_CERT_REMINDER_CATEGORY ||
     existing.completedAt !== null;
 
   if (!shouldUpdate) {
@@ -100,6 +100,7 @@ export async function syncSslCertificateReminder(expiryInput: string | Date) {
       description,
       dueAt: expiry,
       priority,
+      category: SSL_CERT_REMINDER_CATEGORY,
       completedAt: null,
       ...(dueChanged ? { upcomingNotifiedAt: null, overdueNotifiedAt: null } : {}),
     },

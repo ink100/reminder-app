@@ -1,0 +1,1 @@
+export const ACTIVATION_CODE_MAX_LENGTH = 8192;

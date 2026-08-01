@@ -7,6 +7,7 @@ import { PaymentQrManager } from "@/components/license-key/payment-qr-manager";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ACTIVATION_CODE_MAX_LENGTH } from "@/lib/constants/activation-code";
 
 type ActivationReminder = {
   id: string;
@@ -267,8 +268,8 @@ export function LicenseStoreAccountTable() {
             className="min-h-28 w-full resize-y break-all rounded-md border border-slate-200 bg-white px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-slate-400"
             value={form.activationCode}
             onChange={(event) => updateForm("activationCode", event.target.value)}
-            maxLength={2048}
-            placeholder="输入店铺激活码（最多 2048 个字符）"
+            maxLength={ACTIVATION_CODE_MAX_LENGTH}
+            placeholder={`输入店铺激活码（最多 ${ACTIVATION_CODE_MAX_LENGTH} 个字符）`}
           />
         </div>
         <label className="flex min-h-11 items-center gap-2 text-sm text-slate-700 md:min-h-0">

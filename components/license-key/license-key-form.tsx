@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,12 +11,15 @@ function getInitialValidDays(value: string | null) {
   return Number.isInteger(days) && days > 0 ? String(days) : "7";
 }
 
-export function LicenseKeyForm() {
-  const searchParams = useSearchParams();
-  const initialClientKey = searchParams.get("clientKey") ?? searchParams.get("activationCode") ?? "";
-  const reminderId = searchParams.get("reminderId") ?? "";
+type LicenseKeyFormProps = {
+  initialClientKey?: string;
+  reminderId?: string;
+  initialValidDays?: string;
+};
+
+export function LicenseKeyForm({ initialClientKey = "", reminderId = "", initialValidDays }: LicenseKeyFormProps) {
   const [clientKey, setClientKey] = useState(initialClientKey);
-  const [validDays, setValidDays] = useState(getInitialValidDays(searchParams.get("validDays")));
+  const [validDays, setValidDays] = useState(getInitialValidDays(initialValidDays ?? null));
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [download, setDownload] = useState<{ url: string; fileName: string } | null>(null);

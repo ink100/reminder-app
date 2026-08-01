@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { buildReminderStats, filterReminders, type ReminderListItem } from "@/lib/reminder-view";
-import { getReminderKindLabel } from "@/lib/reminder-kind";
+import { buildReminderStats, filterReminders, serializeReminderForList, type ReminderListItem } from "@/lib/reminder-view";
 
 const reminders: ReminderListItem[] = [
   {
     id: "1",
     title: "合同续签",
     description: "工作合同",
-    activationCode: null,
+    hasActivationCode: false,
     activationContact: null,
     dueAt: "2026-04-22T10:00:00.000Z",
     priority: "high",
@@ -20,7 +19,7 @@ const reminders: ReminderListItem[] = [
     id: "2",
     title: "缴房租",
     description: null,
-    activationCode: null,
+    hasActivationCode: false,
     activationContact: null,
     dueAt: "2026-04-19T09:00:00.000Z",
     priority: "medium",
@@ -32,7 +31,7 @@ const reminders: ReminderListItem[] = [
     id: "3",
     title: "归档材料",
     description: "已完成",
-    activationCode: null,
+    hasActivationCode: false,
     activationContact: null,
     dueAt: "2026-04-30T09:00:00.000Z",
     priority: "low",
@@ -43,6 +42,24 @@ const reminders: ReminderListItem[] = [
 ];
 
 describe("reminder view helpers", () => {
+  it("serializes list reminders without exposing the activation code payload", () => {
+    const serialized = serializeReminderForList({
+      id: "secret-reminder",
+      title: "激活码到期",
+      description: null,
+      activationCode: "SECRET-ACTIVATION-CODE",
+      activationContact: "微信",
+      dueAt: new Date("2027-01-01T00:00:00.000Z"),
+      priority: "medium",
+      category: "授权与店铺",
+      completedAt: null,
+      remindBeforeDays: 3,
+    });
+
+    expect(serialized).not.toHaveProperty("activationCode");
+    expect(serialized).toMatchObject({ id: "secret-reminder", hasActivationCode: true });
+  });
+
   it("builds stats by risk level", () => {
     expect(buildReminderStats(reminders, new Date("2026-04-19T12:00:00.000Z"))).toEqual({
       total: 3,
@@ -95,7 +112,7 @@ describe("reminder view helpers", () => {
           id: "4",
           title: "会员续费",
           description: null,
-          activationCode: "VIP-2026-CODE",
+          hasActivationCode: true,
           activationContact: "wx-9988",
           dueAt: "2026-04-25T10:00:00.000Z",
           priority: "medium",
@@ -105,7 +122,7 @@ describe("reminder view helpers", () => {
         },
       ],
       {
-        search: "VIP-2026",
+        search: "会员",
         status: "all",
         priority: "all",
         now: new Date("2026-04-19T12:00:00.000Z"),
@@ -113,7 +130,7 @@ describe("reminder view helpers", () => {
     );
 
     expect(result.map((item) => item.id)).toEqual(["4"]);
-    expect(getReminderKindLabel(result[0]?.activationCode ?? null)).toBe("激活码通知");
+    expect(result[0]?.hasActivationCode).toBe(true);
   });
 
   it("supports activation contact in search", () => {
@@ -124,7 +141,7 @@ describe("reminder view helpers", () => {
           id: "4",
           title: "会员续费",
           description: null,
-          activationCode: "VIP-2026-CODE",
+          hasActivationCode: true,
           activationContact: "telegram:vip_support",
           dueAt: "2026-04-25T10:00:00.000Z",
           priority: "medium",

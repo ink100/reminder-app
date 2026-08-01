@@ -9,6 +9,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { isActivationReminder } from "@/lib/reminder-kind";
 import type { ReminderRecurrenceType } from "@/lib/reminder-recurrence";
 import { REMINDER_GROUPS, getReminderGroup, type ReminderGroup } from "@/lib/reminder-groups";
+import { ACTIVATION_CODE_MAX_LENGTH } from "@/lib/constants/activation-code";
 
 type RecurrenceSelectValue = ReminderRecurrenceType | "none";
 
@@ -226,8 +227,8 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
               className="min-h-28 w-full resize-y break-all rounded-md border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-slate-400"
               value={activationCode}
               onChange={(e) => setActivationCode(e.target.value)}
-              maxLength={2048}
-              placeholder="请输入激活码（最多 2048 个字符）"
+              maxLength={ACTIVATION_CODE_MAX_LENGTH}
+              placeholder={`请输入激活码（最多 ${ACTIVATION_CODE_MAX_LENGTH} 个字符）`}
             />
           </div>
           <div className="space-y-2">
@@ -238,7 +239,7 @@ export function ReminderForm({ mode, defaultValues, attachments }: ReminderFormP
               placeholder="例如：微信 / Telegram / 邮箱 / 手机号"
             />
           </div>
-          <p className="text-xs text-slate-500">激活码通知会在列表和邮件提醒中单独展示激活码和联系方式。</p>
+          <p className="text-xs text-slate-500">激活码仅在编辑记录和通知内容中完整使用，提醒列表不会直接展示。</p>
         </div>
       ) : null}
 

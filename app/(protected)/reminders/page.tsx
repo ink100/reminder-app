@@ -1,21 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseModels } from "@/lib/reminders/store";
 import { RemindersDashboard } from "@/components/reminders/reminders-dashboard";
-
-function serializeReminder(reminder: any) {
-  return {
-    id: reminder.id,
-    title: reminder.title,
-    description: reminder.description,
-    activationCode: reminder.activationCode,
-    activationContact: reminder.activationContact,
-    dueAt: reminder.dueAt.toISOString(),
-    priority: reminder.priority,
-    category: reminder.category,
-    completedAt: reminder.completedAt?.toISOString() ?? null,
-    remindBeforeDays: reminder.remindBeforeDays,
-  };
-}
+import { serializeReminderForList } from "@/lib/reminder-view";
 
 export default async function RemindersPage() {
   const [reminders, deletedReminders, deletedCount] = await Promise.all([
@@ -34,10 +20,10 @@ export default async function RemindersPage() {
 
   return (
     <RemindersDashboard
-      reminders={reminders.map(serializeReminder)}
+      reminders={reminders.map(serializeReminderForList)}
       deletedCount={deletedCount}
       deletedReminders={deletedReminders.map((reminder: any) => ({
-        ...serializeReminder(reminder),
+        ...serializeReminderForList(reminder),
         deletedAt: reminder.deletedAt.toISOString(),
       }))}
     />

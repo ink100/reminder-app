@@ -1,9 +1,23 @@
-import { Suspense } from "react";
-
 import { LicenseKeyForm } from "@/components/license-key/license-key-form";
 import { LicenseStoreAccountTable } from "@/components/license-key/license-store-account-table";
+import { supabaseModels } from "@/lib/reminders/store";
 
-export default function LicenseKeyPage() {
+type LicenseKeyPageProps = {
+  searchParams: Promise<{ reminderId?: string | string[]; validDays?: string | string[] }>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function LicenseKeyPage({ searchParams }: LicenseKeyPageProps) {
+  const params = await searchParams;
+  const requestedReminderId = firstValue(params.reminderId)?.trim() ?? "";
+  const reminder = requestedReminderId
+    ? await supabaseModels.reminder.findFirst({ where: { id: requestedReminderId, deletedAt: null } })
+    : null;
+  const linkedReminderId = reminder?.activationCode ? reminder.id : "";
+
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
       <div>
@@ -13,9 +27,11 @@ export default function LicenseKeyPage() {
           输入激活码 / Client Key 和有效天数，生成 HRB 授权 .key 文件；当前暂不需要 OTP 验证码。
         </p>
       </div>
-      <Suspense fallback={<div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-500 sm:p-6">加载中...</div>}>
-        <LicenseKeyForm />
-      </Suspense>
+      <LicenseKeyForm
+        initialClientKey={reminder?.activationCode ?? ""}
+        reminderId={linkedReminderId}
+        initialValidDays={firstValue(params.validDays)}
+      />
       <LicenseStoreAccountTable />
     </div>
   );

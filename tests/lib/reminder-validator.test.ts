@@ -24,8 +24,8 @@ describe("reminderInputSchema", () => {
     expect(result.remindBeforeHours).toBe(0);
   });
 
-  it("accepts a 756-character activation code", () => {
-    const activationCode = "A".repeat(756);
+  it("accepts a 4096-character activation code without truncating it", () => {
+    const activationCode = "A".repeat(4096);
     const result = reminderInputSchema.parse({
       title: "长激活码到期",
       description: null,
@@ -41,7 +41,23 @@ describe("reminderInputSchema", () => {
       activationContact: null,
     });
 
-    expect(result.activationCode).toHaveLength(756);
+    expect(result.activationCode).toHaveLength(4096);
+  });
+
+  it("rejects activation codes longer than 8192 characters", () => {
+    expect(() => reminderInputSchema.parse({
+      title: "过长激活码到期",
+      dueAt: "2026-05-01T08:00:00.000Z",
+      priority: "medium",
+      category: "授权与店铺",
+      remindBeforeDays: 3,
+      remindBeforeHours: 0,
+      overdueRemindEnabled: true,
+      recurrenceType: null,
+      recurrenceInterval: null,
+      activationCode: "A".repeat(8193),
+      activationContact: null,
+    })).toThrow("激活码过长");
   });
 
   it("allows normal reminders without activation code", () => {

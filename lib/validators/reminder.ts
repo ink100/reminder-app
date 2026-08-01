@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+import { ACTIVATION_CODE_MAX_LENGTH } from "@/lib/constants/activation-code";
+
 export const reminderInputSchema = z.object({
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().optional().nullable(),
-  activationCode: z.string().trim().max(2048, "激活码过长").optional().nullable(),
+  activationCode: z.string().trim().max(ACTIVATION_CODE_MAX_LENGTH, "激活码过长").optional().nullable(),
   activationContact: z.string().trim().max(200).optional().nullable(),
   dueAt: z.string().datetime(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),

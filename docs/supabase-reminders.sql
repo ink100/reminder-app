@@ -175,6 +175,7 @@ create table if not exists public.license_store_accounts (
 drop trigger if exists reminders_normalize_license_store_schedule on public.reminders;
 drop trigger if exists reminders_sync_license_store_expiry on public.reminders;
 drop index if exists license_store_accounts_reminder_id_unique;
+drop index if exists ssl_certificate_active_reminder_uidx;
 alter table public.license_store_accounts drop constraint if exists license_store_accounts_reminder_id_fkey;
 alter table public.license_store_accounts alter column expires_at drop not null;
 alter table public.license_store_accounts alter column reminder_id drop not null;
@@ -195,6 +196,26 @@ end
 where category is null
    or btrim(category) = ''
    or category in ('激活码', '授权', '店铺', 'SSL证书', '证书', '域名', '服务器', '账单', '续费', '宠物', '生活', '工作', '项目');
+
+-- Keep the oldest system-managed SSL reminder, soft-delete legacy duplicates, and
+-- enforce one active row even if two certificate synchronization jobs race.
+with ranked_ssl_reminders as (
+  select id, row_number() over (order by created_at, id) as duplicate_rank
+  from public.reminders
+  where deleted_at is null and title = 'SSL 证书到期：daydreams.cn'
+)
+update public.reminders reminder
+set deleted_at = transaction_timestamp(), updated_at = transaction_timestamp()
+from ranked_ssl_reminders ranked
+where reminder.id = ranked.id and ranked.duplicate_rank > 1;
+update public.reminders
+set category = '服务器与证书', updated_at = transaction_timestamp()
+where deleted_at is null
+  and title = 'SSL 证书到期：daydreams.cn'
+  and category is distinct from '服务器与证书';
+create unique index if not exists ssl_certificate_active_reminder_uidx
+  on public.reminders(title)
+  where deleted_at is null and title = 'SSL 证书到期：daydreams.cn';
 
 create or replace function public.utc_clamped_calendar_year_later(p_at timestamptz)
 returns timestamptz language sql immutable strict set search_path = public as $$
@@ -532,7 +553,7 @@ create index if not exists medicines_expires_at_idx on public.medicines(expires_
 create index if not exists medicines_deleted_at_idx on public.medicines(deleted_at);
 create index if not exists medicines_expiration_reminder_id_idx on public.medicines(expiration_reminder_id);
 create index if not exists license_store_accounts_expires_at_idx on public.license_store_accounts(expires_at);
-create index if not exists license_store_accounts_activation_code_idx on public.license_store_accounts(activation_code);
+drop index if exists license_store_accounts_activation_code_idx;
 create index if not exists license_store_accounts_deleted_at_idx on public.license_store_accounts(deleted_at);
 
 comment on table public.reminders is 'Reminder records migrated from the rollback-preserved SQLite database';

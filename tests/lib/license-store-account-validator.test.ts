@@ -13,21 +13,21 @@ const baseInput = {
 };
 
 describe("licenseStoreAccountInputSchema", () => {
-  it("accepts a 756-character activation code", () => {
-    const activationCode = "A".repeat(756);
+  it("accepts a 4096-character activation code without truncating it", () => {
+    const activationCode = "A".repeat(4096);
 
     const result = licenseStoreAccountInputSchema.parse({
       ...baseInput,
       activationCode,
     });
 
-    expect(result.activationCode).toHaveLength(756);
+    expect(result.activationCode).toHaveLength(4096);
   });
 
-  it("rejects activation codes longer than 2048 characters", () => {
+  it("rejects activation codes longer than 8192 characters", () => {
     expect(() => licenseStoreAccountInputSchema.parse({
       ...baseInput,
-      activationCode: "A".repeat(2049),
+      activationCode: "A".repeat(8193),
     })).toThrow("对应激活码过长");
   });
 });
