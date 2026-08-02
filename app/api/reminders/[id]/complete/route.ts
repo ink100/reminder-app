@@ -6,7 +6,7 @@ import { toApiErrorResponse } from "@/lib/api-error";
 import { buildReminderCompletionUpdate } from "@/lib/reminder-complete";
 
 export async function POST(_request: NextRequest, context: RouteContext<"/api/reminders/[id]/complete">) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

@@ -5,7 +5,7 @@ import { requireApiSession } from "@/lib/auth";
 import { uploadToR2 } from "@/lib/r2-storage";
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

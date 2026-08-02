@@ -4,8 +4,8 @@ import { eq, NotificationChannelRow, NotificationTemplateRow, QueueJobRow, selec
 
 export const runtime = "nodejs";
 
-export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdminApi();
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
 
   const { id } = await context.params;

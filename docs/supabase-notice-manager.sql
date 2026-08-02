@@ -131,15 +131,33 @@ create table if not exists public.notification_api_keys (
   name text not null,
   api_key text not null unique,
   enabled boolean not null default true,
-  expires_at timestamptz
+  expires_at timestamptz,
+  scopes jsonb not null default '["notifications:send"]'::jsonb
 );
 
-comment on table public.notification_api_keys is 'NoticeManager API Key 表：保存外部 Worker 调用通知入口所需的 API Key 元数据。';
+alter table public.notification_api_keys add column if not exists scopes jsonb not null default '["notifications:send"]'::jsonb;
+-- Existing explicit NULL/malformed values are fail-closed. Rows predating the column receive
+-- PostgreSQL's column default and retain their legacy notification-only behavior.
+update public.notification_api_keys
+set scopes = '[]'::jsonb
+where scopes is null
+   or jsonb_typeof(scopes) <> 'array'
+   or not (scopes <@ '["notifications:send", "ai:all"]'::jsonb);
+alter table public.notification_api_keys alter column scopes set default '["notifications:send"]'::jsonb;
+alter table public.notification_api_keys alter column scopes set not null;
+alter table public.notification_api_keys drop constraint if exists notification_api_keys_scopes_check;
+alter table public.notification_api_keys add constraint notification_api_keys_scopes_check check (
+  jsonb_typeof(scopes) = 'array'
+  and scopes <@ '["notifications:send", "ai:all"]'::jsonb
+);
+
+comment on table public.notification_api_keys is 'NoticeManager/API 机器调用 Key 表：Worker Key 仅发送通知，AI Key 可调用非身份业务模块。';
 comment on column public.notification_api_keys.id is 'API Key 记录 ID，对应本地 NotificationApiKey.id。';
 comment on column public.notification_api_keys.name is 'API Key 显示名称或用途说明。';
 comment on column public.notification_api_keys.api_key is 'API Key 明文或迁移期兼容值；生产建议改为哈希存储。';
 comment on column public.notification_api_keys.enabled is 'API Key 是否启用。';
 comment on column public.notification_api_keys.expires_at is 'API Key 过期时间，空表示不过期。';
+comment on column public.notification_api_keys.scopes is '权限范围 JSON 数组；默认仅 notifications:send，AI 全模块 Key 包含 ai:all。';
 
 create table if not exists public.queue_jobs (
   id text primary key,

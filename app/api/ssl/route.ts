@@ -30,8 +30,8 @@ interface SSLStatus {
 }
 
 // 获取 SSL 证书状态
-export async function GET() {
-  const auth = await requireAdminApi()
+export async function GET(request: Request) {
+  const auth = await requireAdminApi(request)
   if (auth.response) return auth.response
 
   try {
@@ -122,8 +122,8 @@ export async function GET() {
 }
 
 // 手动触发证书更新
-export async function POST() {
-  const auth = await requireAdminApi()
+export async function POST(request: Request) {
+  const auth = await requireAdminApi(request)
   if (auth.response) return auth.response
 
   try {

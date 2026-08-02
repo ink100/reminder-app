@@ -81,6 +81,18 @@ export async function validateNotificationApiKey(apiKey: string | null) {
   return record;
 }
 
+export const NOTIFICATION_SEND_SCOPE = "notifications:send";
+export const AI_ALL_SCOPE = "ai:all";
+
+/** Missing scopes are deliberately treated as the legacy notification-only default; malformed scopes grant nothing. */
+export function notificationApiKeyScopes(record: { scopes?: unknown }): string[] {
+  if (record.scopes === undefined || record.scopes === null) return [NOTIFICATION_SEND_SCOPE];
+  if (!Array.isArray(record.scopes) || !record.scopes.every(
+    (scope) => scope === NOTIFICATION_SEND_SCOPE || scope === AI_ALL_SCOPE,
+  )) return [];
+  return record.scopes;
+}
+
 export async function createNotificationFromEvent(input: {
   source?: string;
   group: string;

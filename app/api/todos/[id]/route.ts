@@ -14,7 +14,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,7 +60,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

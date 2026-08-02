@@ -6,7 +6,7 @@ import { eq, NotificationChannelRow, NotificationRow, QueueJobRow, selectOne, se
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const url = new URL(request.url);
   const status = url.searchParams.get("status") || undefined;

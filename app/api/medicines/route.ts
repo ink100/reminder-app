@@ -9,8 +9,8 @@ function serializeMedicine(item: Awaited<ReturnType<typeof medicineStore.findMan
   return { ...item, status: getMedicineStatus(item) };
 }
 
-export async function GET() {
-  const session = await requireApiSession();
+export async function GET(request: NextRequest) {
+  const session = await requireApiSession(request);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const items = await medicineStore.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "desc" } });
@@ -18,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   try {

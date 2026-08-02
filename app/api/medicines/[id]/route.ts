@@ -11,7 +11,7 @@ function serializeMedicine(item: Awaited<ReturnType<typeof medicineStore.findUni
 }
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const item = await medicineStore.findUnique({ where: { id } });
@@ -20,7 +20,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { id } = await params;
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { id } = await params;

@@ -2,8 +2,8 @@ import { requireAdminApi } from "@/lib/admin-api";
 import { getSchedulerStatus } from "@/lib/scheduler";
 import { getTaskRunLogs } from "@/lib/task-runner";
 
-export async function GET() {
-  const auth = await requireAdminApi();
+export async function GET(request: Request) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
 

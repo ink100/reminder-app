@@ -5,8 +5,8 @@ import { requireApiSession } from "@/lib/auth";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { reminderInputSchema } from "@/lib/validators/reminder";
 
-export async function GET() {
-  const session = await requireApiSession();
+export async function GET(request: NextRequest) {
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

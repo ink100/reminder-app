@@ -1,5 +1,5 @@
 import { NotificationCenterDashboard } from "@/components/notification-center/dashboard";
-import { listNotifications } from "@/lib/notification-center/manager";
+import { listNotifications, notificationApiKeyScopes } from "@/lib/notification-center/manager";
 import {
   countRows,
   eq,
@@ -34,6 +34,7 @@ export default async function NotificationsPage() {
         name: item.name,
         apiKey: item.api_key,
         enabled: item.enabled,
+        scopes: notificationApiKeyScopes(item),
       }))}
       groups={groups.map((item) => ({ id: item.id, name: item.name, description: item.description, enabled: item.enabled }))}
       channels={channels.map((item) => ({

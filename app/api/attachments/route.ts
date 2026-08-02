@@ -7,7 +7,7 @@ import { getPaymentQrSourceLabel } from "@/lib/payment-qr";
 import { getMedicineAttachmentLabel } from "@/lib/medicines";
 
 export async function GET(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

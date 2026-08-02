@@ -8,7 +8,7 @@ import { toApiErrorResponse } from "@/lib/api-error";
 import { licenseStoreAccountInputSchema } from "@/lib/validators/license-store-account";
 
 export async function PUT(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]">) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
 
   try {
@@ -43,8 +43,8 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/lice
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]">) {
-  const auth = await requireAdminApi();
+export async function DELETE(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]">) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
 
   try {

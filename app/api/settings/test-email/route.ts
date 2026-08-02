@@ -11,7 +11,7 @@ const inputSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
 

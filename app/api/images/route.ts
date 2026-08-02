@@ -12,7 +12,7 @@ import path from "path";
 const MAX_SIZE = 100 * 1024 * 1024;
 
 export async function GET(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

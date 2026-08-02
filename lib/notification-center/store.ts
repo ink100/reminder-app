@@ -237,6 +237,7 @@ export type NotificationApiKeyRow = {
   api_key: string;
   enabled: boolean;
   expires_at: string | null;
+  scopes: string[];
 };
 
 export type QueueJobRow = {

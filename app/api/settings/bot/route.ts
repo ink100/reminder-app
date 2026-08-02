@@ -13,8 +13,8 @@ import {
 } from "@/lib/telegram-bot";
 import { telegramBotSettingsSchema, telegramBotTestSchema } from "@/lib/validators/bot";
 
-export async function GET() {
-  const auth = await requireAdminApi();
+export async function GET(request: NextRequest) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
 
@@ -28,7 +28,7 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
 
@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
 

@@ -5,7 +5,7 @@ import { requireApiSession } from "@/lib/auth";
 import { supabaseModels } from "@/lib/reminders/store";
 
 export async function POST(_request: NextRequest, context: RouteContext<"/api/reminders/[id]/restore">) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

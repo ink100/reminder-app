@@ -9,7 +9,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

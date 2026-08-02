@@ -3,8 +3,8 @@ import { cancelNotification } from "@/lib/notification-center/manager";
 
 export const runtime = "nodejs";
 
-export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdminApi();
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
 
   const { id } = await context.params;

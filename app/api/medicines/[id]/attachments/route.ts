@@ -25,7 +25,7 @@ function serializeAttachment(item: Awaited<ReturnType<typeof attachmentStore.fin
 }
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const medicine = await medicineStore.findUnique({ where: { id } });
@@ -35,7 +35,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const contentLength = Number(request.headers.get("content-length") ?? 0);

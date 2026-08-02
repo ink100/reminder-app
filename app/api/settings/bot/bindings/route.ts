@@ -4,8 +4,8 @@ import { requireAdminApi } from "@/lib/admin-api";
 import { toApiErrorResponse } from "@/lib/api-error";
 import { getActiveBindings, createBindCode, unbindChatId } from "@/lib/telegram-binding";
 
-export async function GET() {
-  const auth = await requireAdminApi();
+export async function GET(request: NextRequest) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
   if (!session) {
@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
   if (!session) {

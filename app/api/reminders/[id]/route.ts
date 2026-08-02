@@ -8,7 +8,7 @@ import { buildLicenseStoreReminderSchedule } from "@/lib/license-store-reminder"
 import { reminderInputSchema } from "@/lib/validators/reminder";
 
 export async function GET(_request: NextRequest, context: RouteContext<"/api/reminders/[id]">) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,7 +25,7 @@ export async function GET(_request: NextRequest, context: RouteContext<"/api/rem
 }
 
 export async function PUT(request: NextRequest, context: RouteContext<"/api/reminders/[id]">) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -90,7 +90,7 @@ export async function PUT(request: NextRequest, context: RouteContext<"/api/remi
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext<"/api/reminders/[id]">) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(_request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

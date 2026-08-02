@@ -1,7 +1,12 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { createNotificationFromEvent, validateNotificationApiKey } from "@/lib/notification-center/manager";
+import {
+  createNotificationFromEvent,
+  NOTIFICATION_SEND_SCOPE,
+  notificationApiKeyScopes,
+  validateNotificationApiKey,
+} from "@/lib/notification-center/manager";
 
 export const runtime = "nodejs";
 
@@ -22,7 +27,9 @@ function error(code: string, message: string, status = 400) {
 
 export async function POST(request: NextRequest) {
   const apiKey = await validateNotificationApiKey(request.headers.get("x-api-key"));
-  if (!apiKey) return error("UNAUTHORIZED", "Invalid X-API-Key", 401);
+  if (!apiKey || !notificationApiKeyScopes(apiKey).includes(NOTIFICATION_SEND_SCOPE)) {
+    return error("UNAUTHORIZED", "Invalid X-API-Key", 401);
+  }
 
   try {
     const input = notifySchema.parse(await request.json());

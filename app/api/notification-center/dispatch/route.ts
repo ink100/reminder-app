@@ -3,8 +3,8 @@ import { cleanupNotificationData, dispatchQueueJobs } from "@/lib/notification-c
 
 export const runtime = "nodejs";
 
-export async function POST() {
-  const auth = await requireAdminApi();
+export async function POST(request: Request) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
   if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });

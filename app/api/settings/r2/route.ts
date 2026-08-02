@@ -5,7 +5,7 @@ import { getR2Config, testR2Connection } from "@/lib/r2-config";
 
 // 测试 R2 连接
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
   if (!session) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
 // 保存 R2 配置
 export async function PUT(request: NextRequest) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
   if (!session) {
@@ -61,8 +61,8 @@ export async function PUT(request: NextRequest) {
 }
 
 // 获取当前 R2 配置
-export async function GET() {
-  const auth = await requireAdminApi();
+export async function GET(request: NextRequest) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
   const session = auth.actor;
   if (!session) {
@@ -70,10 +70,15 @@ export async function GET() {
   }
 
   const config = await getR2Config();
+  const machineActor = auth.actor.id.startsWith("api-key:");
   return NextResponse.json({
     endpoint: config.endpoint,
-    accessKey: config.accessKey,
-    secretKey: config.secretKey,
+    accessKey: machineActor ? "" : config.accessKey,
+    secretKey: machineActor ? "" : config.secretKey,
+    ...(machineActor ? {
+      accessKeyConfigured: Boolean(config.accessKey),
+      secretKeyConfigured: Boolean(config.secretKey),
+    } : {}),
     bucket: config.bucket,
     publicUrl: config.publicUrl,
     cacheControl: config.cacheControl,

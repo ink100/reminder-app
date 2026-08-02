@@ -10,7 +10,7 @@ type RouteMode = "inherit" | "custom" | "disabled";
 
 type DashboardProps = {
   stats: { notifications: number; pendingJobs: number; failedJobs: number; channels: number };
-  apiKeys: Array<{ id: string; name: string; apiKey: string; enabled: boolean }>;
+  apiKeys: Array<{ id: string; name: string; apiKey: string; enabled: boolean; scopes?: string[] }>;
   groups: Group[];
   channels: Channel[];
   templates: Template[];
@@ -63,6 +63,7 @@ export function NotificationCenterDashboard({ stats, apiKeys, groups, channels, 
   const [groupName, setGroupName] = useState("");
   const [groupDescription, setGroupDescription] = useState("");
   const [newApiKey, setNewApiKey] = useState("");
+  const [apiKeyType, setApiKeyType] = useState<"worker" | "ai">("worker");
 
   const selectedGroup = groups.find((group) => group.id === selectedGroupId) ?? groups[0] ?? null;
 
@@ -286,11 +287,11 @@ export function NotificationCenterDashboard({ stats, apiKeys, groups, channels, 
 
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <h2 className="font-semibold text-slate-950">Worker API Keys</h2>
-          <p className="mt-1 text-xs text-slate-500">所有 Worker API Key 均以明文完整展示，方便直接复制使用。</p>
-          <div className="mt-3 space-y-2 text-sm">{apiKeys.map((item) => <div key={item.id} className="min-w-0 rounded-lg bg-slate-50 p-3"><div className="break-words font-medium">{item.name}</div><code className="block break-all text-xs text-slate-500">{item.apiKey}</code></div>)}</div>
+          <h2 className="font-semibold text-slate-950">API Keys</h2>
+          <p className="mt-1 text-xs text-slate-500">受保护管理页按既有规则完整展示 Key。Worker Key 仅发送通知；AI Key 可调用全部非身份业务 API。</p>
+          <div className="mt-3 space-y-2 text-sm">{apiKeys.map((item) => <div key={item.id} className="min-w-0 rounded-lg bg-slate-50 p-3"><div className="break-words font-medium">{item.name} <span className="text-xs text-blue-600">{item.scopes?.includes("ai:all") ? "AI 全模块" : "Worker"}</span></div><code className="block break-all text-xs text-slate-500">{item.apiKey}</code></div>)}</div>
           {newApiKey ? <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-medium text-amber-800">新生成的 API Key</p><code className="mt-1 block break-all text-xs text-amber-900">{newApiKey}</code></div> : null}
-          <button disabled={busy} onClick={() => run(async () => { const data = await requestJson("/api/notification-center/api-keys", "POST", { name: "Worker Key" }); setNewApiKey(data.item.apiKey); }, "API Key 已创建", false)} className="mt-3 min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-medium">生成新 Key</button>
+          <div className="mt-3 flex gap-2"><select value={apiKeyType} onChange={(event) => setApiKeyType(event.target.value as "worker" | "ai")} className="min-h-10 rounded-lg border border-slate-200 px-2 text-sm"><option value="worker">普通 Worker Key</option><option value="ai">AI 全模块 Key</option></select><button disabled={busy} onClick={() => run(async () => { const data = await requestJson("/api/notification-center/api-keys", "POST", { name: apiKeyType === "ai" ? "AI Key" : "Worker Key", type: apiKeyType }); setNewApiKey(data.item.apiKey); }, "API Key 已创建", false)} className="min-h-10 rounded-lg border border-slate-200 px-3 text-sm font-medium">生成新 Key</button></div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <h2 className="font-semibold text-slate-950">最近通知</h2>

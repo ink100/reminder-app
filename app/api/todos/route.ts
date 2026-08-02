@@ -9,8 +9,8 @@ const todoCreateSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(200),
 });
 
-export async function GET() {
-  const session = await requireApiSession();
+export async function GET(request: NextRequest) {
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireApiSession();
+  const session = await requireApiSession(request);
 
   if (!session) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

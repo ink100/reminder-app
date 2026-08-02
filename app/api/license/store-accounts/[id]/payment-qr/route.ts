@@ -60,8 +60,8 @@ async function findActiveAccount(id: string) {
   return licenseStoreAccountStore.findFirst({ where: { id, deletedAt: null }, select: { id: true } });
 }
 
-export async function GET(_request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]/payment-qr">) {
-  const auth = await requireAdminApi();
+export async function GET(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]/payment-qr">) {
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
 
   const { id } = await context.params;
@@ -89,7 +89,7 @@ export async function GET(_request: NextRequest, context: RouteContext<"/api/lic
 }
 
 export async function POST(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]/payment-qr">) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
 
   try {
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/lic
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext<"/api/license/store-accounts/[id]/payment-qr">) {
-  const auth = await requireAdminApi();
+  const auth = await requireAdminApi(request);
   if (auth.response) return auth.response;
 
   try {
