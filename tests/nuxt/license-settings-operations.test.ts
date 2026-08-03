@@ -59,4 +59,19 @@ describe("Nuxt license, payment and settings migration", () => {
     const status={status:{lastRenew:null,lastResult:0,expiry:"2030-01-01",updated:null,daysRemaining:300,isExpired:false,subject:"example.test",issuer:"Test CA",serialNumber:"01"},acmeList:"entry",logs:"ok",certPath:"/cert",renewScript:"/renew"};apiFetch.mockResolvedValue(status);
     const wrapper=mount(SslStatus,{global});await flushPromises();expect(apiFetch).toHaveBeenCalledWith("/api/ssl");expect(wrapper.text()).toContain("正常");await button(wrapper,"刷新").trigger("click");await flushPromises();expect(apiFetch).toHaveBeenCalledTimes(2);
   });
+
+  it("does not report an unreadable certificate or a failed renewal as healthy",async()=>{
+    apiFetch.mockResolvedValue({status:{lastRenew:null,lastResult:1,lastAction:"failed",message:"证书读取失败",expiry:null,updated:null,certificateAvailable:false},acmeList:"",logs:"",certPath:"/cert",renewScript:"/renew"});
+    const wrapper=mount(SslStatus,{global});await flushPromises();
+    expect(wrapper.text()).toContain("状态不可用");
+    expect(wrapper.text()).toContain("最近操作失败");
+    expect(wrapper.text()).not.toContain("正常");
+  });
+
+  it("shows a dedicated warning while a renewed certificate is waiting for nginx activation",async()=>{
+    apiFetch.mockResolvedValue({status:{lastRenew:"2030-01-01",lastResult:8,lastAction:"failed",message:"nginx 重载失败",expiry:"2030-04-01",updated:null,certificateAvailable:true,daysRemaining:90,isExpired:false,reloadPending:true},acmeList:"",logs:"",certPath:"/cert",renewScript:"/renew"});
+    const wrapper=mount(SslStatus,{global});await flushPromises();
+    expect(wrapper.text()).toContain("新证书待加载");
+    expect(wrapper.text()).toContain("nginx 重载失败");
+  });
 });
