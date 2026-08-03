@@ -48,6 +48,7 @@ yarn-error.log*
 /prisma/*.db-*
 /data/*.json
 /data/*.log
+/data/*.lock
 /uploads/
 /tmp/
 /backups/
