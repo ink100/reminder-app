@@ -15,6 +15,7 @@ describe("Nuxt configuration", () => {
     expect(config).toMatch(/modules:\s*\[[^\]]*["']@element-plus\/nuxt["']/);
     expect(config).toMatch(/preset:\s*["']node-server["']/);
     expect(config).toMatch(/css:\s*\[[^\]]*["']~\/assets\/css\/main\.css["']/);
+    expect(config).toMatch(/components:\s*\[\s*\{[^}]*path:\s*["']~\/components["'][^}]*pathPrefix:\s*false/);
   });
 
   it("does not expose secrets through public runtime config", () => {

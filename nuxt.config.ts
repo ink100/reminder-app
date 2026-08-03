@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   ssr: true,
   modules: ["@element-plus/nuxt"],
   css: ["~/assets/css/main.css"],
+  components: [{ path: "~/components", pathPrefix: false }],
   alias: {
     "@": rootDir,
   },
