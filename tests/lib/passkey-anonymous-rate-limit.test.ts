@@ -9,8 +9,8 @@ vi.mock("@/lib/webauthn-cookie", () => ({
   newCeremonyBrowserToken: vi.fn(() => "browser-secret"), setCeremonyCookie: vi.fn(), ceremonyBrowserToken: vi.fn(() => "browser-secret"),
 }));
 
-import { GET } from "@/app/api/auth/passkey/login/route";
-import { POST } from "@/app/api/auth/passkey/login/verify/route";
+import { GET } from "@/server/handlers/api/auth/passkey/login/route";
+import { POST } from "@/server/handlers/api/auth/passkey/login/verify/route";
 
 describe("anonymous passkey endpoint throttling", () => {
   beforeEach(() => vi.clearAllMocks());

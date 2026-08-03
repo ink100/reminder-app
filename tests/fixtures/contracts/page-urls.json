@@ -1,0 +1,21 @@
+[
+  { "source": "app/pages/account.vue", "url": "/account" },
+  { "source": "app/pages/auth.vue", "url": "/auth" },
+  { "source": "app/pages/bot.vue", "url": "/bot" },
+  { "source": "app/pages/images.vue", "url": "/images" },
+  { "source": "app/pages/index.vue", "url": "/" },
+  { "source": "app/pages/invite/[token].vue", "url": "/invite/:token" },
+  { "source": "app/pages/license-key.vue", "url": "/license-key" },
+  { "source": "app/pages/medicines/[id].vue", "url": "/medicines/:id" },
+  { "source": "app/pages/medicines/index.vue", "url": "/medicines" },
+  { "source": "app/pages/members.vue", "url": "/members" },
+  { "source": "app/pages/notification-center.vue", "url": "/notification-center" },
+  { "source": "app/pages/push-ledger.vue", "url": "/push-ledger" },
+  { "source": "app/pages/reminders/[id]/edit.vue", "url": "/reminders/:id/edit" },
+  { "source": "app/pages/reminders/index.vue", "url": "/reminders" },
+  { "source": "app/pages/reminders/new.vue", "url": "/reminders/new" },
+  { "source": "app/pages/settings.vue", "url": "/settings" },
+  { "source": "app/pages/ssl.vue", "url": "/ssl" },
+  { "source": "app/pages/todos.vue", "url": "/todos" },
+  { "source": "app/pages/voice.vue", "url": "/voice" }
+]

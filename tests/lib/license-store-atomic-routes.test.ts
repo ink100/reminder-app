@@ -11,8 +11,8 @@ vi.mock("@/lib/notification-center/store", () => ({ callRpc }));
 vi.mock("@/lib/reminders/store", () => ({ supabaseModels: { licenseStoreAccount, reminder }, createCuid }));
 vi.mock("@/lib/r2-cleanup", () => ({ cleanupR2Keys: vi.fn() }));
 
-import { POST } from "@/app/api/license/store-accounts/route";
-import { PUT } from "@/app/api/license/store-accounts/[id]/route";
+import { POST } from "@/server/handlers/api/license/store-accounts/route";
+import { PUT } from "@/server/handlers/api/license/store-accounts/[id]/route";
 
 const body = {
   shopName: "Store", phone: "13800138000", remoteCode: "remote",
@@ -21,7 +21,7 @@ const body = {
 };
 const request = (method: string) => new Request("https://test", {
   method, headers: { "content-type": "application/json" }, body: JSON.stringify(body),
-}) as never;
+});
 
 describe("atomic license store writes", () => {
   beforeEach(() => {

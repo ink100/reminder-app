@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
 import { supabaseModels } from "@/lib/reminders/store";
 

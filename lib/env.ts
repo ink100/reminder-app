@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { loadEnvConfig } from "@next/env";
+import { loadProjectEnv } from "@/lib/load-env";
 
-loadEnvConfig(process.cwd());
+// Keep this as an explicit call: Nitro may tree-shake a side-effect-only local import.
+loadProjectEnv();
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),

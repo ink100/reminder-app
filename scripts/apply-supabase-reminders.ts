@@ -4,10 +4,11 @@ import { readFile } from "node:fs/promises";
 import * as net from "node:net";
 import { resolve } from "node:path";
 
-import { loadEnvConfig } from "@next/env";
+import { loadProjectEnv } from "../lib/load-env";
+
+loadProjectEnv();
 import { Client } from "pg";
 
-loadEnvConfig(process.cwd());
 
 dns.setDefaultResultOrder("ipv4first");
 net.setDefaultAutoSelectFamily(false);

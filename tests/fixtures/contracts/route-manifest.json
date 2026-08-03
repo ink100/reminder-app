@@ -1,0 +1,517 @@
+[
+  {
+    "source": "app/.well-known/ai-plugin.json/route.ts",
+    "path": "/.well-known/ai-plugin.json",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/admin/member-invitations/[id]/route.ts",
+    "path": "/api/admin/member-invitations/[id]",
+    "methods": [
+      "DELETE"
+    ]
+  },
+  {
+    "source": "app/api/admin/members/[id]/revoke-access/route.ts",
+    "path": "/api/admin/members/[id]/revoke-access",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/admin/members/[id]/route.ts",
+    "path": "/api/admin/members/[id]",
+    "methods": [
+      "PATCH"
+    ]
+  },
+  {
+    "source": "app/api/admin/members/route.ts",
+    "path": "/api/admin/members",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/attachments/[id]/route.ts",
+    "path": "/api/attachments/[id]",
+    "methods": [
+      "DELETE"
+    ]
+  },
+  {
+    "source": "app/api/attachments/route.ts",
+    "path": "/api/attachments",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/auth/logout/route.ts",
+    "path": "/api/auth/logout",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/auth/otp/login/route.ts",
+    "path": "/api/auth/otp/login",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/auth/otp/setup/route.ts",
+    "path": "/api/auth/otp/setup",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/auth/otp/verify-setup/route.ts",
+    "path": "/api/auth/otp/verify-setup",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/auth/passkey/[id]/route.ts",
+    "path": "/api/auth/passkey/[id]",
+    "methods": [
+      "DELETE"
+    ]
+  },
+  {
+    "source": "app/api/auth/passkey/list/route.ts",
+    "path": "/api/auth/passkey/list",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/auth/passkey/login/route.ts",
+    "path": "/api/auth/passkey/login",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/auth/passkey/login/verify/route.ts",
+    "path": "/api/auth/passkey/login/verify",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/auth/passkey/register/route.ts",
+    "path": "/api/auth/passkey/register",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/auth/passkey/register/verify/route.ts",
+    "path": "/api/auth/passkey/register/verify",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/auth/status/route.ts",
+    "path": "/api/auth/status",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/auth/trusted/devices/route.ts",
+    "path": "/api/auth/trusted/devices",
+    "methods": [
+      "DELETE",
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/auth/trusted/restore/route.ts",
+    "path": "/api/auth/trusted/restore",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/images/[id]/route.ts",
+    "path": "/api/images/[id]",
+    "methods": [
+      "DELETE"
+    ]
+  },
+  {
+    "source": "app/api/images/route.ts",
+    "path": "/api/images",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/invite/[token]/passkey/options/route.ts",
+    "path": "/api/invite/[token]/passkey/options",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/invite/[token]/passkey/verify/route.ts",
+    "path": "/api/invite/[token]/passkey/verify",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/invite/[token]/totp/setup/route.ts",
+    "path": "/api/invite/[token]/totp/setup",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/invite/[token]/totp/verify/route.ts",
+    "path": "/api/invite/[token]/totp/verify",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/license/generate/route.ts",
+    "path": "/api/license/generate",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/license/store-accounts/[id]/payment-qr/route.ts",
+    "path": "/api/license/store-accounts/[id]/payment-qr",
+    "methods": [
+      "DELETE",
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/license/store-accounts/[id]/route.ts",
+    "path": "/api/license/store-accounts/[id]",
+    "methods": [
+      "DELETE",
+      "PUT"
+    ]
+  },
+  {
+    "source": "app/api/license/store-accounts/route.ts",
+    "path": "/api/license/store-accounts",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/medicines/[id]/attachments/route.ts",
+    "path": "/api/medicines/[id]/attachments",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/medicines/[id]/route.ts",
+    "path": "/api/medicines/[id]",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ]
+  },
+  {
+    "source": "app/api/medicines/route.ts",
+    "path": "/api/medicines",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/api-keys/route.ts",
+    "path": "/api/notification-center/api-keys",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/channels/route.ts",
+    "path": "/api/notification-center/channels",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/dispatch/route.ts",
+    "path": "/api/notification-center/dispatch",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/groups/[id]/route.ts",
+    "path": "/api/notification-center/groups/[id]",
+    "methods": [
+      "PATCH"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/groups/[id]/routes/[channelId]/route.ts",
+    "path": "/api/notification-center/groups/[id]/routes/[channelId]",
+    "methods": [
+      "DELETE",
+      "PUT"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/groups/route.ts",
+    "path": "/api/notification-center/groups",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/templates/[id]/route.ts",
+    "path": "/api/notification-center/templates/[id]",
+    "methods": [
+      "PATCH"
+    ]
+  },
+  {
+    "source": "app/api/notification-center/templates/route.ts",
+    "path": "/api/notification-center/templates",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/openapi.json/route.ts",
+    "path": "/api/openapi.json",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/push-ledger/route.ts",
+    "path": "/api/push-ledger",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/reminders/[id]/complete/route.ts",
+    "path": "/api/reminders/[id]/complete",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/reminders/[id]/restore/route.ts",
+    "path": "/api/reminders/[id]/restore",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/reminders/[id]/route.ts",
+    "path": "/api/reminders/[id]",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ]
+  },
+  {
+    "source": "app/api/reminders/route.ts",
+    "path": "/api/reminders",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/scheduler/status/route.ts",
+    "path": "/api/scheduler/status",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/api/settings/bot/bindings/route.ts",
+    "path": "/api/settings/bot/bindings",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/settings/bot/route.ts",
+    "path": "/api/settings/bot",
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ]
+  },
+  {
+    "source": "app/api/settings/otp/reset/route.ts",
+    "path": "/api/settings/otp/reset",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/settings/r2/route.ts",
+    "path": "/api/settings/r2",
+    "methods": [
+      "GET",
+      "POST",
+      "PUT"
+    ]
+  },
+  {
+    "source": "app/api/settings/route.ts",
+    "path": "/api/settings",
+    "methods": [
+      "GET",
+      "PUT"
+    ]
+  },
+  {
+    "source": "app/api/settings/test-email/route.ts",
+    "path": "/api/settings/test-email",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/ssl/route.ts",
+    "path": "/api/ssl",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/todos/[id]/route.ts",
+    "path": "/api/todos/[id]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ]
+  },
+  {
+    "source": "app/api/todos/route.ts",
+    "path": "/api/todos",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/upload/route.ts",
+    "path": "/api/upload",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/voice/transcriptions/route.ts",
+    "path": "/api/voice/transcriptions",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/api/voice/tts/route.ts",
+    "path": "/api/voice/tts",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/cancel/[id]/route.ts",
+    "path": "/cancel/[id]",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/channels/route.ts",
+    "path": "/channels",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/groups/route.ts",
+    "path": "/groups",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "source": "app/notifications/[id]/route.ts",
+    "path": "/notifications/[id]",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/notifications/route.ts",
+    "path": "/notifications",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/notify/route.ts",
+    "path": "/notify",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/queue/jobs/route.ts",
+    "path": "/queue/jobs",
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "source": "app/queue/retry/[job_id]/route.ts",
+    "path": "/queue/retry/[job_id]",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "source": "app/templates/route.ts",
+    "path": "/templates",
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  }
+]

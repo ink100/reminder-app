@@ -5,13 +5,14 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
-import { loadEnvConfig } from "@next/env";
+import { loadProjectEnv } from "../lib/load-env";
+
+loadProjectEnv();
 import type { AppSetting, Prisma } from "@prisma/client";
 import { Client } from "pg";
 import { APP_SETTINGS_MIGRATION_VERSION } from "../lib/app-settings/migration-version";
 import { prisma } from "../lib/prisma";
 
-loadEnvConfig(process.cwd());
 dns.setDefaultResultOrder("ipv4first");
 net.setDefaultAutoSelectFamily(false);
 const execFile = promisify(execFileCallback);

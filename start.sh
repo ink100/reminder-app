@@ -2,7 +2,7 @@
 # 自动重启 wrapper — 进程退出后 2 秒自动重启
 APP_DIR="${APP_DIR:-/home/ubuntu/apps/reminder-app}"
 PORT="${PORT:-63456}"
-# 固定默认只监听本机回环地址，避免继承外部 HOST=0.0.0.0 导致 Next 端口公网暴露。
+# 固定默认只监听本机回环地址，避免继承外部 HOST=0.0.0.0 导致应用端口公网暴露。
 # 如确实需要改监听地址，只允许显式设置 REMINDER_HOST。
 HOST="${REMINDER_HOST:-127.0.0.1}"
 KEY_TOOL_DIR="/home/agentuser/HRB-CLient/src/HRB.Payment.KeyTool.WebApi"
@@ -29,7 +29,7 @@ ensure_key_tool() {
 while true; do
   ensure_key_tool
   echo "[wrapper] 启动服务 (host=$HOST port=$PORT)..."
-  cd "$APP_DIR" && PORT="$PORT" ./node_modules/.bin/next start --hostname "$HOST" --port "$PORT"
+  cd "$APP_DIR" && HOST="$HOST" PORT="$PORT" /usr/bin/node .output/server/index.mjs
   EXIT_CODE=$?
   echo "[wrapper] 进程退出 (exit=$EXIT_CODE)，2 秒后重启..."
   sleep 2

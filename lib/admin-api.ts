@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 import { requireApiSession } from "@/lib/auth";
 import { adminApiAuthorizationStatus } from "@/lib/member-api-auth";
 
@@ -10,7 +8,7 @@ export async function requireAdminApi(request?: Request) {
   if (status) {
     return {
       actor: null,
-      response: NextResponse.json(
+      response: Response.json(
         { error: status === 401 ? "Unauthorized" : "Forbidden" },
         { status },
       ),

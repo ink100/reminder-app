@@ -1,9 +1,8 @@
 import crypto from "node:crypto";
 import type { Prisma } from "@prisma/client";
-import { cookies } from "next/headers";
-
 import { SESSION_COOKIE_NAME, TRUSTED_DEVICE_COOKIE_NAME, TRUSTED_DEVICE_MAX_AGE_SECONDS } from "@/lib/constants/auth";
 import { env } from "@/lib/env";
+import { deleteResponseCookie, getRequestCookie, setResponseCookie } from "@/lib/http/cookies";
 import { prisma } from "@/lib/prisma";
 import { createSessionInTransaction, hashSessionToken, issueSessionToken, setSessionCookie } from "@/lib/session";
 
@@ -31,8 +30,7 @@ function getDeviceName(userAgent?: string | null) {
 }
 
 export async function setTrustedDeviceCookie(token: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(TRUSTED_DEVICE_COOKIE_NAME, token, {
+  setResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: env.APP_BASE_URL.startsWith("https://"),
@@ -91,8 +89,7 @@ export async function createTrustedDevice(userId: string, ipAddress?: string | n
 }
 
 export async function getValidTrustedDevice() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(TRUSTED_DEVICE_COOKIE_NAME)?.value;
+  const token = getRequestCookie(TRUSTED_DEVICE_COOKIE_NAME);
   if (!token) return null;
   const device = await prisma.trustedDevice.findFirst({
     where: { tokenHash: hashTrustedDeviceToken(token), revokedAt: null, expiresAt: { gt: new Date() } },
@@ -100,7 +97,7 @@ export async function getValidTrustedDevice() {
   });
   if (!device || device.user.status !== "ACTIVE" || !["ADMIN", "MEMBER"].includes(device.user.role)
     || device.securityVersion !== device.user.securityVersion) {
-    cookieStore.delete(TRUSTED_DEVICE_COOKIE_NAME);
+    deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
     return null;
   }
   await prisma.trustedDevice.update({ where: { id: device.id }, data: { lastUsedAt: new Date() } });
@@ -109,10 +106,9 @@ export async function getValidTrustedDevice() {
 
 /** Atomically rotates a valid trusted token and creates its derived session. */
 export async function restoreSessionFromTrustedDevice(ipAddress?: string | null, userAgent?: string | null) {
-  const cookieStore = await cookies();
-  const trustedToken = cookieStore.get(TRUSTED_DEVICE_COOKIE_NAME)?.value;
+  const trustedToken = getRequestCookie(TRUSTED_DEVICE_COOKIE_NAME);
   if (!trustedToken) return { status: "missing" as const };
-  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const sessionToken = getRequestCookie(SESSION_COOKIE_NAME);
 
   const now = new Date();
   const oldTokenHash = hashTrustedDeviceToken(trustedToken);
@@ -184,13 +180,11 @@ export async function restoreSessionFromTrustedDevice(ipAddress?: string | null,
 }
 
 export async function hasTrustedDeviceCookie() {
-  const cookieStore = await cookies();
-  return Boolean(cookieStore.get(TRUSTED_DEVICE_COOKIE_NAME)?.value);
+  return Boolean(getRequestCookie(TRUSTED_DEVICE_COOKIE_NAME));
 }
 
 export async function deleteTrustedDeviceCookie() {
-  const cookieStore = await cookies();
-  cookieStore.delete(TRUSTED_DEVICE_COOKIE_NAME);
+  deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
 }
 
 export async function listTrustedDevices(userId: string) {
@@ -209,17 +203,15 @@ export async function revokeTrustedDevice(userId: string, id: string) {
     await tx.authSession.deleteMany({ where: { trustedDeviceId: id } });
     return revoked;
   });
-  const cookieStore = await cookies();
-  const currentToken = cookieStore.get(TRUSTED_DEVICE_COOKIE_NAME)?.value;
-  if (currentToken && hashTrustedDeviceToken(currentToken) === device.tokenHash) cookieStore.delete(TRUSTED_DEVICE_COOKIE_NAME);
+  const currentToken = getRequestCookie(TRUSTED_DEVICE_COOKIE_NAME);
+  if (currentToken && hashTrustedDeviceToken(currentToken) === device.tokenHash) deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
   return device;
 }
 
 /** Atomically invalidates every session and trusted device for the cookie-resolved account. */
 export async function logoutCurrentDevice() {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-  const trustedToken = cookieStore.get(TRUSTED_DEVICE_COOKIE_NAME)?.value;
+  const sessionToken = getRequestCookie(SESSION_COOKIE_NAME);
+  const trustedToken = getRequestCookie(TRUSTED_DEVICE_COOKIE_NAME);
   await prisma.$transaction(async (tx) => {
     const session = sessionToken ? await tx.authSession.findUnique({
       where: { sessionTokenHash: hashSessionToken(sessionToken) },
@@ -246,6 +238,6 @@ export async function logoutCurrentDevice() {
       }
     }
   });
-  cookieStore.delete(SESSION_COOKIE_NAME);
-  cookieStore.delete(TRUSTED_DEVICE_COOKIE_NAME);
+  deleteResponseCookie(SESSION_COOKIE_NAME, { path: "/" });
+  deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
 }

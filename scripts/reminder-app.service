@@ -1,5 +1,5 @@
 [Unit]
-Description=Reminder Inventory Next.js App
+Description=Reminder Inventory Nuxt App
 After=network.target hrb-license-key.service
 Wants=hrb-license-key.service
 
@@ -11,9 +11,10 @@ Environment=NODE_ENV=production
 # Supabase DNS records include IPv6, but this VPS must connect through IPv4 only.
 # Disable Node's dual-stack family racing and select IPv4 addresses first.
 Environment="NODE_OPTIONS=--dns-result-order=ipv4first --no-network-family-autoselection"
+Environment=HOST=127.0.0.1
 Environment=PORT=63456
-ExecStart=/home/ubuntu/apps/reminder-app/node_modules/.bin/next start --hostname 127.0.0.1 --port 63456
-# Next.js exits with status 143 when systemd intentionally sends SIGTERM during stop/restart.
+ExecStart=/usr/bin/node /home/ubuntu/apps/reminder-app/.output/server/index.mjs
+# Node may report SIGTERM as status 143 during an intentional service restart.
 SuccessExitStatus=143 SIGTERM
 Restart=always
 RestartSec=5

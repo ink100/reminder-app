@@ -1,6 +1,6 @@
 # Nginx limit for record-specific payment QR upload endpoints
 
-The application accepts QR images up to 10MB. `request.formData()` parses multipart bodies before application validation, so production nginx must enforce the request limit before proxying to Next.js.
+The application accepts QR images up to 10MB. `request.formData()` parses multipart bodies before application validation, so production nginx must enforce the request limit before proxying to Nitro.
 
 Add this regex location before the general `location /` block for `ne.daydreams.cn`:
 

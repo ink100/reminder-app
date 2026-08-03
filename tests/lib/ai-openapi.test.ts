@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
 import { AI_OPENAPI_DOCUMENT, AI_PLUGIN_MANIFEST } from "@/lib/ai-openapi";
 
 const methods = ["get", "post", "put", "patch", "delete"] as const;
-const root = path.resolve(process.cwd(), "app");
-const identityOrCredentialRoute = /^api\/(?:auth|invite|admin\/(?:members|member-invitations)|notification-center\/api-keys)(?:\/|$)/;
+const root = path.resolve(process.cwd(), "server/handlers");
+const cookieOnlyRoute = /^(?:api\/(?:auth|invite|admin\/(?:members|member-invitations)|settings|ssl|notification-center\/(?:api-keys|channels))(?:\/|$)|channels\/route\.ts$)/;
 
 function routePath(file: string) {
   return `/${path.relative(root, path.dirname(file)).replaceAll(path.sep, "/").replace(/\[([^\]]+)\]/g, "{$1}")}`;
@@ -25,6 +25,12 @@ describe("AI OpenAPI surface", () => {
     expect(AI_OPENAPI_DOCUMENT.openapi).toBe("3.0.3");
     const documentedPaths = Object.keys(AI_OPENAPI_DOCUMENT.paths);
     expect(documentedPaths.some((item) => /(^|\/)auth(\/|$)|(^|\/)invite(\/|$)|otp|reset|admin\/(members|member-invitations)|notification-center\/api-keys/i.test(item))).toBe(false);
+    for (const pathName of [
+      "/api/settings", "/api/settings/bot", "/api/settings/bot/bindings", "/api/settings/r2",
+      "/api/settings/test-email", "/api/ssl", "/api/notification-center/channels", "/channels",
+    ]) {
+      expect(documentedPaths).not.toContain(pathName);
+    }
 
     const operationIds = Object.values(AI_OPENAPI_DOCUMENT.paths).flatMap((pathItem) =>
       methods.flatMap((method) => {
@@ -42,7 +48,7 @@ describe("AI OpenAPI surface", () => {
     for (const file of walk(root)) {
       const source = fs.readFileSync(file, "utf8");
       const relative = path.relative(root, file).replaceAll(path.sep, "/");
-      if (identityOrCredentialRoute.test(relative) || relative === "api/settings/otp/reset/route.ts") continue;
+      if (cookieOnlyRoute.test(relative)) continue;
       const machineEnabled = /require(?:ApiSession|AdminApi|AdminMemberApi)\((?:_?request)\)/.test(source)
         || relative === "notify/route.ts";
       if (!machineEnabled) continue;
@@ -60,7 +66,7 @@ describe("AI OpenAPI surface", () => {
   it("keeps identity routes cookie-only while business guards receive Request explicitly", () => {
     const identityFiles = walk(root).filter((file) => {
       const relative = path.relative(root, file).replaceAll(path.sep, "/");
-      return identityOrCredentialRoute.test(relative) || relative === "api/settings/otp/reset/route.ts";
+      return cookieOnlyRoute.test(relative);
     });
     for (const file of identityFiles) {
       const source = fs.readFileSync(file, "utf8");
@@ -71,15 +77,14 @@ describe("AI OpenAPI surface", () => {
     for (const file of walk(root)) {
       const source = fs.readFileSync(file, "utf8");
       const relative = path.relative(root, file).replaceAll(path.sep, "/");
-      if (identityOrCredentialRoute.test(relative) || relative === "api/settings/otp/reset/route.ts") continue;
+      if (cookieOnlyRoute.test(relative)) continue;
       if (/require(?:ApiSession|AdminApi|AdminMemberApi)\(\)/.test(source)) unguarded.push(relative);
     }
     expect(unguarded).toEqual([]);
   });
 
-  it("passes Request through notification-center compatibility wrappers", () => {
+  it("passes request bodies through machine-enabled notification-center compatibility wrappers", () => {
     for (const relative of [
-      "api/notification-center/channels/route.ts",
       "api/notification-center/groups/route.ts",
       "api/notification-center/templates/route.ts",
     ]) {
@@ -99,7 +104,6 @@ describe("AI OpenAPI surface", () => {
       ["/api/medicines", "post"],
       ["/api/license/store-accounts", "post"],
       ["/api/todos", "post"],
-      ["/channels", "post"],
       ["/groups", "post"],
       ["/templates", "post"],
     ]) {

@@ -1,6 +1,6 @@
 # Reminder App
 
-一个基于 Next.js 16 + Prisma 7 + SQLite 的轻量提醒系统，现已包含：
+一个基于 Nuxt 4 + Vue 3 + Element Plus + Prisma 7 的轻量提醒系统，现已包含：
 - OTP 登录保护
 - 提醒事项管理
 - SMTP 邮件提醒
@@ -34,8 +34,9 @@
 
 ## 2. 技术栈
 
-- Next.js 16 (App Router)
-- React 19
+- Nuxt 4（Nitro Node Server）
+- Vue 3
+- Element Plus
 - Prisma 7
 - SQLite
 - Zod
@@ -143,8 +144,9 @@ SMTP_FROM_NAME="提醒助手"
 ## 7. 目录结构
 
 ```text
-app/                 Next.js 页面与 API 路由
-components/          页面组件
+app/                 Nuxt 页面、布局与 Vue 组件
+server/handlers/     Web Request/Response API handlers
+server/http/         Nitro 路由分派与静态 registry
 lib/                 业务逻辑与公共库
 prisma/
   schema.prisma      Prisma 数据模型
@@ -195,7 +197,8 @@ PORT=63456 npm run start
 - `.env`
 - `*.db`
 - `*.sqlite`
-- `.next`
+- `.nuxt`
+- `.output`
 - `node_modules`
 
 请注意：

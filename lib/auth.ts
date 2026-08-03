@@ -1,9 +1,21 @@
-import { redirect } from "next/navigation";
-
 import { getCurrentSession } from "@/lib/session";
 import { hasTrustedDeviceCookie } from "@/lib/trusted-device";
 import { prisma } from "@/lib/prisma";
 import { AI_ALL_SCOPE, notificationApiKeyScopes, validateNotificationApiKey } from "@/lib/notification-center/manager";
+
+export class PageRedirectError extends Error {
+  readonly location: string;
+
+  constructor(location: string) {
+    super(`Redirect to ${location}`);
+    this.name = "PageRedirectError";
+    this.location = location;
+  }
+}
+
+function redirect(location: string): never {
+  throw new PageRedirectError(location);
+}
 
 export async function requirePageSession() {
   const session = await getCurrentSession();
@@ -21,7 +33,11 @@ export async function requirePageSession() {
 
 export function readApiKeyCredentials(request: Request) {
   const authorization = request.headers.get("authorization")?.trim() ?? "";
-  const bearer = /^Bearer\s+(.+)$/i.exec(authorization)?.[1]?.trim() || null;
+  const separator = authorization.search(/[\t ]/);
+  const scheme = separator < 0 ? authorization : authorization.slice(0, separator);
+  const bearer = scheme.toLowerCase() === "bearer" && separator >= 0
+    ? authorization.slice(separator + 1).trim() || null
+    : null;
   const header = request.headers.get("x-api-key")?.trim() || null;
   return { key: bearer ?? header, conflict: Boolean(bearer && header && bearer !== header) };
 }

@@ -14,7 +14,6 @@ const cookieStore = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-vi.mock("next/headers", () => ({ cookies: vi.fn(async () => cookieStore) }));
 vi.mock("@/lib/bootstrap-settings", () => ({ ensureAppSettings }));
 vi.mock("@/lib/admin-api", () => ({ requireAdminApi }));
 vi.mock("@/lib/crypto", () => ({
@@ -31,8 +30,8 @@ vi.mock("@/lib/app-settings/store", () => ({ appSettingStore: { update: updateAp
 vi.mock("@/lib/prisma", () => ({ prisma: { userTotpFactor: { upsert: upsertTotpFactor } } }));
 vi.mock("@/lib/session", () => ({ createSession }));
 
-import { POST as setupTotp } from "@/app/api/auth/otp/setup/route";
-import { POST as verifySetupTotp } from "@/app/api/auth/otp/verify-setup/route";
+import { POST as setupTotp } from "@/server/handlers/api/auth/otp/setup/route";
+import { POST as verifySetupTotp } from "@/server/handlers/api/auth/otp/verify-setup/route";
 
 const unavailableResponse = { error: "Legacy TOTP setup is unavailable" };
 

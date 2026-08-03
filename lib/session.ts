@@ -1,11 +1,10 @@
 import crypto from "node:crypto";
 import type { Prisma } from "@prisma/client";
 
-import { cookies } from "next/headers";
-
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/constants/auth";
+import { deleteResponseCookie, getRequestCookie, setResponseCookie } from "@/lib/http/cookies";
 
 export function hashSessionToken(token: string) {
   return crypto.createHmac("sha256", env.SESSION_SECRET).update(token).digest("hex");
@@ -21,8 +20,7 @@ export function issueSessionToken(now = new Date()) {
 }
 
 export async function setSessionCookie(token: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
+  setResponseCookie(SESSION_COOKIE_NAME, token, {
     httpOnly: true, sameSite: "lax", secure: env.APP_BASE_URL.startsWith("https://"), path: "/", maxAge: SESSION_MAX_AGE_SECONDS,
   });
 }
@@ -89,15 +87,13 @@ export async function createSession(userId: string, authMethod: AuthMethod, ipAd
 }
 
 export async function deleteCurrentSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const token = getRequestCookie(SESSION_COOKIE_NAME);
   if (token) await prisma.authSession.deleteMany({ where: { sessionTokenHash: hashSessionToken(token) } });
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  deleteResponseCookie(SESSION_COOKIE_NAME, { path: "/" });
 }
 
 export async function getCurrentSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const token = getRequestCookie(SESSION_COOKIE_NAME);
   if (!token) return null;
   const session = await prisma.authSession.findFirst({
     where: { sessionTokenHash: hashSessionToken(token), expiresAt: { gt: new Date() }, user: { status: "ACTIVE", role: { in: ["ADMIN", "MEMBER"] } } },
@@ -109,6 +105,5 @@ export async function getCurrentSession() {
 
 export async function clearAllSessions() {
   await prisma.authSession.deleteMany({});
-  const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  deleteResponseCookie(SESSION_COOKIE_NAME, { path: "/" });
 }

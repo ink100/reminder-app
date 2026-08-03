@@ -7,8 +7,8 @@ const licenseStoreAccount = vi.hoisted(() => ({ findFirst: vi.fn(), updateMany: 
 vi.mock("@/lib/auth", () => ({ requireApiSession }));
 vi.mock("@/lib/reminders/store", () => ({ supabaseModels: { reminder, licenseStoreAccount } }));
 
-import { PUT } from "@/app/api/reminders/[id]/route";
-import { POST as complete } from "@/app/api/reminders/[id]/complete/route";
+import { PUT } from "@/server/handlers/api/reminders/[id]/route";
+import { POST as complete } from "@/server/handlers/api/reminders/[id]/complete/route";
 
 const context = { params: Promise.resolve({ id: "reminder-1" }) };
 const input = {

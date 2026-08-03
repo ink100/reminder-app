@@ -4,7 +4,6 @@ const getCurrentSession = vi.hoisted(() => vi.fn());
 const validateNotificationApiKey = vi.hoisted(() => vi.fn());
 const findFirstAdmin = vi.hoisted(() => vi.fn());
 
-vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/session", () => ({ getCurrentSession }));
 vi.mock("@/lib/trusted-device", () => ({ hasTrustedDeviceCookie: vi.fn() }));
 vi.mock("@/lib/prisma", () => ({ prisma: { user: { findFirst: findFirstAdmin } } }));

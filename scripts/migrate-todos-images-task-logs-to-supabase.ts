@@ -5,11 +5,12 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
-import { loadEnvConfig } from "@next/env";
+import { loadProjectEnv } from "../lib/load-env";
+
+loadProjectEnv();
 import { Client, type PoolClient } from "pg";
 import { prisma } from "../lib/prisma";
 
-loadEnvConfig(process.cwd());
 dns.setDefaultResultOrder("ipv4first");
 net.setDefaultAutoSelectFamily(false);
 

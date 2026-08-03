@@ -24,10 +24,10 @@ vi.mock("@/lib/member-invitations", () => ({ createMemberInvitation: createInvit
 vi.mock("@/lib/member-management", () => ({ listMembers: vi.fn(), updateMember, revokeMemberAccess }));
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
 
-import { POST as createMember } from "@/app/api/admin/members/route";
-import { PATCH as patchMember } from "@/app/api/admin/members/[id]/route";
-import { POST as revokeAccess } from "@/app/api/admin/members/[id]/revoke-access/route";
-import { DELETE as revokeInvite } from "@/app/api/admin/member-invitations/[id]/route";
+import { POST as createMember } from "@/server/handlers/api/admin/members/route";
+import { PATCH as patchMember } from "@/server/handlers/api/admin/members/[id]/route";
+import { POST as revokeAccess } from "@/server/handlers/api/admin/members/[id]/revoke-access/route";
+import { DELETE as revokeInvite } from "@/server/handlers/api/admin/member-invitations/[id]/route";
 import { MemberDomainError } from "@/lib/member-domain-error";
 
 const context = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -43,7 +43,7 @@ describe("admin member routes", () => {
   it("passes the authenticated actor id through PATCH and revoke-access routes", async () => {
     updateMember.mockResolvedValue({ id: "member-1" });
     revokeMemberAccess.mockResolvedValue(undefined);
-    await patchMember(new Request("https://test/api/admin/members/member-1", { method: "PATCH", body: JSON.stringify({ role: "MEMBER" }), headers: { "content-type": "application/json" } }) as never, context("member-1"));
+    await patchMember(new Request("https://test/api/admin/members/member-1", { method: "PATCH", body: JSON.stringify({ role: "MEMBER" }), headers: { "content-type": "application/json" } }), context("member-1"));
     await revokeAccess(new Request("https://test/api/admin/members/member-1/revoke-access", { method: "POST" }), context("member-1"));
     expect(updateMember).toHaveBeenCalledWith("actor-42", "member-1", { role: "MEMBER" });
     expect(revokeMemberAccess).toHaveBeenCalledWith("actor-42", "member-1");
@@ -55,7 +55,7 @@ describe("admin member routes", () => {
     const response = await createMember(new Request("https://test/api/admin/members", {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ username: "alice", displayName: "Alice", role: "MEMBER", expiresInHours: 24 }),
-    }) as never);
+    }));
     expect(response.status).toBe(201);
     expect(createInvitation).toHaveBeenCalledWith(expect.objectContaining({ targetUserId: "member-1", invitedById: "actor-42" }), tx, expect.any(Date));
     expect(tx.user.update).toHaveBeenCalledWith(expect.objectContaining({
@@ -71,8 +71,8 @@ describe("admin member routes", () => {
   });
 
   it("returns 400 for malformed JSON rather than treating it as an internal error", async () => {
-    const createResponse = await createMember(new Request("https://test/api/admin/members", { method: "POST", body: "{" }) as never);
-    const patchResponse = await patchMember(new Request("https://test/api/admin/members/member-1", { method: "PATCH", body: "{" }) as never, context("member-1"));
+    const createResponse = await createMember(new Request("https://test/api/admin/members", { method: "POST", body: "{" }));
+    const patchResponse = await patchMember(new Request("https://test/api/admin/members/member-1", { method: "PATCH", body: "{" }), context("member-1"));
     expect(createResponse.status).toBe(400);
     expect(patchResponse.status).toBe(400);
   });

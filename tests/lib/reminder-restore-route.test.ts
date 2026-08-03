@@ -6,7 +6,7 @@ const reminder = vi.hoisted(() => ({ findFirst: vi.fn(), update: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ requireApiSession }));
 vi.mock("@/lib/reminders/store", () => ({ supabaseModels: { reminder } }));
 
-import { POST } from "@/app/api/reminders/[id]/restore/route";
+import { POST } from "@/server/handlers/api/reminders/[id]/restore/route";
 
 describe("POST /api/reminders/[id]/restore", () => {
   beforeEach(() => {

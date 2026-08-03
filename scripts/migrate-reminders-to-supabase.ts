@@ -3,10 +3,12 @@ import * as net from "node:net";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { loadEnvConfig } from "@next/env";
+import { loadProjectEnv } from "../lib/load-env";
+
+loadProjectEnv();
 import { Client } from "pg";
 import { prisma } from "../lib/prisma";
-loadEnvConfig(process.cwd()); dns.setDefaultResultOrder("ipv4first"); net.setDefaultAutoSelectFamily(false);
+dns.setDefaultResultOrder("ipv4first"); net.setDefaultAutoSelectFamily(false);
 const dbUrl=process.env.SUPABASE_DB_URL||process.env.POSTGRES_URL||process.env.DATABASE_DIRECT_URL;
 const iso=(v:Date|null)=>v?.toISOString()??null;
 type Comparable = Record<string, unknown>;

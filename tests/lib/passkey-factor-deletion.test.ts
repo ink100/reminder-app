@@ -17,7 +17,7 @@ const prisma = vi.hoisted(() => ({
 vi.mock("@/lib/auth", () => ({ requireApiSession }));
 vi.mock("@/lib/prisma", () => ({ prisma }));
 
-import { DELETE } from "@/app/api/auth/passkey/[id]/route";
+import { DELETE } from "@/server/handlers/api/auth/passkey/[id]/route";
 import { deleteCredential } from "@/lib/webauthn";
 
 describe("passkey authentication-factor deletion", () => {

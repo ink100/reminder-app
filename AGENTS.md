@@ -1,5 +1,3 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Nuxt application conventions
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+This repository uses Nuxt 4, Vue 3, Element Plus, and Nitro. Keep API handlers on Web `Request`/`Response`, preserve the static route registry, and run tests, lint, typecheck, the production build, and real Nitro HTTP smoke checks before deployment.

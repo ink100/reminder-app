@@ -1,5 +1,7 @@
 import { createClient, type Client, type Transaction } from "@libsql/client";
-import { loadEnvConfig } from "@next/env";
+import { loadProjectEnv } from "../lib/load-env";
+
+loadProjectEnv();
 import { createHash, randomUUID } from "node:crypto";
 import { chmod, lstat, open, unlink } from "node:fs/promises";
 import { readFileSync } from "node:fs";
@@ -255,7 +257,6 @@ export async function applyFamilyMigrations(options: { client: Client; databaseU
 }
 
 async function main() {
-  loadEnvConfig(process.cwd());
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("Missing DATABASE_URL");
   const client = createClient({ url: databaseUrl });

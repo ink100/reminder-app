@@ -1,0 +1,30 @@
+export type NotificationGroup = { id: string; name: string; description: string | null; enabled: boolean };
+export type NotificationChannel = { id: string; name: string; type: string; enabled: boolean; isDefault: boolean; configured: boolean; configKeys?: string[] };
+export type NotificationTemplate = { id: string; name: string; channelType: string; content: string; enabled: boolean; groupId: string | null; isDefault: boolean };
+export type NotificationApiKey = { id: string; name: string; apiKey: string; enabled: boolean; scopes: string[]; expiresAt?: string | null };
+export type NotificationRoute = { groupId: string; channelId: string; mode: "custom" | "disabled"; templateId: string | null; configOverrideKeys: string[] };
+
+export type PushLedgerItem = {
+  id: string;
+  notification_id: string;
+  queue_job_id: string;
+  channel_id: string;
+  channel_type: string;
+  channel_name: string;
+  target: string | null;
+  title: string;
+  content: string;
+  business_type: string | null;
+  business_id: string | null;
+  status: string;
+  retry_count: number;
+  attempt_count: number;
+  error: string | null;
+  duration_ms: number | null;
+  queued_at: string;
+  started_at: string | null;
+  sent_at: string | null;
+  failed_at: string | null;
+  last_retry_at: string | null;
+  created_at: string;
+};

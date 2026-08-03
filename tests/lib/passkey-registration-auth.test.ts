@@ -5,7 +5,7 @@ const generateRegOptions = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth", () => ({ requireApiSession }));
 vi.mock("@/lib/webauthn", () => ({ generateRegOptions }));
 
-import { GET } from "@/app/api/auth/passkey/register/route";
+import { GET } from "@/server/handlers/api/auth/passkey/register/route";
 
 describe("passkey registration safety", () => {
   it("rejects anonymous registration before generating options", async () => {

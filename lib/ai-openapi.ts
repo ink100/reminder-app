@@ -60,9 +60,7 @@ const storeAccountBody = object({
 }, ["shopName", "phone", "remoteCode", "remotePassword", "isOtherAccount", "expiresAt", "activationCode"]);
 const groupBody = object({ name: string(), description: string({ nullable: true }), enabled: boolean }, ["name"]);
 const groupPatchBody = object({ name: string(), description: string({ nullable: true }), enabled: boolean });
-const channelBody = object({
-  type: string(), name: string(), config: unknownObject, enabled: boolean, is_default: boolean,
-}, ["type", "name"]);
+
 const templateBody = object({
   name: string(), channel_type: string(), content: string(), enabled: boolean,
   group_id: string({ nullable: true }), is_default: boolean,
@@ -71,33 +69,7 @@ const templatePatchBody = object({
   name: string(), channel_type: string(), content: string(), enabled: boolean,
   group_id: string({ nullable: true }), is_default: boolean,
 });
-const settingsBody = object({
-  appName: string({ minLength: 1, maxLength: 100 }),
-  timezone: string({ minLength: 1, maxLength: 100 }),
-  emailNotificationsEnabled: boolean,
-  notificationEmail: string({ format: "email", nullable: true }),
-  smtpHost: string({ maxLength: 200 }),
-  smtpPort: integer({ minimum: 1, maximum: 65535 }),
-  smtpUser: string({ maxLength: 200 }),
-  smtpPass: string({ maxLength: 2000, writeOnly: true }),
-  smtpFromEmail: string({ format: "email", maxLength: 200 }),
-  smtpFromName: string({ maxLength: 200 }),
-  clearSmtpPass: boolean,
-  reminderEmailEnabled: boolean,
-  reminderEmailInterval: integer({ minimum: 60, maximum: 86400 }),
-  notifyStartHour: integer({ minimum: 0, maximum: 23 }),
-  notifyEndHour: integer({ minimum: 0, maximum: 23 }),
-}, ["appName", "timezone", "emailNotificationsEnabled", "smtpHost", "smtpPort", "smtpUser", "smtpPass", "smtpFromEmail", "smtpFromName", "clearSmtpPass"]);
-const r2Settings = object({
-  endpoint: string(),
-  accessKey: string({ writeOnly: true }),
-  secretKey: string({ writeOnly: true }),
-  accessKeyConfigured: boolean,
-  secretKeyConfigured: boolean,
-  bucket: string(),
-  publicUrl: string(),
-  cacheControl: string(),
-});
+
 
 const paths: Record<string, OperationSpec[]> = {
   "/api/attachments": [{ method: "get", operationId: "listAttachments", summary: "分页列出附件", query: [{ name: "page", schema: integer({ minimum: 1 }) }, { name: "pageSize", schema: integer({ minimum: 1 }) }, { name: "search" }, { name: "type", schema: string({ enum: ["image", "file", "all"] }) }] }],
@@ -134,10 +106,7 @@ const paths: Record<string, OperationSpec[]> = {
     { method: "get", operationId: "listMedicineAttachments", summary: "列出药品附件" },
     { method: "post", operationId: "uploadMedicineAttachment", summary: "上传药品附件", contentType: "multipart/form-data", body: object({ file: { type: "string", format: "binary" } }, ["file"]), successStatus: 201 },
   ],
-  "/api/notification-center/channels": [
-    { method: "get", operationId: "listNotificationChannels", summary: "列出通知渠道" },
-    { method: "post", operationId: "createNotificationChannel", summary: "创建通知渠道", body: channelBody, successStatus: 201 },
-  ],
+
   "/api/notification-center/dispatch": [{ method: "post", operationId: "dispatchNotificationQueue", summary: "派发通知队列" }],
   "/api/notification-center/groups": [
     { method: "get", operationId: "listNotificationGroups", summary: "列出通知分组" },
@@ -166,29 +135,7 @@ const paths: Record<string, OperationSpec[]> = {
   "/api/reminders/{id}/complete": [{ method: "post", operationId: "completeReminder", summary: "完成提醒" }],
   "/api/reminders/{id}/restore": [{ method: "post", operationId: "restoreReminder", summary: "恢复提醒" }],
   "/api/scheduler/status": [{ method: "get", operationId: "getSchedulerStatus", summary: "读取调度器状态" }],
-  "/api/settings": [
-    { method: "get", operationId: "getAppSettings", summary: "读取应用设置" },
-    { method: "put", operationId: "updateAppSettings", summary: "更新应用设置", body: settingsBody },
-  ],
-  "/api/settings/bot": [
-    { method: "get", operationId: "getBotSettings", summary: "读取 Bot 设置" },
-    { method: "put", operationId: "updateBotSettings", summary: "更新 Bot 设置", body: unknownObject },
-    { method: "post", operationId: "testBotSettings", summary: "测试 Bot 设置", body: unknownObject },
-  ],
-  "/api/settings/bot/bindings": [
-    { method: "get", operationId: "listBotBindings", summary: "列出 Bot 绑定" },
-    { method: "post", operationId: "createBotBinding", summary: "创建 Bot 绑定", body: unknownObject },
-  ],
-  "/api/settings/r2": [
-    { method: "get", operationId: "getR2Settings", summary: "读取 R2 设置", description: "AI Key 调用时 accessKey/secretKey 始终脱敏为空字符串；使用 configured 布尔字段判断是否已配置。", response: r2Settings },
-    { method: "put", operationId: "updateR2Settings", summary: "更新 R2 设置", body: r2Settings },
-    { method: "post", operationId: "testR2Settings", summary: "测试 R2 设置", body: r2Settings },
-  ],
-  "/api/settings/test-email": [{ method: "post", operationId: "sendTestEmail", summary: "发送测试邮件", body: unknownObject }],
-  "/api/ssl": [
-    { method: "get", operationId: "getSslStatus", summary: "读取 SSL 状态" },
-    { method: "post", operationId: "manageSsl", summary: "管理 SSL" },
-  ],
+
   "/api/todos": [
     { method: "get", operationId: "listTodos", summary: "列出待办" },
     { method: "post", operationId: "createTodo", summary: "创建待办", body: object({ title: string({ minLength: 1, maxLength: 200 }) }, ["title"]), successStatus: 201 },
@@ -204,10 +151,7 @@ const paths: Record<string, OperationSpec[]> = {
   "/api/voice/transcriptions": [{ method: "post", operationId: "transcribeVoice", summary: "语音转文字", contentType: "multipart/form-data", body: object({ file: { type: "string", format: "binary" } }, ["file"]) }],
   "/api/voice/tts": [{ method: "post", operationId: "synthesizeVoice", summary: "文字转语音", body: object({ input: string({ minLength: 1, maxLength: 8000 }), voice: string({ default: "zh-CN-XiaoxiaoNeural" }), speed: { type: "number", minimum: 0.5, maximum: 2, default: 1 }, volume: { type: "number", minimum: -100, maximum: 100, default: 0 }, pitch: { type: "number", minimum: -50, maximum: 50, default: 0 } }, ["input"]) }],
   "/cancel/{id}": [{ method: "post", operationId: "cancelNotification", summary: "取消通知" }],
-  "/channels": [
-    { method: "get", operationId: "listChannels", summary: "列出通知渠道（兼容路由）" },
-    { method: "post", operationId: "createChannel", summary: "创建通知渠道（兼容路由）", body: channelBody, successStatus: 201 },
-  ],
+
   "/groups": [
     { method: "get", operationId: "listGroups", summary: "列出通知分组（兼容路由）" },
     { method: "post", operationId: "createGroup", summary: "创建通知分组（兼容路由）", body: groupBody, successStatus: 201 },

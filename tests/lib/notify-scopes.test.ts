@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
 
 const validateNotificationApiKey = vi.hoisted(() => vi.fn());
 const createNotificationFromEvent = vi.hoisted(() => vi.fn());
@@ -17,10 +16,10 @@ vi.mock("@/lib/notification-center/manager", () => ({
   createNotificationFromEvent,
 }));
 
-import { POST } from "@/app/notify/route";
+import { POST } from "@/server/handlers/notify/route";
 
 function request() {
-  return new NextRequest("https://test/notify", {
+  return new Request("https://test/notify", {
     method: "POST",
     headers: { "x-api-key": "test-key", "content-type": "application/json" },
     body: JSON.stringify({ group: "server", event_type: "test", title: "Test" }),
