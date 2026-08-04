@@ -39,6 +39,15 @@ export async function setTrustedDeviceCookie(token: string) {
   });
 }
 
+function clearTrustedDeviceResponseCookies() {
+  deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
+  const hostname = new URL(env.APP_BASE_URL).hostname;
+  if (hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "::1") {
+    // A host-only expiry cannot remove a legacy Domain=.ne.daydreams.cn cookie.
+    deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/", domain: hostname });
+  }
+}
+
 export async function createTrustedDeviceInTransaction(
   tx: Prisma.TransactionClient,
   input: {
@@ -97,7 +106,7 @@ export async function getValidTrustedDevice() {
   });
   if (!device || device.user.status !== "ACTIVE" || !["ADMIN", "MEMBER"].includes(device.user.role)
     || device.securityVersion !== device.user.securityVersion) {
-    deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
+    clearTrustedDeviceResponseCookies();
     return null;
   }
   await prisma.trustedDevice.update({ where: { id: device.id }, data: { lastUsedAt: new Date() } });
@@ -184,7 +193,7 @@ export async function hasTrustedDeviceCookie() {
 }
 
 export async function deleteTrustedDeviceCookie() {
-  deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
+  clearTrustedDeviceResponseCookies();
 }
 
 export async function listTrustedDevices(userId: string) {
@@ -204,7 +213,7 @@ export async function revokeTrustedDevice(userId: string, id: string) {
     return revoked;
   });
   const currentToken = getRequestCookie(TRUSTED_DEVICE_COOKIE_NAME);
-  if (currentToken && hashTrustedDeviceToken(currentToken) === device.tokenHash) deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
+  if (currentToken && hashTrustedDeviceToken(currentToken) === device.tokenHash) clearTrustedDeviceResponseCookies();
   return device;
 }
 
@@ -239,5 +248,5 @@ export async function logoutCurrentDevice() {
     }
   });
   deleteResponseCookie(SESSION_COOKIE_NAME, { path: "/" });
-  deleteResponseCookie(TRUSTED_DEVICE_COOKIE_NAME, { path: "/" });
+  clearTrustedDeviceResponseCookies();
 }

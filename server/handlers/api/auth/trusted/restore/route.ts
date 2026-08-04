@@ -11,6 +11,11 @@ function safeNextPath(value: string | null) {
   return value;
 }
 
+function failedRestorePath(nextPath: string) {
+  const query = new URLSearchParams({ trustedRestore: "failed", returnUrl: nextPath });
+  return `/auth?${query.toString()}`;
+}
+
 function getRedirectUrl(request: Request, path: string) {
   const forwardedHost = request.headers.get("x-forwarded-host");
   const host = forwardedHost ?? request.headers.get("host");
@@ -33,10 +38,10 @@ export async function GET(request: Request) {
   const result = await restoreSessionFromTrustedDevice(ipAddress, userAgent);
   if (result.status === "invalid") {
     await deleteTrustedDeviceCookie();
-    return Response.redirect(getRedirectUrl(request, "/auth"));
+    return Response.redirect(getRedirectUrl(request, failedRestorePath(nextPath)));
   }
   if (result.status === "session_present") return Response.redirect(getRedirectUrl(request, nextPath));
-  if (result.status !== "restored") return Response.redirect(getRedirectUrl(request, "/auth"));
+  if (result.status !== "restored") return Response.redirect(getRedirectUrl(request, failedRestorePath(nextPath)));
 
   return Response.redirect(getRedirectUrl(request, nextPath));
 }

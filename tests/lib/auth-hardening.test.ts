@@ -61,7 +61,10 @@ describe("inactive principal hardening", () => {
     prismaMock.trustedDevice.findFirst.mockResolvedValue({ id: "d1", securityVersion: 3, user: { status: "ACTIVE", securityVersion: 4 } });
     await withRequestContext(async () => {
       await expect(getValidTrustedDevice()).resolves.toBeNull();
-      expect(getResponseCookies()).toEqual([`${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Max-Age=0`]);
+      expect(getResponseCookies()).toEqual([
+        `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Max-Age=0`,
+        `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Domain=example.test; Max-Age=0`,
+      ]);
       expect(prismaMock.trustedDevice.update).not.toHaveBeenCalled();
     }, `${TRUSTED_DEVICE_COOKIE_NAME}=token`);
   });

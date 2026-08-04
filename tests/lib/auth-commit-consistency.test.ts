@@ -223,6 +223,7 @@ describe("atomic authentication commits", () => {
       expect(getResponseCookies()).toEqual([
         `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0`,
         `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Max-Age=0`,
+        `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Domain=example.test; Max-Age=0`,
       ]);
     }, bothCookies("session-token", "trusted-token"));
   });
@@ -255,6 +256,7 @@ describe("atomic authentication commits", () => {
       expect(getResponseCookies()).toEqual([
         `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0`,
         `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Max-Age=0`,
+        `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Domain=example.test; Max-Age=0`,
       ]);
     }, bothCookies("session-user-b", "trusted-user-a"));
   });
@@ -274,6 +276,7 @@ describe("atomic authentication commits", () => {
       expect(getResponseCookies()).toEqual([
         `${SESSION_COOKIE_NAME}=; Path=/; Max-Age=0`,
         `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Max-Age=0`,
+        `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Domain=example.test; Max-Age=0`,
       ]);
     }, trustedCookie("rotated-token"));
   });

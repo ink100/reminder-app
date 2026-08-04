@@ -68,6 +68,7 @@ describe("authentication cookies in the Nitro request context", () => {
       expect(getResponseCookies()).toEqual([
         `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Max-Age=0`,
         `${WEBAUTHN_CEREMONY_COOKIE}=ceremony-token; Path=/api; Max-Age=300; HttpOnly; Secure; SameSite=Strict`,
+        `${TRUSTED_DEVICE_COOKIE_NAME}=; Path=/; Domain=example.test; Max-Age=0`,
       ]);
     });
   });
