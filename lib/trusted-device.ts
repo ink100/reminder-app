@@ -124,26 +124,33 @@ export async function restoreSessionFromTrustedDevice(ipAddress?: string | null,
   const trustedIssue = issueTrustedDeviceToken(now);
   const sessionIssue = issueSessionToken(now);
   const result = await prisma.$transaction(async (tx) => {
+    let currentSession: Prisma.AuthSessionGetPayload<{ include: { user: true } }> | null = null;
     if (sessionToken) {
-      const currentSession = await tx.authSession.findUnique({
+      currentSession = await tx.authSession.findUnique({
         where: { sessionTokenHash: hashSessionToken(sessionToken) },
         include: { user: true },
       });
-      if (currentSession
-        && currentSession.expiresAt > now
-        && currentSession.user.status === "ACTIVE"
-        && ["ADMIN", "MEMBER"].includes(currentSession.user.role)
-        && currentSession.securityVersion === currentSession.user.securityVersion) {
-        return { status: "session_present" as const };
-      }
     }
-
     const candidate = await tx.trustedDevice.findFirst({
       where: { tokenHash: oldTokenHash, revokedAt: null, expiresAt: { gt: now } },
       include: { user: true },
     });
-    if (!candidate || candidate.user.status !== "ACTIVE" || !["ADMIN", "MEMBER"].includes(candidate.user.role)
-      || candidate.securityVersion !== candidate.user.securityVersion) return { status: "invalid" as const };
+    const validCandidate = candidate && candidate.user.status === "ACTIVE" && ["ADMIN", "MEMBER"].includes(candidate.user.role)
+      && candidate.securityVersion === candidate.user.securityVersion;
+    if (!validCandidate) return { status: "invalid" as const };
+
+    if (currentSession
+      && currentSession.expiresAt > now
+      && currentSession.user.status === "ACTIVE"
+      && ["ADMIN", "MEMBER"].includes(currentSession.user.role)
+      && currentSession.securityVersion === currentSession.user.securityVersion) {
+      if (currentSession.userId === candidate.userId) return { status: "session_present" as const };
+      await tx.trustedDevice.updateMany({
+        where: { id: candidate.id, userId: candidate.userId, tokenHash: oldTokenHash, revokedAt: null },
+        data: { revokedAt: now, lastUsedAt: now },
+      });
+      return { status: "owner_mismatch" as const };
+    }
 
     const rotated = await tx.trustedDevice.updateMany({
       where: {
@@ -181,6 +188,10 @@ export async function restoreSessionFromTrustedDevice(ipAddress?: string | null,
     return { status: "restored" as const, device: candidate };
   });
 
+  if (result.status === "owner_mismatch") {
+    clearTrustedDeviceResponseCookies();
+    return result;
+  }
   if (result.status !== "restored") return result;
   // Neither credential is exposed until both database writes commit.
   await setTrustedDeviceCookie(trustedIssue.token);

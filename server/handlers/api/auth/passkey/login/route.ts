@@ -1,6 +1,6 @@
 
 import { generateAuthOptions } from "@/lib/webauthn";
-import { newCeremonyBrowserToken, setCeremonyCookie } from "@/lib/webauthn-cookie";
+import { getOrCreateCeremonyBrowserToken, setCeremonyCookie } from "@/lib/webauthn-cookie";
 import { getTrustedClientIp, reserveAnonymousAuthAttempt } from "@/lib/login-throttle";
 
 export async function GET(request: Request) {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     }
     const { searchParams } = new URL(request.url);
     const mode = searchParams.get("mode") === "hybrid" ? "hybrid" : "platform";
-    const browserToken = newCeremonyBrowserToken();
+    const browserToken = getOrCreateCeremonyBrowserToken(request);
     const options = await generateAuthOptions(browserToken, mode);
     const response = Response.json(options);
     setCeremonyCookie(browserToken);

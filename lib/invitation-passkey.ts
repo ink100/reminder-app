@@ -3,7 +3,7 @@ import { verifyRegistrationResponse, type RegistrationResponseJSON } from "@simp
 import { getInvitationTarget, INVALID_INVITATION } from "@/lib/invitation-acceptance";
 import { prisma } from "@/lib/prisma";
 import { generateRegOptions } from "@/lib/webauthn";
-import { hashCeremonyCookie } from "@/lib/webauthn-ceremonies";
+import { consumeWebAuthnCeremonyInTransaction, getWebAuthnCeremony } from "@/lib/webauthn-ceremonies";
 import { createSessionInTransaction, issueSessionToken } from "@/lib/session";
 
 const RP_ID = process.env.WEBAUTHN_RP_ID || "localhost";
@@ -18,21 +18,13 @@ export async function completeInvitationPasskey(
   token: string,
   response: RegistrationResponseJSON,
   browserToken: string,
+  ceremonyId: string,
   options: { ipAddress?: string | null; userAgent?: string | null } = {},
   now = new Date(),
 ) {
   const invitation = await getInvitationTarget(token, now);
-  const ceremony = await prisma.webAuthnChallenge.findFirst({
-    where: {
-      flow: "REGISTRATION",
-      userId: invitation.targetUserId,
-      browserTokenHash: hashCeremonyCookie(browserToken),
-      consumedAt: null,
-      expiresAt: { gt: now },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!ceremony) throw new Error(INVALID_INVITATION);
+  const ceremony = await getWebAuthnCeremony({ ceremonyId, flow: "REGISTRATION", userId: invitation.targetUserId, browserToken }, now)
+    .catch(() => { throw new Error(INVALID_INVITATION); });
 
   const verification = await verifyRegistrationResponse({
     response,
@@ -46,10 +38,7 @@ export async function completeInvitationPasskey(
 
   const sessionIssue = issueSessionToken(now);
   await prisma.$transaction(async (tx) => {
-    const consumedCeremony = await tx.webAuthnChallenge.updateMany({
-      where: { id: ceremony.id, userId: invitation.targetUserId, consumedAt: null, expiresAt: { gt: now } },
-      data: { consumedAt: now },
-    });
+    await consumeWebAuthnCeremonyInTransaction(tx, ceremony, now);
     const consumedInvite = await tx.memberInvitation.updateMany({
       where: { id: invitation.id, targetUserId: invitation.targetUserId, consumedAt: null, revokedAt: null, expiresAt: { gt: now } },
       data: { consumedAt: now },
@@ -58,7 +47,7 @@ export async function completeInvitationPasskey(
       where: { id: invitation.targetUserId, status: "INVITED" },
       data: { status: "ACTIVE", activatedAt: now, disabledAt: null },
     });
-    if (consumedCeremony.count !== 1 || consumedInvite.count !== 1 || activated.count !== 1) throw new Error(INVALID_INVITATION);
+    if (consumedInvite.count !== 1 || activated.count !== 1) throw new Error(INVALID_INVITATION);
     await tx.webAuthnCredential.create({
       data: {
         userId: invitation.targetUserId,

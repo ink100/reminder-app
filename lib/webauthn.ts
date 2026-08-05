@@ -13,7 +13,7 @@ import type {
   PublicKeyCredentialRequestOptionsJSON,
 } from "@simplewebauthn/server";
 import { prisma } from "@/lib/prisma";
-import { consumeWebAuthnCeremony, consumeWebAuthnCeremonyInTransaction, createWebAuthnCeremony, getWebAuthnCeremony } from "@/lib/webauthn-ceremonies";
+import { consumeWebAuthnCeremonyInTransaction, createWebAuthnCeremony, getWebAuthnCeremony } from "@/lib/webauthn-ceremonies";
 import { createSessionInTransaction, issueSessionToken } from "@/lib/session";
 import { createTrustedDeviceInTransaction, issueTrustedDeviceToken } from "@/lib/trusted-device";
 
@@ -70,16 +70,16 @@ export async function generateRegOptions(userId: string, browserToken: string, a
     browserOptions.transports = EXTERNAL_AUTHENTICATOR_TRANSPORTS;
   }
 
-  await createWebAuthnCeremony({ challenge: options.challenge, flow: "REGISTRATION", userId, browserToken });
+  const ceremony = await createWebAuthnCeremony({ challenge: options.challenge, flow: "REGISTRATION", userId, browserToken });
 
-  return options;
+  return { ...options, ceremonyId: ceremony.id };
 }
 
 /**
  * 验证注册响应
  */
-export async function verifyRegResponse(userId: string, response: RegistrationResponseJSON, browserToken: string) {
-  const challengeRow = await consumeWebAuthnCeremony({ flow: "REGISTRATION", userId, browserToken });
+export async function verifyRegResponse(userId: string, response: RegistrationResponseJSON, browserToken: string, ceremonyId: string) {
+  const challengeRow = await getWebAuthnCeremony({ ceremonyId, flow: "REGISTRATION", userId, browserToken });
 
   const verification = await verifyRegistrationResponse({
     response,
@@ -94,17 +94,19 @@ export async function verifyRegResponse(userId: string, response: RegistrationRe
 
   const { credential } = verification.registrationInfo;
 
-  // 保存凭证
-  await prisma.webAuthnCredential.create({
-    data: {
-      userId,
-      credentialId: credential.id,
-      publicKey: Buffer.from(credential.publicKey).toString("base64"),
-      counter: BigInt(credential.counter),
-      credentialType: "public-key",
-      authenticatorType: "platform",
-      deviceName: "通行密匙",
-    },
+  await prisma.$transaction(async (tx) => {
+    await consumeWebAuthnCeremonyInTransaction(tx, challengeRow);
+    await tx.webAuthnCredential.create({
+      data: {
+        userId,
+        credentialId: credential.id,
+        publicKey: Buffer.from(credential.publicKey).toString("base64"),
+        counter: BigInt(credential.counter),
+        credentialType: "public-key",
+        authenticatorType: "platform",
+        deviceName: "通行密匙",
+      },
+    });
   });
 
   return { verified: true };
@@ -135,9 +137,9 @@ export async function generateAuthOptions(browserToken: string, mode?: "platform
     browserOptions.hints = ["hybrid", "security-key"];
   }
 
-  await createWebAuthnCeremony({ challenge: options.challenge, flow: "AUTHENTICATION", browserToken });
+  const ceremony = await createWebAuthnCeremony({ challenge: options.challenge, flow: "AUTHENTICATION", browserToken });
 
-  return options;
+  return { ...options, ceremonyId: ceremony.id };
 }
 
 /**
@@ -146,11 +148,12 @@ export async function generateAuthOptions(browserToken: string, mode?: "platform
 export async function verifyAuthResponse(
   response: AuthenticationResponseJSON,
   browserToken: string,
+  ceremonyId: string,
   options: { ipAddress?: string | null; userAgent?: string | null; rememberDevice?: boolean } = {},
 ) {
   // Read, but do not consume, before cryptographic verification. Consumption is
   // committed only together with counter advancement and session creation.
-  const challengeRow = await getWebAuthnCeremony({ flow: "AUTHENTICATION", browserToken });
+  const challengeRow = await getWebAuthnCeremony({ ceremonyId, flow: "AUTHENTICATION", browserToken });
   const credential = await prisma.webAuthnCredential.findUnique({
     where: { credentialId: response.id },
     include: { user: { select: { status: true, role: true, securityVersion: true } } },

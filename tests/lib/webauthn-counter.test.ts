@@ -31,7 +31,7 @@ describe("atomic WebAuthn authentication commit", () => {
 
   it("CAS-consumes challenge and counter and creates the session in one transaction", async () => {
     prismaMock.webAuthnCredential.updateMany.mockResolvedValue({ count: 1 });
-    await expect(verifyAuthResponse({ id: "credential" } as never, "browser")).resolves.toEqual(expect.objectContaining({
+    await expect(verifyAuthResponse({ id: "credential" } as never, "browser", "challenge-row")).resolves.toEqual(expect.objectContaining({
       verified: true, userId: "u1", sessionToken: expect.any(String),
     }));
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
@@ -49,13 +49,13 @@ describe("atomic WebAuthn authentication commit", () => {
 
   it("rejects a concurrent stale verification instead of overwriting the newer counter", async () => {
     prismaMock.webAuthnCredential.updateMany.mockResolvedValue({ count: 0 });
-    await expect(verifyAuthResponse({ id: "credential" } as never, "browser")).rejects.toThrow(/counter|concurrent|stale/i);
+    await expect(verifyAuthResponse({ id: "credential" } as never, "browser", "challenge-row")).rejects.toThrow(/counter|concurrent|stale/i);
   });
 
   it("does not update the counter or create a session after losing challenge CAS", async () => {
     prismaMock.webAuthnChallenge.updateMany.mockResolvedValue({ count: 0 });
     prismaMock.webAuthnCredential.updateMany.mockResolvedValue({ count: 1 });
-    await expect(verifyAuthResponse({ id: "credential" } as never, "browser")).rejects.toThrow(/expired|used|invalid/i);
+    await expect(verifyAuthResponse({ id: "credential" } as never, "browser", "challenge-row")).rejects.toThrow(/expired|used|invalid/i);
     expect(prismaMock.webAuthnCredential.updateMany).not.toHaveBeenCalled();
     expect(prismaMock.authSession.create).not.toHaveBeenCalled();
   });
@@ -63,7 +63,7 @@ describe("atomic WebAuthn authentication commit", () => {
   it("keeps challenge, counter, and session under the same rollback boundary", async () => {
     prismaMock.webAuthnCredential.updateMany.mockResolvedValue({ count: 1 });
     prismaMock.authSession.create.mockRejectedValue(new Error("session insert failed"));
-    await expect(verifyAuthResponse({ id: "credential" } as never, "browser")).rejects.toThrow("session insert failed");
+    await expect(verifyAuthResponse({ id: "credential" } as never, "browser", "challenge-row")).rejects.toThrow("session insert failed");
     expect(prismaMock.webAuthnCredential.updateMany).toHaveBeenCalled();
     expect(prismaMock.webAuthnChallenge.updateMany).toHaveBeenCalled();
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);

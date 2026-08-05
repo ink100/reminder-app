@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 export type WebAuthnFlow = "REGISTRATION" | "AUTHENTICATION";
 
-type CeremonyInput = { flow: WebAuthnFlow; userId?: string | null; browserToken: string };
+type CeremonyInput = { ceremonyId: string; flow: WebAuthnFlow; userId?: string | null; browserToken: string };
 
 const CHALLENGE_CLEANUP_BATCH_SIZE = 100;
 const MAX_ACTIVE_PER_BROWSER_FLOW = 2;
@@ -35,16 +35,23 @@ export async function createWebAuthnCeremony(input: { challenge: string; flow: W
   return prisma.$transaction(async (tx) => {
     await cleanupExpiredChallenges(tx, now);
 
-    // The existing composite index starts with browserTokenHash + flow + consumedAt.
-    const active = await tx.webAuthnChallenge.findMany({
-      where: { browserTokenHash, flow: input.flow, consumedAt: null, expiresAt: { gt: now } },
-      orderBy: { createdAt: "desc" },
-      select: { id: true },
-      take: MAX_ACTIVE_PER_BROWSER_FLOW + CHALLENGE_CLEANUP_BATCH_SIZE,
-    });
-    const superseded = active.slice(MAX_ACTIVE_PER_BROWSER_FLOW - 1);
-    if (superseded.length > 0) {
-      await tx.webAuthnChallenge.deleteMany({ where: { id: { in: superseded.map(({ id }) => id) } } });
+    if (input.flow === "AUTHENTICATION") {
+      // A browser profile has one session cookie, so only its newest login may commit.
+      await tx.webAuthnChallenge.updateMany({
+        where: { browserTokenHash, flow: input.flow, consumedAt: null, expiresAt: { gt: now } },
+        data: { consumedAt: now },
+      });
+    } else {
+      const active = await tx.webAuthnChallenge.findMany({
+        where: { browserTokenHash, flow: input.flow, userId: input.userId ?? null, consumedAt: null, expiresAt: { gt: now } },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+        take: MAX_ACTIVE_PER_BROWSER_FLOW + CHALLENGE_CLEANUP_BATCH_SIZE,
+      });
+      const superseded = active.slice(MAX_ACTIVE_PER_BROWSER_FLOW - 1);
+      if (superseded.length > 0) {
+        await tx.webAuthnChallenge.deleteMany({ where: { id: { in: superseded.map(({ id }) => id) } } });
+      }
     }
 
     return tx.webAuthnChallenge.create({
@@ -88,6 +95,7 @@ export async function cleanupAuthArtifacts(now = new Date()) {
 
 function ceremonyWhere(input: CeremonyInput, now: Date) {
   return {
+    id: input.ceremonyId,
     flow: input.flow,
     userId: input.userId ?? null,
     browserTokenHash: hashCeremonyCookie(input.browserToken),
@@ -98,7 +106,7 @@ function ceremonyWhere(input: CeremonyInput, now: Date) {
 
 /** Reads the challenge for cryptographic verification without consuming it. */
 export async function getWebAuthnCeremony(input: CeremonyInput, now = new Date()) {
-  const row = await prisma.webAuthnChallenge.findFirst({ where: ceremonyWhere(input, now), orderBy: { createdAt: "desc" } });
+  const row = await prisma.webAuthnChallenge.findFirst({ where: ceremonyWhere(input, now) });
   if (!row) throw new Error("WebAuthn ceremony is invalid, expired, or used");
   return row;
 }
@@ -112,7 +120,7 @@ export async function consumeWebAuthnCeremonyInTransaction(tx: Prisma.Transactio
 }
 
 export async function consumeWebAuthnCeremony(input: CeremonyInput, now = new Date()) {
-  const row = await prisma.webAuthnChallenge.findFirst({ where: ceremonyWhere(input, now), orderBy: { createdAt: "desc" } });
+  const row = await prisma.webAuthnChallenge.findFirst({ where: ceremonyWhere(input, now) });
   if (!row) throw new Error("WebAuthn ceremony is invalid, expired, or used");
   await consumeWebAuthnCeremonyInTransaction(prisma as unknown as Prisma.TransactionClient, row, now);
   return row;

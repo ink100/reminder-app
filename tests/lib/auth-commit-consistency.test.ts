@@ -52,10 +52,14 @@ describe("atomic authentication commits", () => {
       expiresAt: new Date(Date.now() + 60_000),
       user: { status: "ACTIVE", role: "MEMBER", securityVersion: 4 },
     });
+    txMock.trustedDevice.findFirst.mockResolvedValue({
+      id: "trusted-user-b", userId: "user-b", securityVersion: 4,
+      user: { status: "ACTIVE", role: "MEMBER", securityVersion: 4 },
+    });
 
     await withRequestContext(async () => {
       await expect(restoreSessionFromTrustedDevice()).resolves.toEqual({ status: "session_present" });
-      expect(txMock.trustedDevice.findFirst).not.toHaveBeenCalled();
+      expect(txMock.trustedDevice.findFirst).toHaveBeenCalled();
       expect(txMock.trustedDevice.updateMany).not.toHaveBeenCalled();
       expect(txMock.authSession.create).not.toHaveBeenCalled();
       expect(getResponseCookies()).toEqual([]);

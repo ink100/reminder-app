@@ -37,7 +37,7 @@ describe("WebAuthn ceremony storage", () => {
       .mockResolvedValueOnce(Array.from({ length: 100 }, (_, index) => ({ id: `expired-${index}` })))
       .mockResolvedValueOnce([{ id: "active-old-1" }, { id: "active-old-2" }, { id: "active-old-3" }]);
     prismaMock.webAuthnChallenge.create.mockImplementation(async ({ data }: { data: unknown }) => data);
-    await createWebAuthnCeremony({ challenge: "new", flow: "AUTHENTICATION", browserToken: "browser" });
+    await createWebAuthnCeremony({ challenge: "new", flow: "REGISTRATION", userId: "u1", browserToken: "browser" });
     expect(prismaMock.webAuthnChallenge.deleteMany).toHaveBeenCalledWith({ where: { id: { in: expect.arrayContaining(["expired-0", "expired-99"]) } } });
     expect(prismaMock.webAuthnChallenge.deleteMany).toHaveBeenCalledWith({ where: { id: { in: ["active-old-2", "active-old-3"] } } });
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
@@ -71,14 +71,14 @@ describe("WebAuthn ceremony storage", () => {
     prismaMock.webAuthnChallenge.updateMany.mockResolvedValue({ count: 1 });
     await cleanupAuthArtifacts(new Date("2026-07-29T10:00:00Z"));
     expect(prismaMock.webAuthnChallenge.deleteMany).not.toHaveBeenCalled();
-    await expect(consumeWebAuthnCeremony({ flow: "AUTHENTICATION", browserToken: "browser" }, new Date("2026-07-29T10:00:00Z"))).resolves.toEqual(expect.objectContaining({ id: "valid" }));
+    await expect(consumeWebAuthnCeremony({ ceremonyId: "valid", flow: "AUTHENTICATION", browserToken: "browser" }, new Date("2026-07-29T10:00:00Z"))).resolves.toEqual(expect.objectContaining({ id: "valid" }));
   });
 
   it("atomically consumes an unexpired ceremony only once", async () => {
     const row = { id: "c1", challenge: "challenge", flow: "AUTHENTICATION", userId: null, browserTokenHash: hashCeremonyCookie("browser") };
     prismaMock.webAuthnChallenge.findFirst.mockResolvedValue(row);
     prismaMock.webAuthnChallenge.updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
-    await expect(consumeWebAuthnCeremony({ flow: "AUTHENTICATION", browserToken: "browser" })).resolves.toEqual(row);
-    await expect(consumeWebAuthnCeremony({ flow: "AUTHENTICATION", browserToken: "browser" })).rejects.toThrow(/expired|used|invalid/i);
+    await expect(consumeWebAuthnCeremony({ ceremonyId: "c1", flow: "AUTHENTICATION", browserToken: "browser" })).resolves.toEqual(row);
+    await expect(consumeWebAuthnCeremony({ ceremonyId: "c1", flow: "AUTHENTICATION", browserToken: "browser" })).rejects.toThrow(/expired|used|invalid/i);
   });
 });

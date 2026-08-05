@@ -12,8 +12,9 @@ export async function POST(request: Request) {
       return Response.json({ error: "请求过于频繁" }, { status: 429 });
     }
     const body = await request.json();
-    const { rememberDevice, ...authResponse } = body;
-    const result = await verifyAuthResponse(authResponse, ceremonyBrowserToken(request), {
+    const { rememberDevice, ceremonyId, ...authResponse } = body;
+    if (typeof ceremonyId !== "string" || !ceremonyId) throw new Error("WebAuthn ceremony is invalid, expired, or used");
+    const result = await verifyAuthResponse(authResponse, ceremonyBrowserToken(request), ceremonyId, {
       rememberDevice: Boolean(rememberDevice),
       ipAddress,
       userAgent: request.headers.get("user-agent"),

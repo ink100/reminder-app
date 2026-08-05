@@ -80,7 +80,7 @@ describe("Vue authentication migration", () => {
   it("runs passkey authentication in the client and verifies its response", async () => {
     webauthn.startAuthentication.mockResolvedValue({ id: "credential", response: {} });
     fetchMock
-      .mockResolvedValueOnce(response({ challenge: "challenge", rpId: "example.test" }))
+      .mockResolvedValueOnce(response({ challenge: "challenge", rpId: "example.test", ceremonyId: "login-ceremony" }))
       .mockResolvedValueOnce(response({ verified: true, userId: "u1" }));
     const wrapper = mountWithElement(PasskeyLogin, { redirectTo: "/reminders" });
     await flushPromises();
@@ -90,7 +90,7 @@ describe("Vue authentication migration", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/passkey/login?mode=hybrid");
     expect(webauthn.startAuthentication).toHaveBeenCalledWith({ optionsJSON: expect.objectContaining({ challenge: "challenge" }) });
     const verify = JSON.parse(fetchMock.mock.calls[1][1].body as string);
-    expect(verify).toMatchObject({ id: "credential", rememberDevice: true });
+    expect(verify).toMatchObject({ id: "credential", ceremonyId: "login-ceremony", rememberDevice: true });
     expect(navigateTo).toHaveBeenCalledWith("/reminders", { replace: true });
   });
 
@@ -114,7 +114,7 @@ describe("Vue authentication migration", () => {
   it("requests invitation passkey options, invokes WebAuthn, then verifies", async () => {
     webauthn.startRegistration.mockResolvedValue({ id: "new-passkey", response: {} });
     fetchMock
-      .mockResolvedValueOnce(response({ challenge: "registration-challenge", user: { id: "u1" } }))
+      .mockResolvedValueOnce(response({ challenge: "registration-challenge", user: { id: "u1" }, ceremonyId: "invite-ceremony" }))
       .mockResolvedValueOnce(response({ error: "Unable to complete invitation" }, 400));
     const wrapper = mountWithElement(InvitationEnrollment, { token: "invite-token" });
     await wrapper.findAll("button").find((button) => button.text() === "通行密匙")!.trigger("click");
@@ -126,7 +126,7 @@ describe("Vue authentication migration", () => {
       "/api/invite/invite-token/passkey/verify",
     ]);
     expect(webauthn.startRegistration).toHaveBeenCalled();
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body as string)).toMatchObject({ id: "new-passkey" });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body as string)).toMatchObject({ id: "new-passkey", ceremonyId: "invite-ceremony" });
     expect(wrapper.get("[role=alert]").text()).toBe("无法接受邀请，请重新打开邀请链接后再试");
   });
 });

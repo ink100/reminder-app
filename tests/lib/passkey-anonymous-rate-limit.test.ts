@@ -6,7 +6,7 @@ const verifyAuthResponse = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/login-throttle", () => ({ getTrustedClientIp: vi.fn(() => null), reserveAnonymousAuthAttempt }));
 vi.mock("@/lib/webauthn", () => ({ generateAuthOptions, verifyAuthResponse }));
 vi.mock("@/lib/webauthn-cookie", () => ({
-  newCeremonyBrowserToken: vi.fn(() => "browser-secret"), setCeremonyCookie: vi.fn(), ceremonyBrowserToken: vi.fn(() => "browser-secret"),
+  getOrCreateCeremonyBrowserToken: vi.fn(() => "browser-secret"), setCeremonyCookie: vi.fn(), ceremonyBrowserToken: vi.fn(() => "browser-secret"),
 }));
 
 import { GET } from "@/server/handlers/api/auth/passkey/login/route";

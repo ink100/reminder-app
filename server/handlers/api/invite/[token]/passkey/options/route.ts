@@ -1,11 +1,11 @@
 
 import { generateInvitationPasskeyOptions } from "@/lib/invitation-passkey";
-import { newCeremonyBrowserToken, setCeremonyCookie } from "@/lib/webauthn-cookie";
+import { getOrCreateCeremonyBrowserToken, setCeremonyCookie } from "@/lib/webauthn-cookie";
 
-export async function POST(_request: Request, { params }: { params: Promise<{ token: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params;
-    const browserToken = newCeremonyBrowserToken();
+    const browserToken = getOrCreateCeremonyBrowserToken(request);
     const options = await generateInvitationPasskeyOptions(token, browserToken);
     const response = Response.json(options);
     setCeremonyCookie(browserToken);

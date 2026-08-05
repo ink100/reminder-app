@@ -13,15 +13,17 @@ async function register(type: "platform" | "cross-platform") {
   loading.value = true;
   status.value = type === "platform" ? "正在调用设备验证…" : "正在准备手机扫码…";
   try {
-    const options = await apiFetch<Parameters<typeof startRegistration>[0]["optionsJSON"]>(
+    const options = await apiFetch<Parameters<typeof startRegistration>[0]["optionsJSON"] & { ceremonyId: string }>(
       `/api/auth/passkey/register?type=${type}`,
     );
+    const ceremonyId = String(options.ceremonyId || "");
+    if (!ceremonyId) throw new Error("注册尝试无效，请重试");
     status.value = "请完成通行密匙验证…";
     const credential = await startRegistration({ optionsJSON: options });
     status.value = "正在验证…";
     const result = await apiFetch<{ verified?: boolean; error?: string }>("/api/auth/passkey/register/verify", {
       method: "POST",
-      body: credential,
+      body: { ...credential, ceremonyId },
     });
     if (!result.verified) throw new Error(result.error || "通行密匙注册失败");
     status.value = "";

@@ -48,6 +48,8 @@ async function login(mode: LoginMode) {
     const optionsResponse = await fetch(`/api/auth/passkey/login?mode=${mode}`, { credentials: "same-origin" });
     const options = await readJson(optionsResponse);
     if (!optionsResponse.ok) throw new Error(String(options.error || "获取认证选项失败"));
+    const ceremonyId = String(options.ceremonyId || "");
+    if (!ceremonyId) throw new Error("认证尝试无效，请重试");
 
     message.value = mode === "hybrid" ? "请在 Edge 弹窗中选择手机/扫码完成验证..." : "请完成本机验证...";
     // Keep browser-only WebAuthn code out of Nuxt's server execution path.
@@ -58,7 +60,7 @@ async function login(mode: LoginMode) {
       method: "POST",
       credentials: "same-origin",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...credential, rememberDevice: rememberDevice.value }),
+      body: JSON.stringify({ ...credential, ceremonyId, rememberDevice: rememberDevice.value }),
     });
     const result = await readJson(verifyResponse);
     if (!verifyResponse.ok || result.verified !== true) throw new Error(String(result.error || "登录失败"));

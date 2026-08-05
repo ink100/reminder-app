@@ -1,7 +1,7 @@
 
 import { generateRegOptions } from "@/lib/webauthn";
 import { requireApiSession } from "@/lib/auth";
-import { newCeremonyBrowserToken, setCeremonyCookie } from "@/lib/webauthn-cookie";
+import { getOrCreateCeremonyBrowserToken, setCeremonyCookie } from "@/lib/webauthn-cookie";
 
 export async function GET(request: Request) {
   const actor = await requireApiSession();
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") as "platform" | "cross-platform" | null;
     
-    const browserToken = newCeremonyBrowserToken();
+    const browserToken = getOrCreateCeremonyBrowserToken(request);
     const options = await generateRegOptions(actor.userId, browserToken, type || undefined);
     const response = Response.json(options);
     setCeremonyCookie(browserToken);

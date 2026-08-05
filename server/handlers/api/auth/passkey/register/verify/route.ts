@@ -8,7 +8,9 @@ export async function POST(request: Request) {
   if (!actor) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const body = await request.json();
-    const result = await verifyRegResponse(actor.userId, body, ceremonyBrowserToken(request));
+    const { ceremonyId, ...registrationResponse } = body;
+    if (typeof ceremonyId !== "string" || !ceremonyId) throw new Error("WebAuthn ceremony is invalid, expired, or used");
+    const result = await verifyRegResponse(actor.userId, registrationResponse, ceremonyBrowserToken(request), ceremonyId);
     return Response.json(result);
   } catch (error) {
     console.error("注册验证失败:", error);

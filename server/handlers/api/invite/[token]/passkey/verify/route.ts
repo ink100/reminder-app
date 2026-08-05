@@ -9,7 +9,10 @@ import { ceremonyBrowserToken } from "@/lib/webauthn-cookie";
 export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params;
-    const result = await completeInvitationPasskey(token, await request.json(), ceremonyBrowserToken(request), {
+    const body = await request.json();
+    const { ceremonyId, ...registrationResponse } = body;
+    if (typeof ceremonyId !== "string" || !ceremonyId) throw new Error(INVALID_INVITATION);
+    const result = await completeInvitationPasskey(token, registrationResponse, ceremonyBrowserToken(request), ceremonyId, {
       ipAddress: getTrustedClientIp(request.headers),
       userAgent: request.headers.get("user-agent"),
     });

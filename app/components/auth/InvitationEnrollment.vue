@@ -81,6 +81,8 @@ async function enrollPasskey() {
     const optionsResponse = await fetch(`${baseUrl.value}/passkey/options`, { method: "POST", credentials: "same-origin" });
     const options = await json(optionsResponse);
     if (!optionsResponse.ok) throw new Error(invitationError(optionsResponse, options, "无法接受邀请，请重新打开邀请链接后再试"));
+    const ceremonyId = String(options.ceremonyId || "");
+    if (!ceremonyId) throw new Error("邀请验证尝试无效，请重试");
     // The WebAuthn browser bundle is loaded only after a client interaction.
     const { startRegistration } = await import("@simplewebauthn/browser");
     const credential = await startRegistration({ optionsJSON: options as never });
@@ -88,7 +90,7 @@ async function enrollPasskey() {
       method: "POST",
       credentials: "same-origin",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(credential),
+      body: JSON.stringify({ ...credential, ceremonyId }),
     });
     const result = await json(verifyResponse);
     if (!verifyResponse.ok || result.success !== true) throw new Error(invitationError(verifyResponse, result, "无法接受邀请，请重新打开邀请链接后再试"));
