@@ -1,6 +1,10 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { fileURLToPath } from "node:url";
+
+const scriptDir = fileURLToPath(new URL(".", import.meta.url));
+
 type ManifestEntry = { source: string; path: string; methods: string[] };
 
 function handlerImport(source: string): string {
@@ -11,7 +15,7 @@ function handlerImport(source: string): string {
 }
 
 async function main() {
-  const root = resolve(__dirname, "..");
+  const root = resolve(scriptDir, "..");
   const fixturePath = resolve(root, "tests/fixtures/contracts/route-manifest.json");
   const outputPath = resolve(root, "server/http/route-registry.ts");
   const manifest = JSON.parse(await readFile(fixturePath, "utf8")) as ManifestEntry[];

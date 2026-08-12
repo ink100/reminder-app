@@ -217,6 +217,16 @@
     ]
   },
   {
+    "source": "app/api/mcp/route.ts",
+    "path": "/api/mcp",
+    "methods": [
+      "DELETE",
+      "GET",
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
     "source": "app/api/medicines/[id]/attachments/route.ts",
     "path": "/api/medicines/[id]/attachments",
     "methods": [

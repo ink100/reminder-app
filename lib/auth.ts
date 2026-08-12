@@ -59,11 +59,17 @@ async function machineAdminSession(apiKey: string) {
   };
 }
 
+export async function requireAiApiKeySession(request: Request) {
+  const credentials = readApiKeyCredentials(request);
+  if (credentials.conflict || !credentials.key) return null;
+  return machineAdminSession(credentials.key);
+}
+
 export async function requireApiSession(request?: Request) {
   if (request) {
     const credentials = readApiKeyCredentials(request);
     if (credentials.conflict) return null;
-    if (credentials.key) return machineAdminSession(credentials.key);
+    if (credentials.key) return requireAiApiKeySession(request);
   }
   const session = await getCurrentSession();
 

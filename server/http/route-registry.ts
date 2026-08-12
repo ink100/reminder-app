@@ -29,45 +29,46 @@ import * as route26 from "@/server/handlers/api/license/generate/route";
 import * as route27 from "@/server/handlers/api/license/store-accounts/[id]/payment-qr/route";
 import * as route28 from "@/server/handlers/api/license/store-accounts/[id]/route";
 import * as route29 from "@/server/handlers/api/license/store-accounts/route";
-import * as route30 from "@/server/handlers/api/medicines/[id]/attachments/route";
-import * as route31 from "@/server/handlers/api/medicines/[id]/route";
-import * as route32 from "@/server/handlers/api/medicines/route";
-import * as route33 from "@/server/handlers/api/notification-center/api-keys/route";
-import * as route34 from "@/server/handlers/api/notification-center/channels/route";
-import * as route35 from "@/server/handlers/api/notification-center/dispatch/route";
-import * as route36 from "@/server/handlers/api/notification-center/groups/[id]/route";
-import * as route37 from "@/server/handlers/api/notification-center/groups/[id]/routes/[channelId]/route";
-import * as route38 from "@/server/handlers/api/notification-center/groups/route";
-import * as route39 from "@/server/handlers/api/notification-center/templates/[id]/route";
-import * as route40 from "@/server/handlers/api/notification-center/templates/route";
-import * as route41 from "@/server/handlers/api/openapi.json/route";
-import * as route42 from "@/server/handlers/api/push-ledger/route";
-import * as route43 from "@/server/handlers/api/reminders/[id]/complete/route";
-import * as route44 from "@/server/handlers/api/reminders/[id]/restore/route";
-import * as route45 from "@/server/handlers/api/reminders/[id]/route";
-import * as route46 from "@/server/handlers/api/reminders/route";
-import * as route47 from "@/server/handlers/api/scheduler/status/route";
-import * as route48 from "@/server/handlers/api/settings/bot/bindings/route";
-import * as route49 from "@/server/handlers/api/settings/bot/route";
-import * as route50 from "@/server/handlers/api/settings/otp/reset/route";
-import * as route51 from "@/server/handlers/api/settings/r2/route";
-import * as route52 from "@/server/handlers/api/settings/route";
-import * as route53 from "@/server/handlers/api/settings/test-email/route";
-import * as route54 from "@/server/handlers/api/ssl/route";
-import * as route55 from "@/server/handlers/api/todos/[id]/route";
-import * as route56 from "@/server/handlers/api/todos/route";
-import * as route57 from "@/server/handlers/api/upload/route";
-import * as route58 from "@/server/handlers/api/voice/transcriptions/route";
-import * as route59 from "@/server/handlers/api/voice/tts/route";
-import * as route60 from "@/server/handlers/cancel/[id]/route";
-import * as route61 from "@/server/handlers/channels/route";
-import * as route62 from "@/server/handlers/groups/route";
-import * as route63 from "@/server/handlers/notifications/[id]/route";
-import * as route64 from "@/server/handlers/notifications/route";
-import * as route65 from "@/server/handlers/notify/route";
-import * as route66 from "@/server/handlers/queue/jobs/route";
-import * as route67 from "@/server/handlers/queue/retry/[job_id]/route";
-import * as route68 from "@/server/handlers/templates/route";
+import * as route30 from "@/server/handlers/api/mcp/route";
+import * as route31 from "@/server/handlers/api/medicines/[id]/attachments/route";
+import * as route32 from "@/server/handlers/api/medicines/[id]/route";
+import * as route33 from "@/server/handlers/api/medicines/route";
+import * as route34 from "@/server/handlers/api/notification-center/api-keys/route";
+import * as route35 from "@/server/handlers/api/notification-center/channels/route";
+import * as route36 from "@/server/handlers/api/notification-center/dispatch/route";
+import * as route37 from "@/server/handlers/api/notification-center/groups/[id]/route";
+import * as route38 from "@/server/handlers/api/notification-center/groups/[id]/routes/[channelId]/route";
+import * as route39 from "@/server/handlers/api/notification-center/groups/route";
+import * as route40 from "@/server/handlers/api/notification-center/templates/[id]/route";
+import * as route41 from "@/server/handlers/api/notification-center/templates/route";
+import * as route42 from "@/server/handlers/api/openapi.json/route";
+import * as route43 from "@/server/handlers/api/push-ledger/route";
+import * as route44 from "@/server/handlers/api/reminders/[id]/complete/route";
+import * as route45 from "@/server/handlers/api/reminders/[id]/restore/route";
+import * as route46 from "@/server/handlers/api/reminders/[id]/route";
+import * as route47 from "@/server/handlers/api/reminders/route";
+import * as route48 from "@/server/handlers/api/scheduler/status/route";
+import * as route49 from "@/server/handlers/api/settings/bot/bindings/route";
+import * as route50 from "@/server/handlers/api/settings/bot/route";
+import * as route51 from "@/server/handlers/api/settings/otp/reset/route";
+import * as route52 from "@/server/handlers/api/settings/r2/route";
+import * as route53 from "@/server/handlers/api/settings/route";
+import * as route54 from "@/server/handlers/api/settings/test-email/route";
+import * as route55 from "@/server/handlers/api/ssl/route";
+import * as route56 from "@/server/handlers/api/todos/[id]/route";
+import * as route57 from "@/server/handlers/api/todos/route";
+import * as route58 from "@/server/handlers/api/upload/route";
+import * as route59 from "@/server/handlers/api/voice/transcriptions/route";
+import * as route60 from "@/server/handlers/api/voice/tts/route";
+import * as route61 from "@/server/handlers/cancel/[id]/route";
+import * as route62 from "@/server/handlers/channels/route";
+import * as route63 from "@/server/handlers/groups/route";
+import * as route64 from "@/server/handlers/notifications/[id]/route";
+import * as route65 from "@/server/handlers/notifications/route";
+import * as route66 from "@/server/handlers/notify/route";
+import * as route67 from "@/server/handlers/queue/jobs/route";
+import * as route68 from "@/server/handlers/queue/retry/[job_id]/route";
+import * as route69 from "@/server/handlers/templates/route";
 
 import { compileRoute } from "./compile-route";
 import type { RouteHandler } from "./types";
@@ -116,68 +117,72 @@ export const routeRegistry = [
   { source: "app/api/license/store-accounts/[id]/route.ts", path: "/api/license/store-accounts/:id", method: "PUT" as const, handler: adaptRouteHandler(route28.PUT) },
   { source: "app/api/license/store-accounts/route.ts", path: "/api/license/store-accounts", method: "GET" as const, handler: adaptRouteHandler(route29.GET) },
   { source: "app/api/license/store-accounts/route.ts", path: "/api/license/store-accounts", method: "POST" as const, handler: adaptRouteHandler(route29.POST) },
-  { source: "app/api/medicines/[id]/attachments/route.ts", path: "/api/medicines/:id/attachments", method: "GET" as const, handler: adaptRouteHandler(route30.GET) },
-  { source: "app/api/medicines/[id]/attachments/route.ts", path: "/api/medicines/:id/attachments", method: "POST" as const, handler: adaptRouteHandler(route30.POST) },
-  { source: "app/api/medicines/[id]/route.ts", path: "/api/medicines/:id", method: "DELETE" as const, handler: adaptRouteHandler(route31.DELETE) },
-  { source: "app/api/medicines/[id]/route.ts", path: "/api/medicines/:id", method: "GET" as const, handler: adaptRouteHandler(route31.GET) },
-  { source: "app/api/medicines/[id]/route.ts", path: "/api/medicines/:id", method: "PUT" as const, handler: adaptRouteHandler(route31.PUT) },
-  { source: "app/api/medicines/route.ts", path: "/api/medicines", method: "GET" as const, handler: adaptRouteHandler(route32.GET) },
-  { source: "app/api/medicines/route.ts", path: "/api/medicines", method: "POST" as const, handler: adaptRouteHandler(route32.POST) },
-  { source: "app/api/notification-center/api-keys/route.ts", path: "/api/notification-center/api-keys", method: "GET" as const, handler: adaptRouteHandler(route33.GET) },
-  { source: "app/api/notification-center/api-keys/route.ts", path: "/api/notification-center/api-keys", method: "POST" as const, handler: adaptRouteHandler(route33.POST) },
-  { source: "app/api/notification-center/channels/route.ts", path: "/api/notification-center/channels", method: "GET" as const, handler: adaptRouteHandler(route34.GET) },
-  { source: "app/api/notification-center/channels/route.ts", path: "/api/notification-center/channels", method: "POST" as const, handler: adaptRouteHandler(route34.POST) },
-  { source: "app/api/notification-center/dispatch/route.ts", path: "/api/notification-center/dispatch", method: "POST" as const, handler: adaptRouteHandler(route35.POST) },
-  { source: "app/api/notification-center/groups/[id]/route.ts", path: "/api/notification-center/groups/:id", method: "PATCH" as const, handler: adaptRouteHandler(route36.PATCH) },
-  { source: "app/api/notification-center/groups/[id]/routes/[channelId]/route.ts", path: "/api/notification-center/groups/:id/routes/:channelId", method: "DELETE" as const, handler: adaptRouteHandler(route37.DELETE) },
-  { source: "app/api/notification-center/groups/[id]/routes/[channelId]/route.ts", path: "/api/notification-center/groups/:id/routes/:channelId", method: "PUT" as const, handler: adaptRouteHandler(route37.PUT) },
-  { source: "app/api/notification-center/groups/route.ts", path: "/api/notification-center/groups", method: "GET" as const, handler: adaptRouteHandler(route38.GET) },
-  { source: "app/api/notification-center/groups/route.ts", path: "/api/notification-center/groups", method: "POST" as const, handler: adaptRouteHandler(route38.POST) },
-  { source: "app/api/notification-center/templates/[id]/route.ts", path: "/api/notification-center/templates/:id", method: "PATCH" as const, handler: adaptRouteHandler(route39.PATCH) },
-  { source: "app/api/notification-center/templates/route.ts", path: "/api/notification-center/templates", method: "GET" as const, handler: adaptRouteHandler(route40.GET) },
-  { source: "app/api/notification-center/templates/route.ts", path: "/api/notification-center/templates", method: "POST" as const, handler: adaptRouteHandler(route40.POST) },
-  { source: "app/api/openapi.json/route.ts", path: "/api/openapi.json", method: "GET" as const, handler: adaptRouteHandler(route41.GET) },
-  { source: "app/api/push-ledger/route.ts", path: "/api/push-ledger", method: "GET" as const, handler: adaptRouteHandler(route42.GET) },
-  { source: "app/api/reminders/[id]/complete/route.ts", path: "/api/reminders/:id/complete", method: "POST" as const, handler: adaptRouteHandler(route43.POST) },
-  { source: "app/api/reminders/[id]/restore/route.ts", path: "/api/reminders/:id/restore", method: "POST" as const, handler: adaptRouteHandler(route44.POST) },
-  { source: "app/api/reminders/[id]/route.ts", path: "/api/reminders/:id", method: "DELETE" as const, handler: adaptRouteHandler(route45.DELETE) },
-  { source: "app/api/reminders/[id]/route.ts", path: "/api/reminders/:id", method: "GET" as const, handler: adaptRouteHandler(route45.GET) },
-  { source: "app/api/reminders/[id]/route.ts", path: "/api/reminders/:id", method: "PUT" as const, handler: adaptRouteHandler(route45.PUT) },
-  { source: "app/api/reminders/route.ts", path: "/api/reminders", method: "GET" as const, handler: adaptRouteHandler(route46.GET) },
-  { source: "app/api/reminders/route.ts", path: "/api/reminders", method: "POST" as const, handler: adaptRouteHandler(route46.POST) },
-  { source: "app/api/scheduler/status/route.ts", path: "/api/scheduler/status", method: "GET" as const, handler: adaptRouteHandler(route47.GET) },
-  { source: "app/api/settings/bot/bindings/route.ts", path: "/api/settings/bot/bindings", method: "GET" as const, handler: adaptRouteHandler(route48.GET) },
-  { source: "app/api/settings/bot/bindings/route.ts", path: "/api/settings/bot/bindings", method: "POST" as const, handler: adaptRouteHandler(route48.POST) },
-  { source: "app/api/settings/bot/route.ts", path: "/api/settings/bot", method: "GET" as const, handler: adaptRouteHandler(route49.GET) },
-  { source: "app/api/settings/bot/route.ts", path: "/api/settings/bot", method: "POST" as const, handler: adaptRouteHandler(route49.POST) },
-  { source: "app/api/settings/bot/route.ts", path: "/api/settings/bot", method: "PUT" as const, handler: adaptRouteHandler(route49.PUT) },
-  { source: "app/api/settings/otp/reset/route.ts", path: "/api/settings/otp/reset", method: "POST" as const, handler: adaptRouteHandler(route50.POST) },
-  { source: "app/api/settings/r2/route.ts", path: "/api/settings/r2", method: "GET" as const, handler: adaptRouteHandler(route51.GET) },
-  { source: "app/api/settings/r2/route.ts", path: "/api/settings/r2", method: "POST" as const, handler: adaptRouteHandler(route51.POST) },
-  { source: "app/api/settings/r2/route.ts", path: "/api/settings/r2", method: "PUT" as const, handler: adaptRouteHandler(route51.PUT) },
-  { source: "app/api/settings/route.ts", path: "/api/settings", method: "GET" as const, handler: adaptRouteHandler(route52.GET) },
-  { source: "app/api/settings/route.ts", path: "/api/settings", method: "PUT" as const, handler: adaptRouteHandler(route52.PUT) },
-  { source: "app/api/settings/test-email/route.ts", path: "/api/settings/test-email", method: "POST" as const, handler: adaptRouteHandler(route53.POST) },
-  { source: "app/api/ssl/route.ts", path: "/api/ssl", method: "GET" as const, handler: adaptRouteHandler(route54.GET) },
-  { source: "app/api/ssl/route.ts", path: "/api/ssl", method: "POST" as const, handler: adaptRouteHandler(route54.POST) },
-  { source: "app/api/todos/[id]/route.ts", path: "/api/todos/:id", method: "DELETE" as const, handler: adaptRouteHandler(route55.DELETE) },
-  { source: "app/api/todos/[id]/route.ts", path: "/api/todos/:id", method: "PATCH" as const, handler: adaptRouteHandler(route55.PATCH) },
-  { source: "app/api/todos/route.ts", path: "/api/todos", method: "GET" as const, handler: adaptRouteHandler(route56.GET) },
-  { source: "app/api/todos/route.ts", path: "/api/todos", method: "POST" as const, handler: adaptRouteHandler(route56.POST) },
-  { source: "app/api/upload/route.ts", path: "/api/upload", method: "GET" as const, handler: adaptRouteHandler(route57.GET) },
-  { source: "app/api/upload/route.ts", path: "/api/upload", method: "POST" as const, handler: adaptRouteHandler(route57.POST) },
-  { source: "app/api/voice/transcriptions/route.ts", path: "/api/voice/transcriptions", method: "POST" as const, handler: adaptRouteHandler(route58.POST) },
-  { source: "app/api/voice/tts/route.ts", path: "/api/voice/tts", method: "POST" as const, handler: adaptRouteHandler(route59.POST) },
-  { source: "app/cancel/[id]/route.ts", path: "/cancel/:id", method: "POST" as const, handler: adaptRouteHandler(route60.POST) },
-  { source: "app/channels/route.ts", path: "/channels", method: "GET" as const, handler: adaptRouteHandler(route61.GET) },
-  { source: "app/channels/route.ts", path: "/channels", method: "POST" as const, handler: adaptRouteHandler(route61.POST) },
-  { source: "app/groups/route.ts", path: "/groups", method: "GET" as const, handler: adaptRouteHandler(route62.GET) },
-  { source: "app/groups/route.ts", path: "/groups", method: "POST" as const, handler: adaptRouteHandler(route62.POST) },
-  { source: "app/notifications/[id]/route.ts", path: "/notifications/:id", method: "GET" as const, handler: adaptRouteHandler(route63.GET) },
-  { source: "app/notifications/route.ts", path: "/notifications", method: "GET" as const, handler: adaptRouteHandler(route64.GET) },
-  { source: "app/notify/route.ts", path: "/notify", method: "POST" as const, handler: adaptRouteHandler(route65.POST) },
-  { source: "app/queue/jobs/route.ts", path: "/queue/jobs", method: "GET" as const, handler: adaptRouteHandler(route66.GET) },
-  { source: "app/queue/retry/[job_id]/route.ts", path: "/queue/retry/:job_id", method: "POST" as const, handler: adaptRouteHandler(route67.POST) },
-  { source: "app/templates/route.ts", path: "/templates", method: "GET" as const, handler: adaptRouteHandler(route68.GET) },
-  { source: "app/templates/route.ts", path: "/templates", method: "POST" as const, handler: adaptRouteHandler(route68.POST) },
+  { source: "app/api/mcp/route.ts", path: "/api/mcp", method: "DELETE" as const, handler: adaptRouteHandler(route30.DELETE) },
+  { source: "app/api/mcp/route.ts", path: "/api/mcp", method: "GET" as const, handler: adaptRouteHandler(route30.GET) },
+  { source: "app/api/mcp/route.ts", path: "/api/mcp", method: "OPTIONS" as const, handler: adaptRouteHandler(route30.OPTIONS) },
+  { source: "app/api/mcp/route.ts", path: "/api/mcp", method: "POST" as const, handler: adaptRouteHandler(route30.POST) },
+  { source: "app/api/medicines/[id]/attachments/route.ts", path: "/api/medicines/:id/attachments", method: "GET" as const, handler: adaptRouteHandler(route31.GET) },
+  { source: "app/api/medicines/[id]/attachments/route.ts", path: "/api/medicines/:id/attachments", method: "POST" as const, handler: adaptRouteHandler(route31.POST) },
+  { source: "app/api/medicines/[id]/route.ts", path: "/api/medicines/:id", method: "DELETE" as const, handler: adaptRouteHandler(route32.DELETE) },
+  { source: "app/api/medicines/[id]/route.ts", path: "/api/medicines/:id", method: "GET" as const, handler: adaptRouteHandler(route32.GET) },
+  { source: "app/api/medicines/[id]/route.ts", path: "/api/medicines/:id", method: "PUT" as const, handler: adaptRouteHandler(route32.PUT) },
+  { source: "app/api/medicines/route.ts", path: "/api/medicines", method: "GET" as const, handler: adaptRouteHandler(route33.GET) },
+  { source: "app/api/medicines/route.ts", path: "/api/medicines", method: "POST" as const, handler: adaptRouteHandler(route33.POST) },
+  { source: "app/api/notification-center/api-keys/route.ts", path: "/api/notification-center/api-keys", method: "GET" as const, handler: adaptRouteHandler(route34.GET) },
+  { source: "app/api/notification-center/api-keys/route.ts", path: "/api/notification-center/api-keys", method: "POST" as const, handler: adaptRouteHandler(route34.POST) },
+  { source: "app/api/notification-center/channels/route.ts", path: "/api/notification-center/channels", method: "GET" as const, handler: adaptRouteHandler(route35.GET) },
+  { source: "app/api/notification-center/channels/route.ts", path: "/api/notification-center/channels", method: "POST" as const, handler: adaptRouteHandler(route35.POST) },
+  { source: "app/api/notification-center/dispatch/route.ts", path: "/api/notification-center/dispatch", method: "POST" as const, handler: adaptRouteHandler(route36.POST) },
+  { source: "app/api/notification-center/groups/[id]/route.ts", path: "/api/notification-center/groups/:id", method: "PATCH" as const, handler: adaptRouteHandler(route37.PATCH) },
+  { source: "app/api/notification-center/groups/[id]/routes/[channelId]/route.ts", path: "/api/notification-center/groups/:id/routes/:channelId", method: "DELETE" as const, handler: adaptRouteHandler(route38.DELETE) },
+  { source: "app/api/notification-center/groups/[id]/routes/[channelId]/route.ts", path: "/api/notification-center/groups/:id/routes/:channelId", method: "PUT" as const, handler: adaptRouteHandler(route38.PUT) },
+  { source: "app/api/notification-center/groups/route.ts", path: "/api/notification-center/groups", method: "GET" as const, handler: adaptRouteHandler(route39.GET) },
+  { source: "app/api/notification-center/groups/route.ts", path: "/api/notification-center/groups", method: "POST" as const, handler: adaptRouteHandler(route39.POST) },
+  { source: "app/api/notification-center/templates/[id]/route.ts", path: "/api/notification-center/templates/:id", method: "PATCH" as const, handler: adaptRouteHandler(route40.PATCH) },
+  { source: "app/api/notification-center/templates/route.ts", path: "/api/notification-center/templates", method: "GET" as const, handler: adaptRouteHandler(route41.GET) },
+  { source: "app/api/notification-center/templates/route.ts", path: "/api/notification-center/templates", method: "POST" as const, handler: adaptRouteHandler(route41.POST) },
+  { source: "app/api/openapi.json/route.ts", path: "/api/openapi.json", method: "GET" as const, handler: adaptRouteHandler(route42.GET) },
+  { source: "app/api/push-ledger/route.ts", path: "/api/push-ledger", method: "GET" as const, handler: adaptRouteHandler(route43.GET) },
+  { source: "app/api/reminders/[id]/complete/route.ts", path: "/api/reminders/:id/complete", method: "POST" as const, handler: adaptRouteHandler(route44.POST) },
+  { source: "app/api/reminders/[id]/restore/route.ts", path: "/api/reminders/:id/restore", method: "POST" as const, handler: adaptRouteHandler(route45.POST) },
+  { source: "app/api/reminders/[id]/route.ts", path: "/api/reminders/:id", method: "DELETE" as const, handler: adaptRouteHandler(route46.DELETE) },
+  { source: "app/api/reminders/[id]/route.ts", path: "/api/reminders/:id", method: "GET" as const, handler: adaptRouteHandler(route46.GET) },
+  { source: "app/api/reminders/[id]/route.ts", path: "/api/reminders/:id", method: "PUT" as const, handler: adaptRouteHandler(route46.PUT) },
+  { source: "app/api/reminders/route.ts", path: "/api/reminders", method: "GET" as const, handler: adaptRouteHandler(route47.GET) },
+  { source: "app/api/reminders/route.ts", path: "/api/reminders", method: "POST" as const, handler: adaptRouteHandler(route47.POST) },
+  { source: "app/api/scheduler/status/route.ts", path: "/api/scheduler/status", method: "GET" as const, handler: adaptRouteHandler(route48.GET) },
+  { source: "app/api/settings/bot/bindings/route.ts", path: "/api/settings/bot/bindings", method: "GET" as const, handler: adaptRouteHandler(route49.GET) },
+  { source: "app/api/settings/bot/bindings/route.ts", path: "/api/settings/bot/bindings", method: "POST" as const, handler: adaptRouteHandler(route49.POST) },
+  { source: "app/api/settings/bot/route.ts", path: "/api/settings/bot", method: "GET" as const, handler: adaptRouteHandler(route50.GET) },
+  { source: "app/api/settings/bot/route.ts", path: "/api/settings/bot", method: "POST" as const, handler: adaptRouteHandler(route50.POST) },
+  { source: "app/api/settings/bot/route.ts", path: "/api/settings/bot", method: "PUT" as const, handler: adaptRouteHandler(route50.PUT) },
+  { source: "app/api/settings/otp/reset/route.ts", path: "/api/settings/otp/reset", method: "POST" as const, handler: adaptRouteHandler(route51.POST) },
+  { source: "app/api/settings/r2/route.ts", path: "/api/settings/r2", method: "GET" as const, handler: adaptRouteHandler(route52.GET) },
+  { source: "app/api/settings/r2/route.ts", path: "/api/settings/r2", method: "POST" as const, handler: adaptRouteHandler(route52.POST) },
+  { source: "app/api/settings/r2/route.ts", path: "/api/settings/r2", method: "PUT" as const, handler: adaptRouteHandler(route52.PUT) },
+  { source: "app/api/settings/route.ts", path: "/api/settings", method: "GET" as const, handler: adaptRouteHandler(route53.GET) },
+  { source: "app/api/settings/route.ts", path: "/api/settings", method: "PUT" as const, handler: adaptRouteHandler(route53.PUT) },
+  { source: "app/api/settings/test-email/route.ts", path: "/api/settings/test-email", method: "POST" as const, handler: adaptRouteHandler(route54.POST) },
+  { source: "app/api/ssl/route.ts", path: "/api/ssl", method: "GET" as const, handler: adaptRouteHandler(route55.GET) },
+  { source: "app/api/ssl/route.ts", path: "/api/ssl", method: "POST" as const, handler: adaptRouteHandler(route55.POST) },
+  { source: "app/api/todos/[id]/route.ts", path: "/api/todos/:id", method: "DELETE" as const, handler: adaptRouteHandler(route56.DELETE) },
+  { source: "app/api/todos/[id]/route.ts", path: "/api/todos/:id", method: "PATCH" as const, handler: adaptRouteHandler(route56.PATCH) },
+  { source: "app/api/todos/route.ts", path: "/api/todos", method: "GET" as const, handler: adaptRouteHandler(route57.GET) },
+  { source: "app/api/todos/route.ts", path: "/api/todos", method: "POST" as const, handler: adaptRouteHandler(route57.POST) },
+  { source: "app/api/upload/route.ts", path: "/api/upload", method: "GET" as const, handler: adaptRouteHandler(route58.GET) },
+  { source: "app/api/upload/route.ts", path: "/api/upload", method: "POST" as const, handler: adaptRouteHandler(route58.POST) },
+  { source: "app/api/voice/transcriptions/route.ts", path: "/api/voice/transcriptions", method: "POST" as const, handler: adaptRouteHandler(route59.POST) },
+  { source: "app/api/voice/tts/route.ts", path: "/api/voice/tts", method: "POST" as const, handler: adaptRouteHandler(route60.POST) },
+  { source: "app/cancel/[id]/route.ts", path: "/cancel/:id", method: "POST" as const, handler: adaptRouteHandler(route61.POST) },
+  { source: "app/channels/route.ts", path: "/channels", method: "GET" as const, handler: adaptRouteHandler(route62.GET) },
+  { source: "app/channels/route.ts", path: "/channels", method: "POST" as const, handler: adaptRouteHandler(route62.POST) },
+  { source: "app/groups/route.ts", path: "/groups", method: "GET" as const, handler: adaptRouteHandler(route63.GET) },
+  { source: "app/groups/route.ts", path: "/groups", method: "POST" as const, handler: adaptRouteHandler(route63.POST) },
+  { source: "app/notifications/[id]/route.ts", path: "/notifications/:id", method: "GET" as const, handler: adaptRouteHandler(route64.GET) },
+  { source: "app/notifications/route.ts", path: "/notifications", method: "GET" as const, handler: adaptRouteHandler(route65.GET) },
+  { source: "app/notify/route.ts", path: "/notify", method: "POST" as const, handler: adaptRouteHandler(route66.POST) },
+  { source: "app/queue/jobs/route.ts", path: "/queue/jobs", method: "GET" as const, handler: adaptRouteHandler(route67.GET) },
+  { source: "app/queue/retry/[job_id]/route.ts", path: "/queue/retry/:job_id", method: "POST" as const, handler: adaptRouteHandler(route68.POST) },
+  { source: "app/templates/route.ts", path: "/templates", method: "GET" as const, handler: adaptRouteHandler(route69.GET) },
+  { source: "app/templates/route.ts", path: "/templates", method: "POST" as const, handler: adaptRouteHandler(route69.POST) },
 ].map(compileRoute);

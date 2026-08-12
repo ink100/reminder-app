@@ -191,7 +191,28 @@ PORT=63456 npm run start
 更完整的从 0 到 1 SOP，请看：
 - `docs/deploy-sop.md`
 
-## 10. 隐私与安全
+## 10. MCP 服务
+
+应用内置 Streamable HTTP MCP 端点：
+
+- URL：`https://你的域名/api/mcp`
+- 鉴权：`Authorization: Bearer <AI_API_KEY>` 或 `X-API-Key: <AI_API_KEY>`
+- API Key 必须具有 `ai:all` scope；浏览器 Cookie、legacy `notifications:send` key 均不能访问 MCP。
+- 当前工具只允许操作提醒、待办和读取调度器状态；身份、邀请、OTP、成员、系统设置、通知渠道和 API Key 管理不会通过 MCP 暴露。
+
+Hermes Agent 配置示例：
+
+```yaml
+mcp_servers:
+  reminder_app:
+    url: "https://你的域名/api/mcp"
+    headers:
+      Authorization: "Bearer 你的AI_API_KEY"
+```
+
+修改配置后重启 MCP 客户端。删除提醒/待办属于破坏性工具，客户端应在调用前向用户确认。
+
+## 11. 隐私与安全
 
 仓库默认不会提交以下内容：
 - `.env`
@@ -207,7 +228,7 @@ PORT=63456 npm run start
 - 不要把 SMTP 密码或 OTP 密钥写进文档
 - 修改生产环境前，先备份数据库文件
 
-## 11. 维护建议
+## 12. 维护建议
 
 ### 备份
 至少备份这些：
@@ -230,7 +251,7 @@ npm run db:init
 - 生产环境不要随便运行 `npm run db:reset`
 - 有真实数据时，优先备份后再做迁移
 
-## 12. 备注
+## 13. 备注
 
 - Prisma 7 的 datasource URL 配置在 `prisma.config.ts`
 - OTP 页面使用动态渲染，避免状态缓存错误

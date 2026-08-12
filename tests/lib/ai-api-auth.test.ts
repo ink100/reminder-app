@@ -13,7 +13,7 @@ vi.mock("@/lib/notification-center/manager", () => ({
   validateNotificationApiKey,
 }));
 
-import { readApiKeyCredentials, requireApiSession } from "@/lib/auth";
+import { readApiKeyCredentials, requireAiApiKeySession, requireApiSession } from "@/lib/auth";
 
 const admin = {
   id: "admin-1", role: "ADMIN", status: "ACTIVE", securityVersion: 3,
@@ -45,7 +45,7 @@ describe("AI API authentication", () => {
   it("does not grant ai:all to a legacy worker key with missing scopes", async () => {
     validateNotificationApiKey.mockResolvedValue({ id: "worker-1", enabled: true });
     await expect(requireApiSession(new Request("https://test", { headers: { "x-api-key": "legacy" } }))).resolves.toBeNull();
-    expect(findFirstAdmin).not.toHaveBeenCalled();
+    await expect(requireAiApiKeySession(new Request("https://test", { headers: { "x-api-key": "legacy" } }))).resolves.toBeNull();
   });
 
   it("returns a marked machine actor for an AI key", async () => {
