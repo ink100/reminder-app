@@ -445,6 +445,13 @@
     ]
   },
   {
+    "source": "app/api/voice/assistant/route.ts",
+    "path": "/api/voice/assistant",
+    "methods": [
+      "POST"
+    ]
+  },
+  {
     "source": "app/api/voice/transcriptions/route.ts",
     "path": "/api/voice/transcriptions",
     "methods": [

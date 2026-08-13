@@ -39,8 +39,8 @@ describe("frozen route manifest", () => {
     const actualContracts = registryContracts();
 
     expect(actualContracts).toEqual(expectedContracts);
-    expect(expected).toHaveLength(70);
-    expect(actualContracts).toHaveLength(105);
+    expect(expected).toHaveLength(71);
+    expect(actualContracts).toHaveLength(106);
   });
 
   it("contains no duplicate path and method contracts", () => {

@@ -58,17 +58,18 @@ import * as route55 from "@/server/handlers/api/ssl/route";
 import * as route56 from "@/server/handlers/api/todos/[id]/route";
 import * as route57 from "@/server/handlers/api/todos/route";
 import * as route58 from "@/server/handlers/api/upload/route";
-import * as route59 from "@/server/handlers/api/voice/transcriptions/route";
-import * as route60 from "@/server/handlers/api/voice/tts/route";
-import * as route61 from "@/server/handlers/cancel/[id]/route";
-import * as route62 from "@/server/handlers/channels/route";
-import * as route63 from "@/server/handlers/groups/route";
-import * as route64 from "@/server/handlers/notifications/[id]/route";
-import * as route65 from "@/server/handlers/notifications/route";
-import * as route66 from "@/server/handlers/notify/route";
-import * as route67 from "@/server/handlers/queue/jobs/route";
-import * as route68 from "@/server/handlers/queue/retry/[job_id]/route";
-import * as route69 from "@/server/handlers/templates/route";
+import * as route59 from "@/server/handlers/api/voice/assistant/route";
+import * as route60 from "@/server/handlers/api/voice/transcriptions/route";
+import * as route61 from "@/server/handlers/api/voice/tts/route";
+import * as route62 from "@/server/handlers/cancel/[id]/route";
+import * as route63 from "@/server/handlers/channels/route";
+import * as route64 from "@/server/handlers/groups/route";
+import * as route65 from "@/server/handlers/notifications/[id]/route";
+import * as route66 from "@/server/handlers/notifications/route";
+import * as route67 from "@/server/handlers/notify/route";
+import * as route68 from "@/server/handlers/queue/jobs/route";
+import * as route69 from "@/server/handlers/queue/retry/[job_id]/route";
+import * as route70 from "@/server/handlers/templates/route";
 
 import { compileRoute } from "./compile-route";
 import type { RouteHandler } from "./types";
@@ -171,18 +172,19 @@ export const routeRegistry = [
   { source: "app/api/todos/route.ts", path: "/api/todos", method: "POST" as const, handler: adaptRouteHandler(route57.POST) },
   { source: "app/api/upload/route.ts", path: "/api/upload", method: "GET" as const, handler: adaptRouteHandler(route58.GET) },
   { source: "app/api/upload/route.ts", path: "/api/upload", method: "POST" as const, handler: adaptRouteHandler(route58.POST) },
-  { source: "app/api/voice/transcriptions/route.ts", path: "/api/voice/transcriptions", method: "POST" as const, handler: adaptRouteHandler(route59.POST) },
-  { source: "app/api/voice/tts/route.ts", path: "/api/voice/tts", method: "POST" as const, handler: adaptRouteHandler(route60.POST) },
-  { source: "app/cancel/[id]/route.ts", path: "/cancel/:id", method: "POST" as const, handler: adaptRouteHandler(route61.POST) },
-  { source: "app/channels/route.ts", path: "/channels", method: "GET" as const, handler: adaptRouteHandler(route62.GET) },
-  { source: "app/channels/route.ts", path: "/channels", method: "POST" as const, handler: adaptRouteHandler(route62.POST) },
-  { source: "app/groups/route.ts", path: "/groups", method: "GET" as const, handler: adaptRouteHandler(route63.GET) },
-  { source: "app/groups/route.ts", path: "/groups", method: "POST" as const, handler: adaptRouteHandler(route63.POST) },
-  { source: "app/notifications/[id]/route.ts", path: "/notifications/:id", method: "GET" as const, handler: adaptRouteHandler(route64.GET) },
-  { source: "app/notifications/route.ts", path: "/notifications", method: "GET" as const, handler: adaptRouteHandler(route65.GET) },
-  { source: "app/notify/route.ts", path: "/notify", method: "POST" as const, handler: adaptRouteHandler(route66.POST) },
-  { source: "app/queue/jobs/route.ts", path: "/queue/jobs", method: "GET" as const, handler: adaptRouteHandler(route67.GET) },
-  { source: "app/queue/retry/[job_id]/route.ts", path: "/queue/retry/:job_id", method: "POST" as const, handler: adaptRouteHandler(route68.POST) },
-  { source: "app/templates/route.ts", path: "/templates", method: "GET" as const, handler: adaptRouteHandler(route69.GET) },
-  { source: "app/templates/route.ts", path: "/templates", method: "POST" as const, handler: adaptRouteHandler(route69.POST) },
+  { source: "app/api/voice/assistant/route.ts", path: "/api/voice/assistant", method: "POST" as const, handler: adaptRouteHandler(route59.POST) },
+  { source: "app/api/voice/transcriptions/route.ts", path: "/api/voice/transcriptions", method: "POST" as const, handler: adaptRouteHandler(route60.POST) },
+  { source: "app/api/voice/tts/route.ts", path: "/api/voice/tts", method: "POST" as const, handler: adaptRouteHandler(route61.POST) },
+  { source: "app/cancel/[id]/route.ts", path: "/cancel/:id", method: "POST" as const, handler: adaptRouteHandler(route62.POST) },
+  { source: "app/channels/route.ts", path: "/channels", method: "GET" as const, handler: adaptRouteHandler(route63.GET) },
+  { source: "app/channels/route.ts", path: "/channels", method: "POST" as const, handler: adaptRouteHandler(route63.POST) },
+  { source: "app/groups/route.ts", path: "/groups", method: "GET" as const, handler: adaptRouteHandler(route64.GET) },
+  { source: "app/groups/route.ts", path: "/groups", method: "POST" as const, handler: adaptRouteHandler(route64.POST) },
+  { source: "app/notifications/[id]/route.ts", path: "/notifications/:id", method: "GET" as const, handler: adaptRouteHandler(route65.GET) },
+  { source: "app/notifications/route.ts", path: "/notifications", method: "GET" as const, handler: adaptRouteHandler(route66.GET) },
+  { source: "app/notify/route.ts", path: "/notify", method: "POST" as const, handler: adaptRouteHandler(route67.POST) },
+  { source: "app/queue/jobs/route.ts", path: "/queue/jobs", method: "GET" as const, handler: adaptRouteHandler(route68.GET) },
+  { source: "app/queue/retry/[job_id]/route.ts", path: "/queue/retry/:job_id", method: "POST" as const, handler: adaptRouteHandler(route69.POST) },
+  { source: "app/templates/route.ts", path: "/templates", method: "GET" as const, handler: adaptRouteHandler(route70.GET) },
+  { source: "app/templates/route.ts", path: "/templates", method: "POST" as const, handler: adaptRouteHandler(route70.POST) },
 ].map(compileRoute);

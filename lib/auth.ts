@@ -80,6 +80,11 @@ export async function requireApiSession(request?: Request) {
   return session;
 }
 
+/** Cookie-only session guard for browser business routes that must never accept machine keys. */
+export async function requireBrowserSession() {
+  return getCurrentSession();
+}
+
 export async function requireAdminApiSession() {
   const session = await getCurrentSession();
   return session?.user.role === "ADMIN" ? session : null;
