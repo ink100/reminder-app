@@ -11,7 +11,7 @@ const execFileAsync = promisify(execFile)
 const APP_DIR = process.env.REMINDER_SSL_APP_DIR || process.cwd()
 const SSL_STATUS_FILE = process.env.REMINDER_SSL_STATUS_FILE || path.join(APP_DIR, 'data', 'ssl-status.json')
 const SSL_LOG_FILE = process.env.REMINDER_SSL_LOG_FILE || path.join(APP_DIR, 'logs', 'ssl-renew.log')
-const CERT_FILE = process.env.REMINDER_SSL_CERT_FILE || '/home/ubuntu/.acme.sh/daydreams.cn_ecc/daydreams.cn.cer'
+const CERT_FILE = process.env.REMINDER_SSL_CERT_FILE || '/home/ubuntu/.acme.sh/ne.daydreams.cn_ecc/ne.daydreams.cn.cer'
 const ACME_SH = process.env.REMINDER_SSL_ACME_SH || path.join(process.env.HOME || '/home/ubuntu', '.acme.sh', 'acme.sh')
 const RENEW_SCRIPT = process.env.REMINDER_SSL_RENEW_SCRIPT || path.join(APP_DIR, 'scripts', 'ssl-renew.sh')
 

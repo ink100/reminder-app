@@ -304,6 +304,17 @@ describe("SSL status endpoint semantics", () => {
     expect(getHandler).not.toContain("syncSslCertificateReminder(");
   });
 
+  it("manages the auto-renewable ne.daydreams.cn webroot certificate by default", () => {
+    const scriptSource = readFileSync(resolve("scripts/ssl-renew.sh"), "utf8");
+    const routeSource = readFileSync(resolve("server/handlers/api/ssl/route.ts"), "utf8");
+
+    expect(scriptSource).toContain("ne.daydreams.cn_ecc/ne.daydreams.cn.cer");
+    expect(scriptSource).toContain('ACME_DOMAIN="${REMINDER_SSL_ACME_DOMAIN:-ne.daydreams.cn}"');
+    expect(routeSource).toContain("ne.daydreams.cn_ecc/ne.daydreams.cn.cer");
+    expect(scriptSource).not.toContain("daydreams.cn_ecc/daydreams.cn.cer");
+    expect(routeSource).not.toContain("daydreams.cn_ecc/daydreams.cn.cer");
+  });
+
   it("uses app-specific override names instead of ambient TLS variables", () => {
     const scriptSource = readFileSync(resolve("scripts/ssl-renew.sh"), "utf8");
     const routeSource = readFileSync(resolve("server/handlers/api/ssl/route.ts"), "utf8");

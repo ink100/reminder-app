@@ -3,11 +3,11 @@
 # 使用 acme.sh 检查并按需更新 ZeroSSL 证书；只有目标证书实际变化后才重载 nginx。
 
 LOG_FILE="${REMINDER_SSL_LOG_FILE:-/home/ubuntu/apps/reminder-app/logs/ssl-renew.log}"
-CERT_FILE="${REMINDER_SSL_CERT_FILE:-/home/ubuntu/.acme.sh/daydreams.cn_ecc/daydreams.cn.cer}"
+CERT_FILE="${REMINDER_SSL_CERT_FILE:-/home/ubuntu/.acme.sh/ne.daydreams.cn_ecc/ne.daydreams.cn.cer}"
 APP_DIR="${REMINDER_SSL_APP_DIR:-/home/ubuntu/apps/reminder-app}"
 STATUS_FILE="${REMINDER_SSL_STATUS_FILE:-$APP_DIR/data/ssl-status.json}"
 ACME_SH="${REMINDER_SSL_ACME_SH:-$HOME/.acme.sh/acme.sh}"
-ACME_DOMAIN="${REMINDER_SSL_ACME_DOMAIN:-daydreams.cn}"
+ACME_DOMAIN="${REMINDER_SSL_ACME_DOMAIN:-ne.daydreams.cn}"
 RENEW_THRESHOLD_DAYS="${REMINDER_SSL_RENEW_THRESHOLD_DAYS:-30}"
 LOCK_FILE="${REMINDER_SSL_LOCK_FILE:-$APP_DIR/data/ssl-renew.lock}"
 
