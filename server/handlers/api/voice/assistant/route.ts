@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireBrowserSession } from "@/lib/auth";
 import { createReminderMcpServer } from "@/lib/mcp/server";
 import { runVoiceAssistant, type ProviderTransport } from "@/lib/voice/assistant";
+import { getVoiceAssistantRuntimeConfig } from "@/lib/voice/settings";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -28,12 +29,8 @@ const ALLOWED_API_CALLS = [
 ] as const;
 
 const requestSchema = z.object({
-  baseUrl: z.string().trim().max(500).optional().default(""),
-  apiKey: z.string().trim().min(1).max(1000),
-  model: z.string().trim().max(200).optional().default(""),
-  systemPrompt: z.string().max(8000).optional().default("你是提醒事项语音助手。需要时使用工具，并简洁地用中文回复。"),
   messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1).max(8000) })).min(1).max(30),
-  allowMutations: z.boolean().optional().default(false),
+  allowMutationsConfirmed: z.boolean().optional().default(false),
 });
 
 function isAllowedApiCall(method: string, path: string) {
@@ -84,6 +81,17 @@ async function readInternalResponse(response: Response) {
   return data;
 }
 
+export async function GET() {
+  const session = await requireBrowserSession();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const config = await getVoiceAssistantRuntimeConfig();
+    return Response.json({ ready: Boolean(config.apiKey), allowMutations: config.allowMutations, defaultVoice: config.defaultVoice });
+  } catch {
+    return Response.json({ ready: false, allowMutations: false }, { status: 503 });
+  }
+}
+
 export async function POST(request: Request, dependencies: { providerTransport?: ProviderTransport } = {}) {
   // Deliberately omit request: this route accepts only the current browser Cookie session,
   // never ai:all credentials or the user-supplied provider key.
@@ -100,10 +108,16 @@ export async function POST(request: Request, dependencies: { providerTransport?:
   const parsed = requestSchema.safeParse(json);
   if (!parsed.success) return Response.json({ error: "AI 助手参数无效" }, { status: 400 });
 
-  const baseUrl = parsed.data.baseUrl || process.env.VOICE_ASSISTANT_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
-  const model = parsed.data.model || process.env.VOICE_ASSISTANT_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
+  let config;
+  try { config = await getVoiceAssistantRuntimeConfig(); }
+  catch { return Response.json({ error: "无法读取 AI 语音助手配置" }, { status: 503 }); }
+  if (!config.apiKey) return Response.json({ error: "请管理员先在配置中心设置 AI API Key" }, { status: 503 });
+  if (config.allowMutations && !parsed.data.allowMutationsConfirmed) {
+    return Response.json({ error: "本次请求需要确认 AI 修改权限" }, { status: 409 });
+  }
+  const allowMutations = config.allowMutations && parsed.data.allowMutationsConfirmed;
   let providerUrl: URL;
-  try { providerUrl = new URL(baseUrl); } catch { return Response.json({ error: "AI Base URL 无效" }, { status: 400 }); }
+  try { providerUrl = new URL(config.baseUrl); } catch { return Response.json({ error: "AI Base URL 无效" }, { status: 400 }); }
   if (providerUrl.protocol !== "https:") return Response.json({ error: "AI Base URL 必须使用 HTTPS" }, { status: 400 });
 
   const cookie = request.headers.get("cookie") || "";
@@ -127,14 +141,14 @@ export async function POST(request: Request, dependencies: { providerTransport?:
   try {
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
     const listed = await client.listTools();
-    const tools = listed.tools.filter((tool) => !BLOCKED_TOOLS.has(tool.name) && (parsed.data.allowMutations || !MUTATING_TOOLS.has(tool.name))).map((tool) => ({
+    const tools = listed.tools.filter((tool) => !BLOCKED_TOOLS.has(tool.name) && (allowMutations || !MUTATING_TOOLS.has(tool.name))).map((tool) => ({
       name: tool.name, description: tool.description, inputSchema: tool.inputSchema as Record<string, unknown>,
     }));
     const result = await runVoiceAssistant({
-      baseUrl: providerUrl.toString(), apiKey: parsed.data.apiKey, model,
-      systemPrompt: parsed.data.systemPrompt, messages: parsed.data.messages, tools,
+      baseUrl: providerUrl.toString(), apiKey: config.apiKey, model: config.model,
+      systemPrompt: config.systemPrompt, messages: parsed.data.messages, tools,
       callTool: async (name, arguments_) => {
-        if (BLOCKED_TOOLS.has(name) || (!parsed.data.allowMutations && MUTATING_TOOLS.has(name)) || !tools.some((tool) => tool.name === name)) throw new Error("工具未获授权");
+        if (BLOCKED_TOOLS.has(name) || (!allowMutations && MUTATING_TOOLS.has(name)) || !tools.some((tool) => tool.name === name)) throw new Error("工具未获授权");
         const result = await client.callTool({ name, arguments: arguments_ });
         if (result.isError) throw new Error(typeof result.content === "string" ? result.content : JSON.stringify(result.content).slice(0, 500));
         return result.structuredContent ?? result.content;

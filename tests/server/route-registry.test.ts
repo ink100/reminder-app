@@ -12,12 +12,12 @@ const fixture = JSON.parse(readFileSync(resolve("tests/fixtures/contracts/route-
 const normalize = (path: string) => path.replace(/\[([^\]]+)\]/g, ":$1");
 
 describe("static route registry", () => {
-  it("is bidirectionally equal to the frozen 71 path / 106 method manifest", () => {
+  it("is bidirectionally equal to the frozen 72 path / 109 method manifest", () => {
     const expected = fixture.flatMap((entry) => entry.methods.map((method) => `${method} ${normalize(entry.path)}`)).sort();
     const actual = routeRegistry.map((entry) => `${entry.method} ${entry.path}`).sort();
 
-    expect(routeRegistry).toHaveLength(106);
-    expect(new Set(routeRegistry.map((entry) => entry.path)).size).toBe(71);
+    expect(routeRegistry).toHaveLength(109);
+    expect(new Set(routeRegistry.map((entry) => entry.path)).size).toBe(72);
     expect(actual).toEqual(expected);
   });
 
@@ -41,6 +41,6 @@ describe("static route registry", () => {
   it("contains static imports and no runtime filesystem discovery", () => {
     const source = readFileSync(resolve("server/http/route-registry.ts"), "utf8");
     expect(source).not.toMatch(/node:fs|readdir|glob\(/);
-    expect(source.match(/^import \* as route\d+ from /gm)?.length).toBe(71);
+    expect(source.match(/^import \* as route\d+ from /gm)?.length).toBe(72);
   });
 });

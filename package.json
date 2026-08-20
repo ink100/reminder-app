@@ -25,6 +25,7 @@
     "supabase:reminders:migrate": "tsx scripts/migrate-reminders-to-supabase.ts",
     "supabase:todos-images-task-logs:migrate": "tsx scripts/migrate-todos-images-task-logs-to-supabase.ts",
     "supabase:app-settings:migrate": "tsx scripts/migrate-app-settings-to-supabase.ts",
+    "supabase:voice-assistant:apply": "tsx scripts/apply-supabase-voice-assistant-settings.ts",
     "db:family-migrate": "tsx scripts/apply-family-migrations.ts"
   },
   "dependencies": {

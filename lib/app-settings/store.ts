@@ -34,6 +34,13 @@ const defaults: Prisma.AppSettingCreateInput = {
   notifyEndHour: 22,
   r2CacheControl: "public, max-age=86400",
   telegramBotEnabled: false,
+  voiceAssistantProvider: "openai-compatible",
+  voiceAssistantConfigured: false,
+  voiceAssistantBaseUrl: "https://api.openai.com/v1",
+  voiceAssistantModel: "gpt-4o-mini",
+  voiceAssistantSystemPrompt: "你是提醒事项语音助手。需要时使用工具，并简洁地用中文回复。",
+  voiceAssistantAllowMutations: false,
+  voiceAssistantDefaultVoice: "zh-CN-XiaoxiaoNeural",
 };
 
 function assertSingleton(id: number | undefined) {

@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { requireBrowserSession, dispatchRequest, lookup } = vi.hoisted(() => ({ requireBrowserSession: vi.fn(), dispatchRequest: vi.fn(), lookup: vi.fn() }));
+const { requireBrowserSession, dispatchRequest, lookup, getVoiceAssistantRuntimeConfig } = vi.hoisted(() => ({ requireBrowserSession: vi.fn(), dispatchRequest: vi.fn(), lookup: vi.fn(), getVoiceAssistantRuntimeConfig: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ requireBrowserSession }));
 vi.mock("@/server/http/dispatcher", () => ({ dispatchRequest }));
 vi.mock("node:dns/promises", () => ({ lookup, default: { lookup } }));
+vi.mock("@/lib/voice/settings", () => ({ getVoiceAssistantRuntimeConfig }));
 
 import { POST } from "@/server/handlers/api/voice/assistant/route";
 
@@ -13,15 +14,30 @@ function request(body: unknown, headers: Record<string, string> = {}) {
     body: JSON.stringify(body),
   });
 }
-const valid = { apiKey: "provider-key", messages: [{ role: "user", content: "列出待办" }] };
+const valid = { messages: [{ role: "user", content: "列出待办" }] };
 
 describe("voice assistant route", () => {
-  beforeEach(() => { requireBrowserSession.mockReset(); dispatchRequest.mockReset().mockResolvedValue(Response.json({ items: [{ id: "todo-1", title: "测试" }] })); lookup.mockReset().mockResolvedValue([{ address: "93.184.216.34", family: 4 }]); vi.restoreAllMocks(); });
+  beforeEach(() => {
+    requireBrowserSession.mockReset();
+    dispatchRequest.mockReset().mockResolvedValue(Response.json({ items: [{ id: "todo-1", title: "测试" }] }));
+    lookup.mockReset().mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+    getVoiceAssistantRuntimeConfig.mockReset().mockResolvedValue({
+      provider: "openai-compatible", baseUrl: "https://provider.test/v1", apiKey: "provider-key",
+      model: "custom-model", systemPrompt: "system", allowMutations: false,
+      defaultVoice: "zh-CN-XiaoxiaoNeural",
+    });
+    vi.restoreAllMocks();
+  });
 
   it("rejects cleartext provider URLs before any provider request", async () => {
     requireBrowserSession.mockResolvedValue({ userId: "user-1" });
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const response = await POST(request({ ...valid, baseUrl: "http://provider.test/v1" }));
+    getVoiceAssistantRuntimeConfig.mockResolvedValueOnce({
+      provider: "openai-compatible", baseUrl: "http://provider.test/v1", apiKey: "provider-key",
+      model: "custom-model", systemPrompt: "system", allowMutations: false,
+      defaultVoice: "zh-CN-XiaoxiaoNeural",
+    });
+    const response = await POST(request(valid));
     expect(response.status).toBe(400);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -59,7 +75,12 @@ describe("voice assistant route", () => {
     let payload = JSON.parse(providerTransport.mock.calls[0][1]?.body as string);
     expect(payload.tools.map((tool: { function: { name: string } }) => tool.function.name)).not.toContain("create_reminder");
     providerTransport.mockClear();
-    await POST(request({ ...valid, allowMutations: true }), { providerTransport });
+    getVoiceAssistantRuntimeConfig.mockResolvedValueOnce({
+      provider: "openai-compatible", baseUrl: "https://provider.test/v1", apiKey: "provider-key",
+      model: "custom-model", systemPrompt: "system", allowMutations: true,
+      defaultVoice: "zh-CN-XiaoxiaoNeural",
+    });
+    await POST(request({ ...valid, allowMutationsConfirmed: true }), { providerTransport });
     payload = JSON.parse(providerTransport.mock.calls[0][1]?.body as string);
     expect(payload.tools.map((tool: { function: { name: string } }) => tool.function.name)).toContain("create_reminder");
   });

@@ -90,6 +90,14 @@ model AppSetting {
   telegramBotUsername      String?
   telegramBotLastTestAt    DateTime?
   telegramBotLastTestStatus String?
+  voiceAssistantProvider   String   @default("openai-compatible")
+  voiceAssistantConfigured Boolean  @default(false)
+  voiceAssistantBaseUrl    String   @default("https://api.openai.com/v1")
+  voiceAssistantApiKeyEncrypted String?
+  voiceAssistantModel      String   @default("gpt-4o-mini")
+  voiceAssistantSystemPrompt String @default("你是提醒事项语音助手。需要时使用工具，并简洁地用中文回复。")
+  voiceAssistantAllowMutations Boolean @default(false)
+  voiceAssistantDefaultVoice String @default("zh-CN-XiaoxiaoNeural")
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }

@@ -18,6 +18,8 @@ net.setDefaultAutoSelectFamily(false);
 const execFile = promisify(execFileCallback);
 const dbUrl = process.env.SUPABASE_DB_URL || process.env.POSTGRES_URL || process.env.DATABASE_DIRECT_URL;
 export const columns = ["id","app_name","timezone","default_remind_before_days","default_remind_before_hours","overdue_repeat_enabled","daily_remind_time","email_notifications_enabled","notification_email","smtp_host","smtp_port","smtp_user","smtp_pass_encrypted","smtp_from_email","smtp_from_name","otp_secret_encrypted","otp_configured_at","reminder_email_enabled","reminder_email_interval","notify_start_hour","notify_end_hour","r2_endpoint","r2_access_key","r2_secret_key","r2_bucket","r2_public_url","r2_cache_control","telegram_bot_enabled","telegram_bot_token_encrypted","telegram_bot_chat_id","telegram_bot_name","telegram_bot_username","telegram_bot_last_test_at","telegram_bot_last_test_status","created_at","updated_at"] as const;
+const toCamelCase = (column: string) => column.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
+const legacySelect = Object.fromEntries(columns.map((column) => [toCamelCase(column), true])) as Prisma.AppSettingSelect;
 type Comparable = Record<string, unknown>;
 
 function normalize(value: unknown): unknown { if (value instanceof Date) return value.toISOString(); if (value == null) return null; if (typeof value === "string" && /^\d{4}-\d\d-\d\dT/.test(value)) { const date=new Date(value); if (!Number.isNaN(date.valueOf())) return date.toISOString(); } return value; }
@@ -81,10 +83,10 @@ async function migrateSnapshot(source: Comparable[]) {
 async function main() {
   await assertFrozenSource();
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const source=(await tx.appSetting.findMany({orderBy:{id:"asc"}})).map(sourceRow);
+    const source=(await tx.appSetting.findMany({select:legacySelect,orderBy:{id:"asc"}}) as AppSetting[]).map(sourceRow);
     if(source.some(row=>row.id!==1)||source.length>1) throw new Error("SQLite AppSetting violates singleton id=1");
     await migrateSnapshot(source);
-    const unchanged=(await tx.appSetting.findMany({orderBy:{id:"asc"}})).map(sourceRow); verifyAppSettings(source,unchanged);
+    const unchanged=(await tx.appSetting.findMany({select:legacySelect,orderBy:{id:"asc"}}) as AppSetting[]).map(sourceRow); verifyAppSettings(source,unchanged);
   }, { timeout: 300_000, maxWait: 10_000 });
   await prisma.$disconnect();
 }

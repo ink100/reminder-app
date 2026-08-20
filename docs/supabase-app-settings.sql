@@ -17,6 +17,26 @@ create table if not exists public.app_settings (
   created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 
+-- Incremental AI voice-assistant configuration. Added after the original columns so
+-- fresh installs and upgraded production databases keep the same ordinal schema.
+alter table public.app_settings add column if not exists voice_assistant_provider text not null default 'openai-compatible';
+alter table public.app_settings add column if not exists voice_assistant_base_url text not null default 'https://api.openai.com/v1';
+alter table public.app_settings add column if not exists voice_assistant_api_key_encrypted text;
+alter table public.app_settings add column if not exists voice_assistant_model text not null default 'gpt-4o-mini';
+alter table public.app_settings add column if not exists voice_assistant_system_prompt text not null default '你是提醒事项语音助手。需要时使用工具，并简洁地用中文回复。';
+alter table public.app_settings add column if not exists voice_assistant_allow_mutations boolean not null default false;
+alter table public.app_settings add column if not exists voice_assistant_default_voice text not null default 'zh-CN-XiaoxiaoNeural';
+alter table public.app_settings add column if not exists voice_assistant_configured boolean not null default false;
+
+comment on column public.app_settings.voice_assistant_provider is 'AI voice assistant provider protocol';
+comment on column public.app_settings.voice_assistant_base_url is 'HTTPS base URL for the configured AI provider';
+comment on column public.app_settings.voice_assistant_api_key_encrypted is 'AES-GCM encrypted provider API key; never returned to clients';
+comment on column public.app_settings.voice_assistant_model is 'AI model identifier';
+comment on column public.app_settings.voice_assistant_system_prompt is 'System prompt used for voice assistant requests';
+comment on column public.app_settings.voice_assistant_allow_mutations is 'Whether confirmed requests may expose non-destructive MCP mutation tools';
+comment on column public.app_settings.voice_assistant_default_voice is 'Default Edge TTS voice for assistant replies';
+comment on column public.app_settings.voice_assistant_configured is 'Whether database provider values explicitly override environment configuration';
+
 create table if not exists public.app_migrations (
   version text primary key,
   completed_at timestamptz not null default now()
@@ -38,7 +58,13 @@ declare
     'r2_cache_control:text:NO:''public, max-age=86400''::text','telegram_bot_enabled:boolean:NO:false',
     'telegram_bot_token_encrypted:text:YES:','telegram_bot_chat_id:text:YES:','telegram_bot_name:text:YES:','telegram_bot_username:text:YES:',
     'telegram_bot_last_test_at:timestamp with time zone:YES:','telegram_bot_last_test_status:text:YES:',
-    'created_at:timestamp with time zone:NO:now()','updated_at:timestamp with time zone:NO:now()'
+    'created_at:timestamp with time zone:NO:now()','updated_at:timestamp with time zone:NO:now()',
+    'voice_assistant_provider:text:NO:''openai-compatible''::text',
+    'voice_assistant_base_url:text:NO:''https://api.openai.com/v1''::text','voice_assistant_api_key_encrypted:text:YES:',
+    'voice_assistant_model:text:NO:''gpt-4o-mini''::text',
+    'voice_assistant_system_prompt:text:NO:''你是提醒事项语音助手。需要时使用工具，并简洁地用中文回复。''::text',
+    'voice_assistant_allow_mutations:boolean:NO:false','voice_assistant_default_voice:text:NO:''zh-CN-XiaoxiaoNeural''::text',
+    'voice_assistant_configured:boolean:NO:false'
   ];
 begin
   select array_agg(column_name||':'||data_type||':'||is_nullable||':'||coalesce(column_default,'') order by ordinal_position)

@@ -37,4 +37,17 @@ describe("AppSetting migration verification", () => {
     expect(sql).toContain("app_migrations schema differs from expected columns/types/nullability/defaults");
     expect(sql).toContain("app_migrations primary key differs from expected");
   });
+
+  it("selects only legacy SQLite columns after the Prisma model gains Supabase-only fields", async () => {
+    const script = await readFile("scripts/migrate-app-settings-to-supabase.ts", "utf8");
+    expect(script).toContain("legacySelect");
+    expect(script).toContain("findMany({select:legacySelect");
+  });
+
+  it("records the voice-assistant schema marker in the same transaction as its columns", async () => {
+    const sql = (await readFile("docs/supabase-voice-assistant-settings.sql", "utf8")).toLowerCase();
+    expect(sql.trim().startsWith("begin;")).toBe(true);
+    expect(sql).toContain("app-settings-voice-assistant-v1");
+    expect(sql.trim().endsWith("commit;")).toBe(true);
+  });
 });

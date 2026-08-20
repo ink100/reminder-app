@@ -413,6 +413,14 @@
     ]
   },
   {
+    "source": "app/api/settings/voice-assistant/route.ts",
+    "path": "/api/settings/voice-assistant",
+    "methods": [
+      "GET",
+      "PUT"
+    ]
+  },
+  {
     "source": "app/api/ssl/route.ts",
     "path": "/api/ssl",
     "methods": [
@@ -448,6 +456,7 @@
     "source": "app/api/voice/assistant/route.ts",
     "path": "/api/voice/assistant",
     "methods": [
+      "GET",
       "POST"
     ]
   },
