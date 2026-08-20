@@ -56,11 +56,12 @@ export function safeReturnUrl(value: unknown, fallback = "/reminders"): string {
 
 export function useApi() {
   const route = useRoute();
-  const requestFetch = import.meta.server ? useRequestFetch() : $fetch;
 
   async function apiFetch<T>(url: string, options: Parameters<typeof $fetch<T>>[1] = {}): Promise<T> {
     try {
-      return await requestFetch<T>(url, { credentials: "same-origin", ...options });
+      const requestOptions = { credentials: "same-origin" as const, ...options };
+      if (import.meta.server) return await useRequestFetch()<T>(url, requestOptions);
+      return await $fetch<T>(url, requestOptions);
     } catch (error) {
       const apiError = toApiError(error);
       if (apiError.statusCode === 401) {

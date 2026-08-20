@@ -24,20 +24,18 @@ afterEach(() => vi.unstubAllGlobals());
 describe("Nuxt shell navigation", () => {
   it("preserves the legacy URLs and fails unknown roles closed", () => {
     expect(getNavigationItems("MEMBER").map(({ href }) => href)).toEqual([
-      "/reminders", "/todos", "/medicines", "/images", "/voice", "/account",
+      "/reminders", "/todos", "/medicines", "/images", "/account",
     ]);
     expect(getNavigationItems("ADMIN").map(({ href }) => href)).toEqual([
-      "/reminders", "/todos", "/medicines", "/images", "/voice", "/account",
+      "/reminders", "/todos", "/medicines", "/images", "/account",
       "/members", "/notification-center", "/push-ledger", "/license-key", "/ssl", "/bot", "/settings",
     ]);
     expect(getNavigationItems("UNKNOWN")).toEqual([]);
   });
 
-  it("shows the AI voice assistant in the mobile more navigation", () => {
-    expect(getNavigationItems("MEMBER").find(({ href }) => href === "/voice")).toMatchObject({
-      label: "语音调用 AI",
-      shortLabel: "语音 AI",
-    });
+  it("keeps AI voice out of the side and mobile navigation collections", () => {
+    expect(getNavigationItems("MEMBER").some(({ href }) => href === "/voice")).toBe(false);
+    expect(getNavigationItems("ADMIN").some(({ label }) => label.includes("AI") || label.includes("语音"))).toBe(false);
   });
 
   it("opens the mobile Element Plus drawer", async () => {

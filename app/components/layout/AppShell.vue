@@ -12,6 +12,7 @@ const { actor } = useAuth();
       </ElMain>
     </ElContainer>
     <MobileNav :role="actor?.role" />
+    <FloatingVoiceAssistant />
   </ElContainer>
 </template>
 
