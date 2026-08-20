@@ -24,7 +24,11 @@ describe("global floating voice assistant contract", () => {
       "allowMutations", "确认 AI 修改权限", "transcriptionController", "recorder.ondataavailable=null",
       "generation !== recordingGeneration", "speechController?.abort()", "generation !== speechGeneration",
       "speechAudio === audio", "speechAudio.onended = null", "speechAudio.onerror = null",
+      "beginLongPress", "@pointerdown", "@pointercancel", "void startRecording()",
     ]) expect(source).toContain(contract);
+    expect(source).toContain("if (open.value) closePanel()");
+    expect(source).toContain("const pendingLongPress = longPressTimer !== null");
+    expect(source).toContain("if (pendingLongPress) longPressTriggered = true");
     expect(source).not.toMatch(/localStorage|sessionStorage/);
   });
 });

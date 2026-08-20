@@ -29,6 +29,8 @@ let speechController: AbortController | null = null;
 let speechGeneration = 0;
 let speechUrl = "";
 let speechAudio: HTMLAudioElement | null = null;
+let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+let longPressTriggered = false;
 
 function recorderState() {
   return recorder?.state || "inactive";
@@ -65,6 +67,9 @@ function releaseRecorder() {
 }
 
 function closePanel() {
+  const pendingLongPress = longPressTimer !== null;
+  cancelLongPress();
+  if (pendingLongPress) longPressTriggered = true;
   open.value = false;
   recordingGeneration++;
   transcriptionGeneration++;
@@ -75,6 +80,32 @@ function closePanel() {
   releaseSpeech();
 }
 
+function cancelLongPress() {
+  if (longPressTimer) clearTimeout(longPressTimer);
+  longPressTimer = null;
+}
+
+function beginLongPress(event: PointerEvent) {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  cancelLongPress();
+  longPressTriggered = false;
+  longPressTimer = setTimeout(() => {
+    longPressTimer = null;
+    longPressTriggered = true;
+    open.value = true;
+    void nextTick(() => void startRecording());
+  }, 550);
+}
+
+function togglePanel() {
+  if (longPressTriggered) {
+    longPressTriggered = false;
+    return;
+  }
+  if (open.value) closePanel();
+  else open.value = true;
+}
+
 function handleEscape(event: KeyboardEvent) {
   if (event.key === "Escape" && open.value) closePanel();
 }
@@ -82,6 +113,7 @@ function handleEscape(event: KeyboardEvent) {
 onMounted(() => window.addEventListener("keydown", handleEscape));
 onBeforeUnmount(() => {
   disposed = true;
+  cancelLongPress();
   window.removeEventListener("keydown", handleEscape);
   closePanel();
 });
@@ -345,8 +377,14 @@ async function speak(content: string, index: number) {
       type="button"
       class="assistant-launcher"
       aria-label="打开 AI 语音助手"
+      title="点击展开；长按直接录音"
       :aria-expanded="open"
-      @click="open = !open"
+      @pointerdown="beginLongPress"
+      @pointerup="cancelLongPress"
+      @pointercancel="cancelLongPress"
+      @pointerleave="cancelLongPress"
+      @contextmenu.prevent
+      @click="togglePanel"
     >
       <span aria-hidden="true">🎙</span>
     </button>
@@ -355,7 +393,7 @@ async function speak(content: string, index: number) {
 
 <style scoped>
 .floating-assistant { position: fixed; z-index: 70; right: 24px; bottom: 24px; }
-.assistant-launcher { display: grid; width: 62px; height: 62px; place-items: center; border: 1px solid #1d4ed8; border-radius: 50%; background: #2563eb; box-shadow: 0 12px 28px rgb(37 99 235 / 35%); color: white; cursor: pointer; font-size: 24px; transition: transform .18s ease, box-shadow .18s ease; }
+.assistant-launcher { display: grid; width: 62px; height: 62px; place-items: center; border: 1px solid #1d4ed8; border-radius: 50%; background: #2563eb; box-shadow: 0 12px 28px rgb(37 99 235 / 35%); color: white; cursor: pointer; font-size: 24px; touch-action: manipulation; user-select: none; transition: transform .18s ease, box-shadow .18s ease; }
 .assistant-launcher:hover { box-shadow: 0 15px 34px rgb(37 99 235 / 45%); transform: translateY(-2px); }
 .assistant-launcher:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
 .launcher-label { position: absolute; right: 72px; bottom: 12px; width: max-content; padding: 8px 12px; border-radius: 18px; background: #0f172a; box-shadow: 0 6px 18px rgb(15 23 42 / 20%); color: white; font-size: 12px; font-weight: 600; }
