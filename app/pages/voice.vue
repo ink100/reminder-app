@@ -3,7 +3,7 @@ const voices=[{label:"中文女声",options:[["zh-CN-XiaoxiaoNeural","晓晓 · 
 const AUDIO_ACCEPT=".mp3,.wav,.m4a,.flac,.aac,.ogg,.webm,.amr,.3gp,audio/mpeg,audio/wav,audio/mp4,audio/flac,audio/aac,audio/ogg,audio/webm,audio/amr,audio/3gpp";
 definePageMeta({ layout: "default", middleware: "auth" });
 const {apiFetch}=useApi();
-const mode=ref<"tts"|"stt"|"assistant">("tts");
+const mode=ref<"tts"|"stt"|"assistant">("assistant");
 const text=ref("欢迎使用在线语音转换工具，这里可以把文字转换成自然流畅的语音。");
 const voice=ref("zh-CN-XiaoxiaoNeural"),speed=ref(1),pitch=ref(0),volume=ref(0),generating=ref(false),audioUrl=ref(""),audioMime=ref(""),downloadName=ref("speech.mp3");
 const audioFile=ref<File|null>(null),transcription=ref(""),transcribing=ref(false),custom=ref(false),token=ref("");

@@ -2,6 +2,11 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 describe("voice assistant Vue static contract", () => {
+  it("opens the AI assistant when entering from navigation", async () => {
+    const source = await readFile("app/pages/voice.vue", "utf8");
+    expect(source).toContain('const mode=ref<"tts"|"stt"|"assistant">("assistant")');
+  });
+
   it("supports MediaRecorder, audio upload/STT, auto send, tool traces, provider settings and TTS feedback", async () => {
     const source = await readFile("app/pages/voice.vue", "utf8");
     for (const contract of [

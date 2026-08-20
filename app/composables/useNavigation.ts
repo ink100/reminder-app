@@ -11,7 +11,7 @@ const sharedItems: readonly NavigationItem[] = [
   { href: "/todos", label: "待办事项", shortLabel: "待办" },
   { href: "/medicines", label: "药品管理", shortLabel: "药品" },
   { href: "/images", label: "文件管理", shortLabel: "文件" },
-  { href: "/voice", label: "语音转换", shortLabel: "语音" },
+  { href: "/voice", label: "语音调用 AI", shortLabel: "语音 AI" },
   { href: "/account", label: "账户安全", shortLabel: "账户" },
 ];
 

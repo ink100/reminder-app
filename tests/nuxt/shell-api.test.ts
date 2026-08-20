@@ -33,6 +33,13 @@ describe("Nuxt shell navigation", () => {
     expect(getNavigationItems("UNKNOWN")).toEqual([]);
   });
 
+  it("shows the AI voice assistant in the mobile more navigation", () => {
+    expect(getNavigationItems("MEMBER").find(({ href }) => href === "/voice")).toMatchObject({
+      label: "语音调用 AI",
+      shortLabel: "语音 AI",
+    });
+  });
+
   it("opens the mobile Element Plus drawer", async () => {
     vi.stubGlobal("useNavigation", () => ({
       items: computed(() => getNavigationItems("MEMBER")),
