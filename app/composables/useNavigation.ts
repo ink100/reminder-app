@@ -4,24 +4,25 @@ export interface NavigationItem {
   href: string;
   label: string;
   shortLabel: string;
+  icon: string;
 }
 
 const sharedItems: readonly NavigationItem[] = [
-  { href: "/reminders", label: "提醒首页", shortLabel: "提醒" },
-  { href: "/todos", label: "待办事项", shortLabel: "待办" },
-  { href: "/medicines", label: "药品管理", shortLabel: "药品" },
-  { href: "/images", label: "文件管理", shortLabel: "文件" },
-  { href: "/account", label: "账户安全", shortLabel: "账户" },
+  { href: "/reminders", label: "提醒首页", shortLabel: "提醒", icon: "Bell" },
+  { href: "/todos", label: "待办事项", shortLabel: "待办", icon: "CircleCheck" },
+  { href: "/medicines", label: "药品管理", shortLabel: "药品", icon: "FirstAidKit" },
+  { href: "/images", label: "文件管理", shortLabel: "文件", icon: "FolderOpened" },
+  { href: "/account", label: "账户安全", shortLabel: "账户", icon: "Lock" },
 ];
 
 const adminItems: readonly NavigationItem[] = [
-  { href: "/members", label: "成员管理", shortLabel: "成员" },
-  { href: "/notification-center", label: "通知管理", shortLabel: "通知" },
-  { href: "/push-ledger", label: "推送台账", shortLabel: "台账" },
-  { href: "/license-key", label: "激活密匙", shortLabel: "密匙" },
-  { href: "/ssl", label: "SSL 证书", shortLabel: "SSL" },
-  { href: "/bot", label: "Bot 通知", shortLabel: "Bot" },
-  { href: "/settings", label: "配置中心", shortLabel: "设置" },
+  { href: "/members", label: "成员管理", shortLabel: "成员", icon: "User" },
+  { href: "/notification-center", label: "通知管理", shortLabel: "通知", icon: "Message" },
+  { href: "/push-ledger", label: "推送台账", shortLabel: "台账", icon: "Tickets" },
+  { href: "/license-key", label: "激活密匙", shortLabel: "密匙", icon: "Key" },
+  { href: "/ssl", label: "SSL 证书", shortLabel: "SSL", icon: "Connection" },
+  { href: "/bot", label: "Bot 通知", shortLabel: "Bot", icon: "ChatDotRound" },
+  { href: "/settings", label: "配置中心", shortLabel: "设置", icon: "Setting" },
 ];
 
 export function getNavigationItems(role: ActorRole | null | undefined): NavigationItem[] {

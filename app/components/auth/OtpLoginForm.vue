@@ -42,8 +42,8 @@ async function submit() {
 
 <template>
   <ElCard shadow="never" class="auth-card">
-    <h2>OTP 登录</h2>
-    <p class="muted">请输入 Google Authenticator / GitHub Mobile 中当前显示的 6 位动态验证码。</p>
+    <h2>使用动态验证码登录</h2>
+    <p class="muted">输入 Google Authenticator 或 GitHub Mobile 当前显示的 6 位验证码。</p>
     <ElForm label-position="top" :model="form" @submit.prevent="submit">
       <ElFormItem label="用户名" required>
         <ElInput v-model="form.username" name="username" autocomplete="username" />
@@ -55,7 +55,7 @@ async function submit() {
           autocomplete="one-time-code"
           inputmode="numeric"
           maxlength="6"
-          placeholder="123456"
+          placeholder="请输入 6 位验证码"
           @update:model-value="normalizeCode"
         />
       </ElFormItem>
@@ -65,16 +65,24 @@ async function submit() {
       </div>
       <ElAlert v-if="message" :title="message" type="error" :closable="false" show-icon />
       <ElButton class="submit" type="primary" native-type="submit" :loading="submitting" :disabled="submitting || !codeComplete">
-        {{ submitting ? "验证中…" : "登录" }}
+        {{ submitting ? "验证中…" : "验证并登录" }}
       </ElButton>
     </ElForm>
   </ElCard>
 </template>
 
 <style scoped>
-h2 { margin: 0 0 6px; font-size: 20px; }
+.auth-card { width: 100%; min-width: 0; border-color: #dbe3ee; border-radius: 16px; box-shadow: 0 12px 32px rgb(15 23 42 / 6%); }
+.auth-card :deep(.el-card__body) { padding: 28px; }
+h2 { margin: 0 0 8px; color: #0f172a; font-size: 21px; }
 .muted { margin: 0 0 20px; color: var(--el-text-color-secondary); line-height: 1.6; }
-.trust-row { margin-bottom: 16px; padding: 10px 12px; border: 1px solid var(--el-border-color); border-radius: 10px; background: var(--el-fill-color-light); }
+.auth-card :deep(.el-input__wrapper) { min-height: 48px; border-radius: 10px; }
+.auth-card :deep(.el-input__inner) { font-size: 16px; }
+.trust-row { margin-bottom: 16px; padding: 12px 14px; border: 1px solid var(--el-border-color); border-radius: 10px; background: var(--el-fill-color-light); }
 .trust-row small { display: block; padding-left: 24px; color: var(--el-text-color-secondary); }
-.submit { width: 100%; margin-top: 16px; }
+.submit { width: 100%; min-height: 48px; margin-top: 16px; border-radius: 10px; font-size: 15px; font-weight: 600; }
+@media (max-width: 480px) {
+  .auth-card :deep(.el-card__body) { padding: 22px 20px; }
+  .muted { font-size: 14px; }
+}
 </style>

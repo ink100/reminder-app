@@ -58,6 +58,7 @@ describe("Nuxt shell navigation", () => {
           ElDrawer: Drawer,
           ElMenu: { template: "<div><slot /></div>" },
           ElMenuItem: { template: "<div><slot /></div>" },
+          ElIcon: { template: "<i><slot /></i>" },
           NuxtLink: { props: ["to"], template: "<a :href='to'><slot /></a>" },
         },
       },
